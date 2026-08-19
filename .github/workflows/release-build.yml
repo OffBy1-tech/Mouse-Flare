@@ -166,9 +166,21 @@ jobs:
           minisign -Vm Mouseflare-macOS.zip -p minisign.pub
           minisign -Vm Mouseflare-Windows.zip -p minisign.pub
 
+          # "What's new" comes from the annotated tag's message (git tag -a vX.Y.Z
+          # -m "Title" -m "- bullet"). Re-fetch the tag explicitly: checkout can
+          # leave it peeled to the commit, which would drop the annotation.
+          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}" || true
+
           {
             echo "Stable release ${GITHUB_REF_NAME} (commit ${GITHUB_SHA})."
             echo
+            if [ "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}" 2>/dev/null)" = "tag" ]; then
+              echo "## What's new"
+              echo
+              # Tag annotation verbatim, minus any PGP signature block
+              git tag -l --format='%(contents)' "${GITHUB_REF_NAME}" | sed '/-----BEGIN PGP SIGNATURE-----/,$d'
+              echo
+            fi
             echo "## Verify your download"
             echo
             echo '```'

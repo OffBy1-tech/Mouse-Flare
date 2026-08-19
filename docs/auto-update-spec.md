@@ -52,7 +52,19 @@ Two channels, both already half-existing:
 
 1. Maintainer decides current `main` is release-worthy (the rolling `latest`
    build doubles as the smoke-test candidate — same commit, same build steps).
-2. `git tag v0.2.0 && git push origin v0.2.0`.
+2. Tag with an **annotated tag whose message is the release notes** — the
+   first line is the release title, bullet lines become the "What's new"
+   section (and the changelog shown by the simulator and future in-app
+   updaters):
+
+   ```bash
+   git tag -a v0.2.0 -m "Faster flares, quieter idle" \
+     -m "- Reduced idle CPU by batching overlay redraws
+   - New Aurora passive preset"
+   git push origin v0.2.0
+   ```
+
+   A lightweight tag still works; the release just has no What's-new section.
 3. CI (`on: push: tags: v*`) builds both platforms exactly like the existing
    release-build workflow, **signs each zip with minisign**, stamps the version
    into `Info.plist` / the csproj from the tag, and creates a **draft** release

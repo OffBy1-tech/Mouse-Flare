@@ -96,10 +96,8 @@ function findAsset(release: GitHubRelease, suffix: string): GitHubAsset | undefi
   return release.assets.find((a) => a.name.endsWith(suffix) && !a.name.endsWith('.minisig'));
 }
 
-function parseChangelog(body: string | null): string[] {
-  if (!body) return [];
-  // Bullet lines from the release notes, minus the verification boilerplate
-  return body
+function extractBullets(text: string): string[] {
+  return text
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.startsWith('- ') || line.startsWith('* '))
@@ -108,8 +106,17 @@ function parseChangelog(body: string | null): string[] {
         .replace(/^[-*]\s+/, '')
         .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // markdown links -> plain text
         .replace(/\*\*/g, '')
-    )
-    .slice(0, 8);
+    );
+}
+
+function parseChangelog(body: string | null): string[] {
+  if (!body) return [];
+  // Prefer the "What's new" bullets (everything before the verification
+  // boilerplate); fall back to any bullets in the whole body.
+  const beforeVerify = body.split(/^## Verify your download$/m)[0];
+  const preferred = extractBullets(beforeVerify);
+  const bullets = preferred.length > 0 ? preferred : extractBullets(body);
+  return bullets.slice(0, 8);
 }
 
 function toMetadata(release: GitHubRelease, channel: 'stable' | 'beta'): ReleaseMetadata {
