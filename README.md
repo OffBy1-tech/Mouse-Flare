@@ -56,7 +56,14 @@ Stable (versioned) releases additionally carry [minisign](https://jedisct1.githu
 minisign -Vm Mouseflare-macOS.zip -p minisign.pub
 ```
 
-The macOS app is ad-hoc signed but not notarized yet, so on first launch right-click `Mouseflare.app` and choose **Open**.
+The macOS app is ad-hoc signed but not notarized yet, so Gatekeeper blocks the first launch (and on macOS 15+ the old right-click → Open bypass no longer works). After verifying your download, strip the quarantine flag and open:
+
+```bash
+xattr -dr com.apple.quarantine Mouseflare.app
+open Mouseflare.app
+```
+
+(Alternatively: attempt the launch, then System Settings → Privacy & Security → "Open Anyway".) This is only needed once per download — auto-updates installed by the app itself are not quarantined.
 
 ## Running the web simulator
 

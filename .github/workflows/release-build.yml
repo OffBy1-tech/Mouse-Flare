@@ -65,6 +65,16 @@ jobs:
           # knows the app root and the CI machine's build path)
           cp Sources/Resources/app-logo.png "$APP/Contents/Resources/app-logo.png"
 
+          # Finder/Dock icon: build Mouseflare.icns from the padded 1024px
+          # master (packaging/AppIcon-1024.png, logo at 82% on transparency
+          # to match the macOS icon grid)
+          mkdir -p Mouseflare.iconset
+          for size in 16 32 128 256 512; do
+            sips -z "$size" "$size" packaging/AppIcon-1024.png --out "Mouseflare.iconset/icon_${size}x${size}.png" >/dev/null
+            sips -z "$((size*2))" "$((size*2))" packaging/AppIcon-1024.png --out "Mouseflare.iconset/icon_${size}x${size}@2x.png" >/dev/null
+          done
+          iconutil -c icns Mouseflare.iconset -o "$APP/Contents/Resources/Mouseflare.icns"
+
           cat > "$APP/Contents/Info.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -75,6 +85,7 @@ jobs:
             <key>CFBundleIdentifier</key><string>com.offby1.mouseflare</string>
             <key>CFBundleExecutable</key><string>Mouseflare</string>
             <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleIconFile</key><string>Mouseflare</string>
             <key>CFBundleShortVersionString</key><string>${VERSION}</string>
             <key>CFBundleVersion</key><string>${VERSION}</string>
             <key>LSMinimumSystemVersion</key><string>13.0</string>
@@ -193,7 +204,7 @@ jobs:
             echo "minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw"
             echo '```'
             echo
-            echo "- **macOS**: unzip and launch Mouseflare.app (universal, macOS 13+). Ad-hoc signed, not notarized: on first launch, right-click the app and choose Open."
+            echo "- **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: \`xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app\` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined."
             echo "- **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)."
           } > notes.md
 
@@ -219,7 +230,7 @@ jobs:
             cat SHA256SUMS.txt
             echo '```'
             echo
-            echo "- **macOS**: \`shasum -a 256 -c SHA256SUMS.txt\` (with the zip in the same folder), then unzip and launch Mouseflare.app. The build is ad-hoc signed, not notarized: on first launch, right-click the app and choose Open."
+            echo "- **macOS**: \`shasum -a 256 -c SHA256SUMS.txt\` (with the zip in the same folder). Not notarized yet, so Gatekeeper blocks the first launch: \`xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app\` (or System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined."
             echo "- **Windows**: \`certutil -hashfile Mouseflare-Windows.zip SHA256\` and compare against the value above. Requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)."
           } > notes.md
           # Recreate the release so tag, assets, and checksums always refer to this commit

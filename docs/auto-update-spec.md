@@ -177,7 +177,8 @@ New `Sources/Updater.swift` (~250 lines, no dependencies):
 - **Quarantine note:** `URLSession` downloads from our own process don't get
   the quarantine xattr (no `LSFileQuarantineEnabled` in our Info.plist), so
   the relaunched app opens without Gatekeeper prompts. First-install UX is
-  unchanged (documented right-click → Open until we notarize).
+  unchanged (documented `xattr -dr com.apple.quarantine` until we notarize —
+  on macOS 15+ the old right-click → Open bypass no longer works).
 - **UI:** menu-bar item gains "Check for Updates…"; the Settings window's
   existing Check for Updates area shows real state (available version, notes,
   progress, Restart to Update button) instead of static text.
