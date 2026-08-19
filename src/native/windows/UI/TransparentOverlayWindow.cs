@@ -31,6 +31,7 @@ namespace Mouseflare.UI
         public bool ShakeToFindEnabled { get; set; } = true;
         public bool ReducedMotion { get; set; } = false;
         public bool SoundFxEnabled { get; set; } = true;
+        public bool AutoCheckUpdates { get; set; } = true;
 
         private class Particle
         {

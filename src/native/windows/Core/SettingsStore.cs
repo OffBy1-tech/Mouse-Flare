@@ -29,6 +29,7 @@ namespace Mouseflare.Core
         public bool ReducedMotion { get; set; } = false;
         public bool SoundFxEnabled { get; set; } = true;
         public string Hotkey { get; set; } = "Ctrl + Shift + F";
+        public bool AutoCheckUpdates { get; set; } = true;
     }
 
     public static class SettingsStore

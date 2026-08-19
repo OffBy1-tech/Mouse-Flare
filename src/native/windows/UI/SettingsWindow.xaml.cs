@@ -56,6 +56,8 @@ namespace Mouseflare.UI
             chkShakeToFind.IsChecked = _overlay.ShakeToFindEnabled;
             chkReducedMotion.IsChecked = _overlay.ReducedMotion;
             chkSoundFx.IsChecked = _overlay.SoundFxEnabled;
+            chkAutoUpdates.IsChecked = _overlay.AutoCheckUpdates;
+            txtAutoUpdatesSub.Text = $"Quietly check GitHub Releases every 6 hours (installed: v{Core.Updater.Shared.CurrentVersion}). Use the tray menu for a manual check.";
 
             sliderIntensity.Value = _overlay.IntensityMultiplier;
             sliderDensity.Value = _overlay.SparkDensityMultiplier * 5.0;
@@ -158,6 +160,11 @@ namespace Mouseflare.UI
         private void OnSoundFxChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.SoundFxEnabled = chkSoundFx.IsChecked == true;
+        }
+
+        private void OnAutoUpdatesChanged(object sender, RoutedEventArgs e)
+        {
+            if (_overlay != null) _overlay.AutoCheckUpdates = chkAutoUpdates.IsChecked == true;
         }
 
         // Passive Presets (9 Styles)
@@ -598,6 +605,7 @@ namespace Mouseflare.UI
                 _overlay.ShakeToFindEnabled = true;
                 _overlay.ReducedMotion = false;
                 _overlay.SoundFxEnabled = true;
+                _overlay.AutoCheckUpdates = true;
             }
             LoadCurrentSettings();
             SetStatusText("✓ All Settings Reset to Factory Defaults!");
@@ -638,6 +646,7 @@ namespace Mouseflare.UI
                 ReducedMotion = _overlay.ReducedMotion,
                 SoundFxEnabled = _overlay.SoundFxEnabled,
                 Hotkey = _currentHotkey,
+                AutoCheckUpdates = _overlay.AutoCheckUpdates,
             };
             return Core.SettingsStore.Save(s);
         }

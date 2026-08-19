@@ -266,7 +266,13 @@ Extend `.github/workflows/release-build.yml` (or a sibling `stable-release.yml`)
    tampered zips hard-fail verification (`--verify` flag). minisign's
    prehashed (BLAKE2b-512) format is verified natively via a vendored
    RFC 7693 implementation + CryptoKit Ed25519.*
-4. **M4 — Windows updater:** same, with the rename-dance swap.
+4. **M4 — Windows updater:** same, with the rename-dance swap. **✅ Code
+   complete.** *Crypto (vendored BLAKE2b + BigInteger Ed25519 verify-only)
+   validated against the RFC 7693 test vector and the real v0.1.0 minisign
+   signature, with tamper/bad-sig/wrong-key rejection; the check → download →
+   verify → stage pipeline validated against the live feed. The
+   Windows-only rename-dance swap (`--self-update-test`, logs to
+   update-test.log) still needs a hands-on pass on a Windows machine.*
 5. **M5 — Polish:** "install on quit" option, update-available tray badge,
    README/PRD updates describing the update path and its privacy properties.
 

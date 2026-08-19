@@ -17,3 +17,4 @@ Mouseflare is a lightweight Windows desktop utility that renders momentary visua
 - **Normal Movement**: Subtle sparks/particles follow your cursor without blocking any clicks.
 - **Find Mouse Hotkey**: Press **`Ctrl + Shift + F`** anywhere in Windows to blast a high-visibility shockwave beacon at your cursor.
 - **System Tray**: Right-click the Mouseflare logo icon in your taskbar system tray to open **Settings & FX Studio**, toggle effects, or exit. Choose from 20 passive trail presets, 6 flare animations, and 7 color palettes.
+- **Auto-Update**: Versioned builds quietly check GitHub Releases every 6 hours (toggle in Settings → General) and offer one-click, minisign-verified updates from the tray menu ("Check for Updates..."). Dev builds built from source never self-update.
