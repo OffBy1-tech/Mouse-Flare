@@ -1,22 +1,25 @@
 name: Build & publish distributables
 
-# On every push to main, build the macOS and Windows apps on GitHub-hosted
-# runners and publish them to the rolling `latest` prerelease together with a
-# SHA256SUMS.txt so downloads can be verified. Hosted runners (not self-hosted)
-# are deliberate: this is a public repo.
+# Two channels (docs/auto-update-spec.md):
+#  - push to main   -> rolling `latest` prerelease (dev channel, unsigned)
+#  - push tag v*    -> minisign-signed DRAFT release; a maintainer clicking
+#    Publish is the promotion moment that makes it the stable release the
+#    auto-updater will follow.
+# Hosted runners (not self-hosted) are deliberate: this is a public repo.
 
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# One publish at a time; never cancel a run mid-upload so the release is
+# One publish per ref at a time; never cancel a run mid-upload so a release is
 # always a complete, matching set of artifacts + checksums.
 concurrency:
-  group: release-build
+  group: release-build-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -40,6 +43,14 @@ jobs:
         working-directory: src/native/macos
         run: |
           set -euo pipefail
+          # Stable tag builds get the tag's version; dev builds are 0.0.0
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.0.0"
+          fi
+          echo "Stamping version: $VERSION"
+
           APP="dist/Mouseflare.app"
           mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
@@ -54,7 +65,7 @@ jobs:
           # knows the app root and the CI machine's build path)
           cp Sources/Resources/app-logo.png "$APP/Contents/Resources/app-logo.png"
 
-          cat > "$APP/Contents/Info.plist" <<'PLIST'
+          cat > "$APP/Contents/Info.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -64,8 +75,8 @@ jobs:
             <key>CFBundleIdentifier</key><string>com.offby1.mouseflare</string>
             <key>CFBundleExecutable</key><string>Mouseflare</string>
             <key>CFBundlePackageType</key><string>APPL</string>
-            <key>CFBundleShortVersionString</key><string>0.1.0</string>
-            <key>CFBundleVersion</key><string>1</string>
+            <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+            <key>CFBundleVersion</key><string>${VERSION}</string>
             <key>LSMinimumSystemVersion</key><string>13.0</string>
             <key>LSUIElement</key><true/>
             <key>NSHighResolutionCapable</key><true/>
@@ -94,7 +105,11 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Publish single-file exe
-        run: dotnet publish src/native/windows/Mouseflare.csproj -c Release -o publish
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/v*') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.0' }
+          Write-Host "Stamping version: $version"
+          dotnet publish src/native/windows/Mouseflare.csproj -c Release -o publish -p:Version=$version
 
       - name: Zip distributable
         shell: pwsh
@@ -127,7 +142,60 @@ jobs:
           sha256sum Mouseflare-macOS.zip Mouseflare-Windows.zip > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
+      # ---- Stable channel: tag push -> minisign-signed DRAFT release ----
+      # Publishing the draft is the maintainer's promotion act; the release
+      # becomes GitHub's `releases/latest` (what the auto-updater follows)
+      # only at that moment.
+      - name: Sign artifacts & create draft release (stable tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -q && sudo apt-get install -y -q minisign
+
+          umask 077
+          printf '%s\n' "$MINISIGN_SECRET_KEY" > minisign.key
+          trap 'rm -f minisign.key' EXIT
+
+          minisign -S -s minisign.key -t "Mouseflare ${GITHUB_REF_NAME}" -m Mouseflare-macOS.zip
+          minisign -S -s minisign.key -t "Mouseflare ${GITHUB_REF_NAME}" -m Mouseflare-Windows.zip
+
+          # Verify with the committed public key before releasing anything —
+          # catches a key/secret mismatch at build time, not at user time.
+          minisign -Vm Mouseflare-macOS.zip -p minisign.pub
+          minisign -Vm Mouseflare-Windows.zip -p minisign.pub
+
+          {
+            echo "Stable release ${GITHUB_REF_NAME} (commit ${GITHUB_SHA})."
+            echo
+            echo "## Verify your download"
+            echo
+            echo '```'
+            cat SHA256SUMS.txt
+            echo '```'
+            echo
+            echo "Artifacts are minisign-signed ([public key](https://github.com/OffBy1-tech/Mouse-Flare/blob/main/minisign.pub)):"
+            echo
+            echo '```'
+            echo "minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw"
+            echo '```'
+            echo
+            echo "- **macOS**: unzip and launch Mouseflare.app (universal, macOS 13+). Ad-hoc signed, not notarized: on first launch, right-click the app and choose Open."
+            echo "- **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)."
+          } > notes.md
+
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --title "Mouseflare $GITHUB_REF_NAME" \
+            --notes-file notes.md \
+            Mouseflare-macOS.zip Mouseflare-macOS.zip.minisig \
+            Mouseflare-Windows.zip Mouseflare-Windows.zip.minisig \
+            SHA256SUMS.txt
+
+      # ---- Dev channel: push to main -> rolling `latest` prerelease ----
       - name: Publish rolling `latest` prerelease
+        if: github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
           {

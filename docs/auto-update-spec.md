@@ -74,8 +74,12 @@ older release rolls the fleet back on their next check.
 
 - **Tooling:** [minisign](https://jedisct1.github.io/minisign/) (Ed25519),
   same as Sentinel. One keypair for the project.
-- **Private key:** GitHub Actions secret (`MINISIGN_SECRET_KEY` +
-  `MINISIGN_KEY_PASSWORD`), used only by the tag-triggered stable workflow.
+- **Private key:** GitHub Actions secret (`MINISIGN_SECRET_KEY`, unencrypted —
+  the secret store is the encryption boundary; a password stored beside the
+  key in the same store would add nothing), used only by the tag-triggered
+  stable workflow. The maintainer's canonical copy lives at
+  `~/.minisign/mouseflare-minisign.key` and must be backed up: losing it
+  means a new keypair and a pubkey rotation in every client.
   *Hardening option, deferred:* keep the key off CI entirely and have the
   maintainer sign locally during promotion, Sentinel-style. v1 accepts
   CI-held keys for a one-click flow; revisit if the threat model tightens.

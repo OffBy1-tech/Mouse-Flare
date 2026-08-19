@@ -50,6 +50,12 @@ shasum -a 256 -c SHA256SUMS.txt
 certutil -hashfile Mouseflare-Windows.zip SHA256
 ```
 
+Stable (versioned) releases additionally carry [minisign](https://jedisct1.github.io/minisign/) signatures — `.minisig` files verifiable against the repo's [`minisign.pub`](minisign.pub):
+
+```bash
+minisign -Vm Mouseflare-macOS.zip -p minisign.pub
+```
+
 The macOS app is ad-hoc signed but not notarized yet, so on first launch right-click `Mouseflare.app` and choose **Open**.
 
 ## Running the web simulator
