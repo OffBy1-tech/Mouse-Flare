@@ -1,139 +1,63 @@
+// Live update feed for the simulator, backed by the real GitHub Releases API
+// (the same endpoint the native auto-updaters follow — docs/auto-update-spec.md §5).
+// The simulator pretends to be a 0.0.0 dev build so any published stable
+// release demonstrates the update-available flow.
+
+const REPO_API = 'https://api.github.com/repos/OffBy1-tech/Mouse-Flare/releases';
+const RELEASES_PAGE = 'https://github.com/OffBy1-tech/Mouse-Flare/releases';
+
 export interface ReleaseMetadata {
   version: string;
   releaseDate: string;
   channel: 'stable' | 'beta';
   title: string;
-  summary: string;
   changelog: string[];
-  highlights: {
-    icon: string;
-    title: string;
-    desc: string;
-  }[];
   fileSizes: {
     windowsZip: string;
     macOSZip: string;
-    universalZip: string;
-  };
-  minRequirements: {
-    windows: string;
-    macOS: string;
   };
   downloadUrls: {
     windows: string;
     macOS: string;
-    universal: string;
+    checksums: string;
+    releasePage: string;
   };
-  sha256Checksums: {
+  minRequirements: {
     windows: string;
     macOS: string;
-    universal: string;
   };
 }
 
 export const CURRENT_BUILD_INFO = {
-  version: '2.4.0',
-  buildTag: '2026.08-r1',
-  releaseDate: 'August 18, 2026',
-  architecture: 'Universal (ARM64 Apple Silicon + Intel x86_64 / Windows x64)',
-  engine: 'Mouseflare Fluid Physics Core v2.4',
-  frameworks: '.NET 8 / WPF (Win32) & AppKit (macOS 13+)',
+  version: '0.0.0',
+  buildTag: 'web-simulator',
 };
 
-export const LATEST_RELEASE_STABLE: ReleaseMetadata = {
-  version: '2.5.2',
-  releaseDate: 'August 18, 2026',
-  channel: 'stable',
-  title: 'Fluid Dynamics Simulation & Rock-Solid AppKit Memory Architecture',
-  summary: 'Major release introducing GPU-grade velocity dissipation fluid simulation, AppKit non-destructive window lifecycle (eliminating SIGSEGV on macOS 14+), and ultra-smooth 120Hz adaptive hardware cursor tracking.',
-  changelog: [
-    '🌊 Fluid Particle Simulation: Integrated real-time vorticity curl, dissipation physics, and luminescent dye blending.',
-    '🍏 macOS AppKit Stability: Fixed transform animation dealloc crash by establishing permanent floating window lifecycles.',
-    '⚡ 120Hz Micro-Polling: Sub-millisecond cursor trajectory smoothing to eliminate jagged trails during rapid flicks.',
-    '🖥️ Multi-Display Auto-Healing: Dynamic screen geometry listener rebuilds transparent viewports instantly when monitors are plugged in.',
-    '🎯 Idle Sleep Re-anchoring: Zero-delta baseline clamp prevents erratic particle explosions when waking displays from sleep.',
-    '⚙️ Preferences & FX Studio: Real-time slider sync for vorticity, trail duration, particle scale, and density.'
-  ],
-  highlights: [
-    {
-      icon: '🌊',
-      title: 'Fluid Physics Parity',
-      desc: 'Mimics Pavel DoGreat fluid dynamics with velocity-based dissipation on both Windows & macOS.'
-    },
-    {
-      icon: '🛡️',
-      title: 'Crash-Safe macOS Build',
-      desc: 'Pure ARC memory retention preventing transform animation double-free errors.'
-    },
-    {
-      icon: '⚡',
-      title: '120Hz Hardware Polling',
-      desc: 'Seamless dual-channel NSEvent/Win32 GetCursorPos polling for high-refresh gaming displays.'
-    }
-  ],
-  fileSizes: {
-    windowsZip: '1.4 MB',
-    macOSZip: '1.2 MB',
-    universalZip: '2.5 MB'
-  },
-  minRequirements: {
-    windows: 'Windows 10 (Build 19041+) or Windows 11 with .NET 8.0 SDK / Runtime',
-    macOS: 'macOS 13.0 (Ventura), macOS 14 (Sonoma), macOS 15+ (Sequoia) on Apple Silicon or Intel'
-  },
-  downloadUrls: {
-    windows: 'mouseflare-windows-v2.5.2.zip',
-    macOS: 'mouseflare-macos-v2.5.2.zip',
-    universal: 'mouseflare-universal-v2.5.2.zip'
-  },
-  sha256Checksums: {
-    windows: 'e7b9c14a2f88301d09e53ca8379201947bca82104938a1928374619283746123',
-    macOS: 'a910bf837c019284719283746192837492837461928374619283746192837461',
-    universal: 'c381928374619283746192837461928374619283746192837461928374619283'
-  }
+// Factual, release-independent requirements (mirrors the native READMEs)
+const MIN_REQUIREMENTS = {
+  windows: 'Windows 10 (Build 19041+) or Windows 11 with the .NET 8 Desktop Runtime',
+  macOS: 'macOS 13.0 (Ventura) or later on Apple Silicon or Intel',
 };
 
-export const LATEST_RELEASE_BETA: ReleaseMetadata = {
-  version: '2.6.0-beta.1',
+// Offline/demo fallback: a snapshot of the real v0.1.0 release
+export const FALLBACK_RELEASE: ReleaseMetadata = {
+  version: '0.1.0',
   releaseDate: 'August 19, 2026',
-  channel: 'beta',
-  title: 'Vulkan / Metal Compute Shader Acceleration (Preview)',
-  summary: 'Experimental preview featuring GPU compute shader particle dispatch and live audio-reactive reactive frequency pulse detection.',
+  channel: 'stable',
+  title: 'Mouseflare v0.1.0',
   changelog: [
-    '🧪 GPU Compute Pipelines: Experimental Metal Compute / DirectCompute particle buffers for up to 10,000 active flares.',
-    '🎵 Audio Reactive Flares: Microphone peak and frequency analysis modulating flare radius during meetings or gaming.',
-    '🎨 Custom GLSL / Metal Shader Preset Loader for user-authored visual scripts.'
+    'First stable release: 20 passive FX presets, 6 Find Mouse flares, 7 color palettes.',
+    'Universal macOS app (Apple Silicon + Intel) and single-file Windows x64 build.',
+    'Artifacts are minisign-signed and shipped with SHA-256 checksums.',
   ],
-  highlights: [
-    {
-      icon: '🧪',
-      title: 'Compute Shaders',
-      desc: '10x particle density with zero CPU overhead.'
-    },
-    {
-      icon: '🎵',
-      title: 'Audio Pulse',
-      desc: 'Real-time reactive visual pulses synced to system audio.'
-    }
-  ],
-  fileSizes: {
-    windowsZip: '1.8 MB',
-    macOSZip: '1.5 MB',
-    universalZip: '3.1 MB'
-  },
-  minRequirements: {
-    windows: 'Windows 11 with DirectX 12 / DirectCompute support',
-    macOS: 'macOS 14+ with Apple Silicon (M1/M2/M3/M4)'
-  },
+  fileSizes: { windowsZip: '0.7 MB', macOSZip: '0.7 MB' },
   downloadUrls: {
-    windows: 'mouseflare-windows-v2.6.0-beta.zip',
-    macOS: 'mouseflare-macos-v2.6.0-beta.zip',
-    universal: 'mouseflare-universal-v2.6.0-beta.zip'
+    windows: `${RELEASES_PAGE}/download/v0.1.0/Mouseflare-Windows.zip`,
+    macOS: `${RELEASES_PAGE}/download/v0.1.0/Mouseflare-macOS.zip`,
+    checksums: `${RELEASES_PAGE}/download/v0.1.0/SHA256SUMS.txt`,
+    releasePage: `${RELEASES_PAGE}/tag/v0.1.0`,
   },
-  sha256Checksums: {
-    windows: 'b182736451928374619283746192837461928374619283746192837461928374',
-    macOS: 'f928374619283746192837461928374619283746192837461928374619283746',
-    universal: '8374619283746192837461928374619283746192837461928374619283746192'
-  }
+  minRequirements: MIN_REQUIREMENTS,
 };
 
 export interface UpdateCheckResult {
@@ -146,10 +70,82 @@ export interface UpdateCheckResult {
   message: string;
 }
 
+interface GitHubAsset {
+  name: string;
+  size: number;
+  browser_download_url: string;
+}
+
+interface GitHubRelease {
+  tag_name: string;
+  name: string | null;
+  body: string | null;
+  html_url: string;
+  published_at: string | null;
+  prerelease: boolean;
+  draft: boolean;
+  assets: GitHubAsset[];
+}
+
+function formatSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+function findAsset(release: GitHubRelease, suffix: string): GitHubAsset | undefined {
+  return release.assets.find((a) => a.name.endsWith(suffix) && !a.name.endsWith('.minisig'));
+}
+
+function parseChangelog(body: string | null): string[] {
+  if (!body) return [];
+  // Bullet lines from the release notes, minus the verification boilerplate
+  return body
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- ') || line.startsWith('* '))
+    .map((line) =>
+      line
+        .replace(/^[-*]\s+/, '')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // markdown links -> plain text
+        .replace(/\*\*/g, '')
+    )
+    .slice(0, 8);
+}
+
+function toMetadata(release: GitHubRelease, channel: 'stable' | 'beta'): ReleaseMetadata {
+  const windowsAsset = findAsset(release, 'Mouseflare-Windows.zip');
+  const macAsset = findAsset(release, 'Mouseflare-macOS.zip');
+  const checksums = release.assets.find((a) => a.name === 'SHA256SUMS.txt');
+  const changelog = parseChangelog(release.body);
+  return {
+    version: release.tag_name.replace(/^v/, ''),
+    releaseDate: release.published_at
+      ? new Date(release.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'unpublished',
+    channel,
+    title: release.name || `Mouseflare ${release.tag_name}`,
+    changelog: changelog.length > 0 ? changelog : ['See the release page for full notes.'],
+    fileSizes: {
+      windowsZip: windowsAsset ? formatSize(windowsAsset.size) : '—',
+      macOSZip: macAsset ? formatSize(macAsset.size) : '—',
+    },
+    downloadUrls: {
+      windows: windowsAsset?.browser_download_url ?? release.html_url,
+      macOS: macAsset?.browser_download_url ?? release.html_url,
+      checksums: checksums?.browser_download_url ?? release.html_url,
+      releasePage: release.html_url,
+    },
+    minRequirements: MIN_REQUIREMENTS,
+  };
+}
+
 /**
- * Compare two semver strings like "2.4.0" vs "2.5.2"
+ * Compare two semver-ish strings like "0.1.0" vs "0.2.1".
+ * Non-numeric versions (e.g. the rolling `latest` dev tag) compare as newer —
+ * the dev channel always offers its build.
  */
 export function isNewerVersion(current: string, latest: string): boolean {
+  if (!/^\d/.test(latest.replace(/^v/, ''))) return true;
   const parse = (v: string) => {
     const clean = v.replace(/^v/, '').split('-')[0];
     return clean.split('.').map((n) => parseInt(n, 10) || 0);
@@ -164,29 +160,67 @@ export function isNewerVersion(current: string, latest: string): boolean {
   return lPatch > cPatch;
 }
 
+// One in-flight/completed fetch per channel per page load; the feed changes
+// rarely and api.github.com allows 60 unauthenticated requests/hour.
+const channelCache = new Map<string, Promise<ReleaseMetadata>>();
+
+async function fetchRelease(channel: 'stable' | 'beta'): Promise<ReleaseMetadata> {
+  const cached = channelCache.get(channel);
+  if (cached) return cached;
+
+  const promise = (async () => {
+    if (channel === 'stable') {
+      const res = await fetch(`${REPO_API}/latest`, { headers: { Accept: 'application/vnd.github+json' } });
+      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+      return toMetadata((await res.json()) as GitHubRelease, 'stable');
+    }
+    // Beta = newest prerelease (the rolling `latest` dev build)
+    const res = await fetch(`${REPO_API}?per_page=10`, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+    const releases = (await res.json()) as GitHubRelease[];
+    const prerelease = releases.find((r) => r.prerelease && !r.draft);
+    if (!prerelease) throw new Error('no prerelease published');
+    return toMetadata(prerelease, 'beta');
+  })().catch((err) => {
+    channelCache.delete(channel); // allow retry on the next manual check
+    throw err;
+  });
+
+  channelCache.set(channel, promise);
+  return promise;
+}
+
 /**
- * Checks for updates against release metadata
+ * Checks the live GitHub Releases feed. Falls back to a static snapshot of
+ * v0.1.0 when the network or API is unavailable, so the demo stays functional
+ * offline.
  */
 export async function checkNativeBuildUpdates(
   currentVersion: string = CURRENT_BUILD_INFO.version,
   channel: 'stable' | 'beta' = 'stable'
 ): Promise<UpdateCheckResult> {
-  // Simulate network metadata check with realistic delay
-  await new Promise((resolve) => setTimeout(resolve, 600));
+  let release: ReleaseMetadata;
+  let errored = false;
+  try {
+    release = await fetchRelease(channel);
+  } catch {
+    release = FALLBACK_RELEASE;
+    errored = true;
+  }
 
-  const targetRelease = channel === 'beta' ? LATEST_RELEASE_BETA : LATEST_RELEASE_STABLE;
-  const updateAvailable = isNewerVersion(currentVersion, targetRelease.version);
-
+  const updateAvailable = isNewerVersion(currentVersion, release.version);
   return {
     hasUpdate: updateAvailable,
     currentVersion,
-    latestVersion: targetRelease.version,
-    release: targetRelease,
+    latestVersion: release.version,
+    release,
     checkedAt: Date.now(),
-    status: updateAvailable ? 'update-available' : 'up-to-date',
-    message: updateAvailable
-      ? `A new version (v${targetRelease.version}) is available!`
-      : `You are on the latest ${channel} build (v${currentVersion}).`
+    status: errored ? 'error' : updateAvailable ? 'update-available' : 'up-to-date',
+    message: errored
+      ? `Could not reach the release feed — showing cached v${release.version} info.`
+      : updateAvailable
+        ? `A new version (v${release.version}) is available!`
+        : `You are on the latest ${channel} build (v${currentVersion}).`,
   };
 }
 

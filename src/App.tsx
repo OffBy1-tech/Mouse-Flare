@@ -13,7 +13,6 @@ import {
   CURRENT_BUILD_INFO,
   checkNativeBuildUpdates,
   UpdateCheckResult,
-  LATEST_RELEASE_STABLE,
   isNewerVersion
 } from './utils/updateChecker';
 import { 
@@ -338,7 +337,7 @@ export default function App() {
               <ArrowUpCircle className="w-3.5 h-3.5" />
             </div>
             <span className="text-neutral-200">
-              <strong className="text-amber-300">Mouseflare v{updateInfo.latestVersion}</strong> is now available with Navier-Stokes fluid physics &amp; crash-proof macOS AppKit memory runtime.
+              <strong className="text-amber-300">Mouseflare v{updateInfo.latestVersion}</strong> is now available on GitHub Releases ({updateInfo.release.releaseDate}).
             </span>
           </div>
 
@@ -352,13 +351,14 @@ export default function App() {
             >
               View Release Notes
             </button>
-            <button
-              onClick={() => handleDownload('universal')}
-              disabled={downloadingType !== null}
+            <a
+              href={updateInfo.release.downloadUrls.releasePage}
+              target="_blank"
+              rel="noreferrer"
               className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-[11px] border border-neutral-700 transition-colors"
             >
-              Download Update (.zip)
-            </button>
+              Get v{updateInfo.latestVersion}
+            </a>
             <button
               onClick={() => setUpdateBannerDismissed(true)}
               className="p-1 hover:bg-white/10 rounded text-neutral-400 hover:text-neutral-200 transition-colors"

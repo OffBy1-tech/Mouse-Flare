@@ -7,8 +7,7 @@ import {
   checkNativeBuildUpdates,
   formatTimeAgo,
   UpdateCheckResult,
-  LATEST_RELEASE_STABLE,
-  LATEST_RELEASE_BETA,
+  FALLBACK_RELEASE,
   isNewerVersion
 } from '../utils/updateChecker';
 import { 
@@ -479,8 +478,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           )}
                         </div>
                         <div className="text-[11px] text-neutral-400 mt-0.5">
-                          {updateResult?.hasUpdate 
-                            ? `Latest ${settings.updateChannel} build (${updateResult.latestVersion}) is ready with fluid simulation parity & macOS crash fixes.`
+                          {updateResult?.hasUpdate
+                            ? `Latest ${settings.updateChannel} build (v${updateResult.latestVersion}) is ready to download from GitHub Releases.`
                             : `Current installed version is validated against release feed (checked ${formatTimeAgo(lastCheckTime)}).`}
                         </div>
                       </div>
@@ -1189,7 +1188,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
                 {/* Status Hero Card */}
                 {(() => {
-                  const targetRelease = selectedReleaseChannel === 'beta' ? LATEST_RELEASE_BETA : LATEST_RELEASE_STABLE;
+                  const targetRelease = updateResult?.release ?? FALLBACK_RELEASE;
                   const hasUpdate = updateResult ? updateResult.hasUpdate : isNewerVersion(CURRENT_BUILD_INFO.version, targetRelease.version);
                   
                   return (
@@ -1239,33 +1238,32 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           </div>
                         </div>
 
-                        {/* Direct Download Trigger */}
+                        {/* Direct Download Links (real GitHub Release assets) */}
                         {hasUpdate && (
                           <div className="flex sm:flex-col gap-2 shrink-0">
-                            <button
-                              onClick={() => handleDownload('universal')}
-                              disabled={downloadingType !== null}
+                            <a
+                              href={targetRelease.downloadUrls.releasePage}
+                              target="_blank"
+                              rel="noreferrer"
                               className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
                             >
                               <Download className="w-4 h-4" />
-                              <span>{downloadingType === 'universal' ? 'Preparing Universal...' : `Download v${targetRelease.version} (.zip)`}</span>
-                            </button>
+                              <span>View v{targetRelease.version} on GitHub</span>
+                            </a>
 
                             <div className="flex gap-1.5">
-                              <button
-                                onClick={() => handleDownload('windows')}
-                                disabled={downloadingType !== null}
+                              <a
+                                href={targetRelease.downloadUrls.windows}
                                 className="flex-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-blue-300 border border-neutral-700 text-[11px] font-medium transition-all text-center"
                               >
                                 Win ({targetRelease.fileSizes.windowsZip})
-                              </button>
-                              <button
-                                onClick={() => handleDownload('macos')}
-                                disabled={downloadingType !== null}
+                              </a>
+                              <a
+                                href={targetRelease.downloadUrls.macOS}
                                 className="flex-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-purple-300 border border-neutral-700 text-[11px] font-medium transition-all text-center"
                               >
                                 Mac ({targetRelease.fileSizes.macOSZip})
-                              </button>
+                              </a>
                             </div>
                           </div>
                         )}
@@ -1274,51 +1272,39 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   );
                 })()}
 
-                {/* Release Highlights Grid */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Release Highlights in v{LATEST_RELEASE_STABLE.version}</span>
-                    </h3>
-                    <div className="flex items-center gap-1 text-xs">
-                      <button
-                        onClick={() => {
-                          setSelectedReleaseChannel('stable');
-                          handlePerformUpdateCheck('stable');
-                        }}
-                        className={`px-2.5 py-0.5 rounded-lg font-medium text-xs transition-all ${
-                          selectedReleaseChannel === 'stable'
-                            ? 'bg-neutral-800 text-amber-300 border border-neutral-700 font-bold'
-                            : 'text-neutral-400 hover:text-neutral-200'
-                        }`}
-                      >
-                        Stable (v{LATEST_RELEASE_STABLE.version})
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedReleaseChannel('beta');
-                          handlePerformUpdateCheck('beta');
-                        }}
-                        className={`px-2.5 py-0.5 rounded-lg font-medium text-xs transition-all ${
-                          selectedReleaseChannel === 'beta'
-                            ? 'bg-neutral-800 text-purple-300 border border-neutral-700 font-bold'
-                            : 'text-neutral-400 hover:text-neutral-200'
-                        }`}
-                      >
-                        Beta Preview (v{LATEST_RELEASE_BETA.version})
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    {(selectedReleaseChannel === 'beta' ? LATEST_RELEASE_BETA : LATEST_RELEASE_STABLE).highlights.map((h, i) => (
-                      <div key={i} className="p-3.5 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
-                        <div className="text-xl mb-1.5">{h.icon}</div>
-                        <div className="font-semibold text-xs text-neutral-200">{h.title}</div>
-                        <div className="text-[11px] text-neutral-400 mt-1 leading-relaxed">{h.desc}</div>
-                      </div>
-                    ))}
+                {/* Live Release Feed header + channel selector */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Release Feed — live from GitHub Releases</span>
+                  </h3>
+                  <div className="flex items-center gap-1 text-xs">
+                    <button
+                      onClick={() => {
+                        setSelectedReleaseChannel('stable');
+                        handlePerformUpdateCheck('stable');
+                      }}
+                      className={`px-2.5 py-0.5 rounded-lg font-medium text-xs transition-all ${
+                        selectedReleaseChannel === 'stable'
+                          ? 'bg-neutral-800 text-amber-300 border border-neutral-700 font-bold'
+                          : 'text-neutral-400 hover:text-neutral-200'
+                      }`}
+                    >
+                      Stable
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedReleaseChannel('beta');
+                        handlePerformUpdateCheck('beta');
+                      }}
+                      className={`px-2.5 py-0.5 rounded-lg font-medium text-xs transition-all ${
+                        selectedReleaseChannel === 'beta'
+                          ? 'bg-neutral-800 text-purple-300 border border-neutral-700 font-bold'
+                          : 'text-neutral-400 hover:text-neutral-200'
+                      }`}
+                    >
+                      Beta (rolling dev)
+                    </button>
                   </div>
                 </div>
 
@@ -1332,7 +1318,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         <span>Itemized Changelog</span>
                       </h4>
                       <ul className="space-y-2 text-xs text-neutral-300">
-                        {(selectedReleaseChannel === 'beta' ? LATEST_RELEASE_BETA : LATEST_RELEASE_STABLE).changelog.map((item, idx) => (
+                        {(updateResult?.release ?? FALLBACK_RELEASE).changelog.map((item, idx) => (
                           <li key={idx} className="flex items-start gap-2 leading-relaxed">
                             <span className="text-amber-400 shrink-0 font-bold">•</span>
                             <span>{item}</span>
@@ -1408,50 +1394,48 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Minimum System Requirements:</span>
                       </div>
-                      <div>• Windows: {LATEST_RELEASE_STABLE.minRequirements.windows}</div>
-                      <div>• macOS: {LATEST_RELEASE_STABLE.minRequirements.macOS}</div>
+                      <div>• Windows: {(updateResult?.release ?? FALLBACK_RELEASE).minRequirements.windows}</div>
+                      <div>• macOS: {(updateResult?.release ?? FALLBACK_RELEASE).minRequirements.macOS}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Package Integrity & SHA-256 Checksums */}
-                <div className="p-4 rounded-xl bg-neutral-950/60 border border-neutral-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Security &amp; Package Verification Hashes (SHA-256)</span>
-                    </span>
-                    <span className="text-[10px] text-neutral-400">Signed with Mouseflare Release Key</span>
-                  </div>
+                {/* Package Integrity & Verification */}
+                {(() => {
+                  const release = updateResult?.release ?? FALLBACK_RELEASE;
+                  const minisignCmd = `minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw`;
+                  return (
+                    <div className="p-4 rounded-xl bg-neutral-950/60 border border-neutral-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Security &amp; Package Verification</span>
+                        </span>
+                        <a
+                          href={release.downloadUrls.checksums}
+                          className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 border border-neutral-700"
+                        >
+                          Download SHA256SUMS.txt
+                        </a>
+                      </div>
 
-                  <div className="space-y-1.5 text-xs font-mono">
-                    <div className="flex items-center justify-between p-2 rounded bg-neutral-900 border border-neutral-800">
-                      <span className="text-neutral-400 text-[11px] shrink-0 mr-2">Windows:</span>
-                      <span className="text-neutral-300 text-[10px] truncate max-w-[400px]">
-                        {LATEST_RELEASE_STABLE.sha256Checksums.windows}
-                      </span>
-                      <button
-                        onClick={() => handleCopyChecksum(LATEST_RELEASE_STABLE.sha256Checksums.windows, 'win')}
-                        className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 shrink-0 ml-2"
-                      >
-                        {copiedChecksum === 'win' ? '✓ Copied' : 'Copy'}
-                      </button>
-                    </div>
+                      <p className="text-[11px] text-neutral-400 leading-relaxed">
+                        Every release ships SHA-256 checksums, and stable releases are additionally
+                        minisign-signed. Verify a download against the project's public key:
+                      </p>
 
-                    <div className="flex items-center justify-between p-2 rounded bg-neutral-900 border border-neutral-800">
-                      <span className="text-neutral-400 text-[11px] shrink-0 mr-2">macOS:</span>
-                      <span className="text-neutral-300 text-[10px] truncate max-w-[400px]">
-                        {LATEST_RELEASE_STABLE.sha256Checksums.macOS}
-                      </span>
-                      <button
-                        onClick={() => handleCopyChecksum(LATEST_RELEASE_STABLE.sha256Checksums.macOS, 'mac')}
-                        className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 shrink-0 ml-2"
-                      >
-                        {copiedChecksum === 'mac' ? '✓ Copied' : 'Copy'}
-                      </button>
+                      <div className="flex items-center justify-between p-2 rounded bg-neutral-900 border border-neutral-800 text-xs font-mono">
+                        <span className="text-neutral-300 text-[10px] truncate">{minisignCmd}</span>
+                        <button
+                          onClick={() => handleCopyChecksum(minisignCmd, 'minisign')}
+                          className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 shrink-0 ml-2"
+                        >
+                          {copiedChecksum === 'minisign' ? '✓ Copied' : 'Copy'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
             )}
           </div>
