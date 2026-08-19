@@ -534,7 +534,15 @@ namespace Mouseflare.UI
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) parts.Add("Ctrl");
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) parts.Add("Shift");
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) parts.Add("Alt");
-            parts.Add(key == Key.Space ? "Space" : key.ToString());
+
+            // Normalize WPF Key names into the combo grammar TryParseCombo accepts
+            // (Key.D5 -> "5", Key.NumPad5 -> "5", Key.Space -> "Space")
+            string mainKey;
+            if (key == Key.Space) mainKey = "Space";
+            else if (key >= Key.D0 && key <= Key.D9) mainKey = ((char)('0' + (key - Key.D0))).ToString();
+            else if (key >= Key.NumPad0 && key <= Key.NumPad9) mainKey = ((char)('0' + (key - Key.NumPad0))).ToString();
+            else mainKey = key.ToString();
+            parts.Add(mainKey);
 
             _isRecordingHotkey = false;
             ApplyHotkey(string.Join(" + ", parts));

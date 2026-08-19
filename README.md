@@ -36,6 +36,22 @@ The web simulator and the native apps share the same effect designs and settings
 
 Everything is tunable: intensity, particle density, trail length, animation speed, color presets (or a custom color), minimum movement threshold, idle-burst behavior, monitor-crossing effects, reduced motion, sound FX, and FPS limits.
 
+## Download
+
+Prebuilt apps for every push to `main` are published on the [latest development build](https://github.com/OffBy1-tech/Mouse-Flare/releases/tag/latest) release: `Mouseflare-macOS.zip` (universal .app for Apple Silicon + Intel, macOS 13+) and `Mouseflare-Windows.zip` (x64, needs the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)).
+
+**Verify your download** against the `SHA256SUMS.txt` published alongside the zips:
+
+```bash
+# macOS (with the zip and SHA256SUMS.txt in the same folder)
+shasum -a 256 -c SHA256SUMS.txt
+
+# Windows
+certutil -hashfile Mouseflare-Windows.zip SHA256
+```
+
+The macOS app is ad-hoc signed but not notarized yet, so on first launch right-click `Mouseflare.app` and choose **Open**.
+
 ## Running the web simulator
 
 **Prerequisites:** Node.js (or Bun)

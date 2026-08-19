@@ -1,0 +1,164 @@
+name: Build & publish distributables
+
+# On every push to main, build the macOS and Windows apps on GitHub-hosted
+# runners and publish them to the rolling `latest` prerelease together with a
+# SHA256SUMS.txt so downloads can be verified. Hosted runners (not self-hosted)
+# are deliberate: this is a public repo.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time; never cancel a run mid-upload so the release is
+# always a complete, matching set of artifacts + checksums.
+concurrency:
+  group: release-build
+  cancel-in-progress: false
+
+jobs:
+  build-macos:
+    name: macOS app (universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Two single-arch builds joined with lipo (works with bare Command Line
+      # Tools too, so the recipe can be rehearsed locally — `swift build
+      # --arch a --arch b` requires full Xcode).
+      - name: Build universal binary
+        working-directory: src/native/macos
+        run: |
+          set -euo pipefail
+          swift build -c release --triple arm64-apple-macosx13.0
+          swift build -c release --triple x86_64-apple-macosx13.0
+
+      - name: Assemble Mouseflare.app
+        working-directory: src/native/macos
+        run: |
+          set -euo pipefail
+          APP="dist/Mouseflare.app"
+          RES_BUNDLE="$APP/Contents/Resources/Mouseflare_Mouseflare.bundle"
+          mkdir -p "$APP/Contents/MacOS" "$RES_BUNDLE/Contents/Resources"
+
+          lipo -create \
+            .build/arm64-apple-macosx/release/Mouseflare \
+            .build/x86_64-apple-macosx/release/Mouseflare \
+            -output "$APP/Contents/MacOS/Mouseflare"
+          lipo -archs "$APP/Contents/MacOS/Mouseflare"
+
+          # Repackage the SwiftPM resource bundle as a proper macOS bundle
+          # (Contents/Info.plist + Contents/Resources) so codesign --deep
+          # accepts it; Bundle.module finds it via Bundle.main.resourceURL.
+          cp .build/arm64-apple-macosx/release/Mouseflare_Mouseflare.bundle/* "$RES_BUNDLE/Contents/Resources/"
+          cat > "$RES_BUNDLE/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleIdentifier</key><string>com.offby1.mouseflare.resources</string>
+            <key>CFBundleName</key><string>Mouseflare_Mouseflare</string>
+            <key>CFBundlePackageType</key><string>BNDL</string>
+          </dict>
+          </plist>
+          PLIST
+
+          cat > "$APP/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Mouseflare</string>
+            <key>CFBundleDisplayName</key><string>Mouseflare</string>
+            <key>CFBundleIdentifier</key><string>com.offby1.mouseflare</string>
+            <key>CFBundleExecutable</key><string>Mouseflare</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>0.1.0</string>
+            <key>CFBundleVersion</key><string>1</string>
+            <key>LSMinimumSystemVersion</key><string>13.0</string>
+            <key>LSUIElement</key><true/>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          PLIST
+
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --verbose=2 "$APP"
+          ditto -c -k --keepParent "$APP" "$GITHUB_WORKSPACE/Mouseflare-macOS.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mouseflare-macOS
+          path: Mouseflare-macOS.zip
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows app (x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish single-file exe
+        run: dotnet publish src/native/windows/Mouseflare.csproj -c Release -o publish
+
+      - name: Zip distributable
+        shell: pwsh
+        run: Compress-Archive -Path publish/* -DestinationPath Mouseflare-Windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mouseflare-Windows
+          path: Mouseflare-Windows.zip
+          if-no-files-found: error
+
+  publish:
+    name: Checksums & release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          sha256sum Mouseflare-macOS.zip Mouseflare-Windows.zip > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish rolling `latest` prerelease
+        run: |
+          set -euo pipefail
+          {
+            echo "Automated build of \`main\` @ ${GITHUB_SHA}."
+            echo
+            echo "## Verify your download"
+            echo
+            echo '```'
+            cat SHA256SUMS.txt
+            echo '```'
+            echo
+            echo "- **macOS**: \`shasum -a 256 -c SHA256SUMS.txt\` (with the zip in the same folder), then unzip and launch Mouseflare.app. The build is ad-hoc signed, not notarized: on first launch, right-click the app and choose Open."
+            echo "- **Windows**: \`certutil -hashfile Mouseflare-Windows.zip SHA256\` and compare against the value above. Requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)."
+          } > notes.md
+          # Recreate the release so tag, assets, and checksums always refer to this commit
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Latest development build" \
+            --notes-file notes.md \
+            Mouseflare-macOS.zip Mouseflare-Windows.zip SHA256SUMS.txt
