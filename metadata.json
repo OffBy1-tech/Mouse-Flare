@@ -1,0 +1,6 @@
+{
+  "name": "Mouseflare",
+  "description": "A lightweight Windows & macOS desktop utility and interactive simulation for instant mouse cursor tracking, passive trail FX, and hotkey-activated Find Mouse flares.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

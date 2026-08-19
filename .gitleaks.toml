@@ -1,0 +1,23 @@
+# gitleaks config for Mouseflare (see .github/workflows/secrets-scan.yml).
+#
+# Mouseflare is local-only by design — no API keys, tokens, or credentials
+# belong anywhere in this repo, so the scan should stay strict. This extends
+# gitleaks' default rule set and allowlists only dependency/build output a
+# working-tree scan would otherwise wade through. Keep the allowlist tight:
+# prefer fixing a real hit over widening a rule.
+
+title = "Mouseflare gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Dependency and build output (.gitignore'd, absent from committed history)"
+
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+  '''(^|/)\.build/''',    # Swift Package Manager build output (src/native/macos)
+  '''(^|/)bin/''',        # .NET build output (src/native/windows)
+  '''(^|/)obj/''',
+]

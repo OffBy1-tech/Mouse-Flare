@@ -1,0 +1,1182 @@
+<Window x:Class="Mouseflare.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mouseflare — Settings" Height="660" Width="890"
+        Icon="/Assets/app-logo.png"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        PreviewKeyDown="OnHotkeyPreviewKeyDown"
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+        TextOptions.TextFormattingMode="Display"
+        RenderOptions.ClearTypeHint="Enabled">
+
+    <Window.Resources>
+        <!-- Sleek Dark ScrollBar Styles -->
+        <Style TargetType="{x:Type ScrollBar}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Width" Value="6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid Background="Transparent">
+                            <Track x:Name="PART_Track" IsDirectionReversed="true">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="{x:Type Thumb}">
+                                                <Border Background="#3F3F46" CornerRadius="3" Opacity="0.75"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark CheckBox Style -->
+        <Style TargetType="{x:Type CheckBox}">
+            <Setter Property="Foreground" Value="#FAFAFA"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border x:Name="chkBox" Width="20" Height="20" CornerRadius="5" Background="#18181B" BorderBrush="#3F3F46" BorderThickness="1.5" VerticalAlignment="Center">
+                                <TextBlock x:Name="chkCheck" Text="✓" FontSize="12" FontWeight="Bold" Foreground="#09090B" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            </Border>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="chkBox" Property="Background" Value="#F59E0B"/>
+                                <Setter TargetName="chkBox" Property="BorderBrush" Value="#F59E0B"/>
+                                <Setter TargetName="chkCheck" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="chkBox" Property="BorderBrush" Value="#F59E0B"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark Slider Style -->
+        <Style TargetType="{x:Type Slider}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Slider}">
+                        <Grid VerticalAlignment="Center">
+                            <Border Height="4" Background="#27272A" CornerRadius="2"/>
+                            <Track x:Name="PART_Track">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="{x:Type Thumb}">
+                                                <Ellipse Width="14" Height="14" Fill="#F59E0B" Stroke="#D97706" StrokeThickness="1.5">
+                                                    <Ellipse.Effect>
+                                                        <DropShadowEffect Color="#F59E0B" BlurRadius="6" ShadowDepth="0" Opacity="0.4"/>
+                                                    </Ellipse.Effect>
+                                                </Ellipse>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- MAIN WINDOW CONTAINER WITH SMOOTH CORNERS AND DROP SHADOW -->
+    <Border Background="#09090B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="12" Margin="10">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="25" ShadowDepth="6" Opacity="0.75"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- CUSTOM MODERN TITLEBAR -->
+            <Border Grid.Row="0" Background="#0C0C0E" BorderBrush="#27272A" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0" MouseDown="OnTitleBarMouseDown">
+                <DockPanel LastChildFill="True">
+                    <!-- Title Bar Window Controls (Right) -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Content="─" Width="44" Height="40" Background="Transparent" Foreground="#A1A1AA" FontSize="11" BorderThickness="0" Cursor="Hand" Click="OnMinimizeWindow">
+                            <Button.Template>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border x:Name="btnBrd" Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="btnBrd" Property="Background" Value="#27272A"/>
+                                            <Setter Property="Foreground" Value="#FAFAFA"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button Content="✕" Width="44" Height="40" Background="Transparent" Foreground="#A1A1AA" FontSize="11" BorderThickness="0" Cursor="Hand" Click="OnCloseWindow">
+                            <Button.Template>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border x:Name="btnCloseBrd" Background="{TemplateBinding Background}" CornerRadius="0,12,0,0">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="btnCloseBrd" Property="Background" Value="#DC2626"/>
+                                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Title Bar Brand (Left) -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+                        <Border Width="20" Height="20" CornerRadius="5" Margin="0,0,8,0">
+                            <Border.Background>
+                                <ImageBrush ImageSource="/Assets/app-logo.png" Stretch="UniformToFill"/>
+                            </Border.Background>
+                        </Border>
+                        <TextBlock Text="Mouseflare" FontSize="12" FontWeight="Bold" Foreground="#FAFAFA" VerticalAlignment="Center"/>
+                        <TextBlock Text=" — Settings &amp; FX Studio" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
+                        <Border Background="#1C1917" BorderBrush="#78350F" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="10,0,0,0">
+                            <TextBlock Text="Windows 11 Native" FontSize="9" FontWeight="SemiBold" Foreground="#F59E0B"/>
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- MAIN BODY WITH SIDEBAR & CONTENT -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- LEFT SIDEBAR NAVIGATION -->
+                <Border Grid.Column="0" Background="#0C0C0E" BorderBrush="#27272A" BorderThickness="0,0,1,0" Padding="12" CornerRadius="0,0,0,12">
+                    <DockPanel LastChildFill="True">
+                        <!-- Bottom Action Button -->
+                        <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                            <Button x:Name="btnTestFlareSidebar" Height="36" Background="#F59E0B" Foreground="#09090B" FontWeight="Bold" FontSize="12" Cursor="Hand" BorderThickness="0" Click="OnTestFlare">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="7" Padding="8,0">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="⚡" FontSize="12" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Test Flare Now" FontWeight="Bold" FontSize="11" Foreground="#09090B"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Nav List -->
+                        <StackPanel>
+                            <TextBlock Text="NAVIGATION" FontSize="10" FontWeight="Bold" Foreground="#52525B" Margin="8,4,0,10"/>
+
+                            <Button x:Name="btnNavGeneral" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavGeneral">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="20" Height="20" CornerRadius="4" Background="#1C1917" Margin="0,0,8,0">
+                                                    <TextBlock Text="🔥" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="General" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <Button x:Name="btnNavFxStudio" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="#23F59E0B" BorderBrush="#50F59E0B" BorderThickness="1" Foreground="#F59E0B" Cursor="Hand" Click="OnNavFxStudio">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="20" Height="20" CornerRadius="4" Background="#27272A" Margin="0,0,8,0">
+                                                    <TextBlock Text="✨" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="FX Studio" FontWeight="SemiBold" FontSize="12" Foreground="#F59E0B"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <Button x:Name="btnNavBehavior" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavBehavior">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="20" Height="20" CornerRadius="4" Background="#18181B" Margin="0,0,8,0">
+                                                    <TextBlock Text="🎛️" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="Behavior &amp; Monitors" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <Button x:Name="btnNavDiagnostics" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavDiagnostics">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="20" Height="20" CornerRadius="4" Background="#18181B" Margin="0,0,8,0">
+                                                    <TextBlock Text="📊" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="Diagnostics" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- RIGHT MAIN CONTENT PANEL -->
+                <Grid Grid.Column="1" Margin="22,18,22,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- ============================================== -->
+                    <!-- TAB 2: FX STUDIO (Primary Default View)         -->
+                    <!-- ============================================== -->
+                    <ScrollViewer x:Name="tabFxStudio" Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,10,0">
+                            <!-- Section Title -->
+                            <TextBlock Text="FX Studio &amp; Particle Customizer" FontSize="17" FontWeight="Bold" Foreground="#FAFAFA"/>
+                            <TextBlock Text="Configure movement trails, signature flare shockwaves, color palettes, and physics." FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,16"/>
+
+                            <!-- Passive Movement Styles -->
+                            <TextBlock Text="Passive Movement FX (Trail Styles)" FontSize="12" FontWeight="Bold" Foreground="#F59E0B" Margin="0,0,0,8"/>
+                            <WrapPanel Margin="0,0,0,14">
+                                <Button Tag="fluid-simulation" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
+                                                        <Path Data="M 12,2 A 10,10 0 1 0 22,12 M 12,6 A 6,6 0 1 0 18,12" Stroke="#06B6D4" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Fluid Simulation" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Velocity dissipation model" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="spark-trail" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#F59E0B" BorderThickness="1.5" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
+                                                        <Path Data="M 14,3 L 16,11 L 24,14 L 16,17 L 14,25 L 12,17 L 4,14 L 12,11 Z" Fill="#F59E0B" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Spark Trail" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Golden kinetic embers" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="fluid-smoke" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#281A3C" Margin="0,0,8,0">
+                                                        <Path Data="M 12,3 C 8,3 5,7 7,12 C 5,14 6,18 10,19 C 14,20 18,17 17,13 C 19,9 16,3 12,3 Z" Fill="#A855F7" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Fluid Smoke Swirl" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Pavel DoGreat billowing dye" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="neon-fluid" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
+                                                        <Path Data="M 4,12 C 8,4 16,20 20,12" Stroke="#06B6D4" StrokeThickness="2.5" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Neon Fluid Dye" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Luminescent fluid glow" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="cosmic-vortex" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#1F1B3E" Margin="0,0,8,0">
+                                                        <Path Data="M 12,2 A 10,10 0 1 0 22,12 M 12,6 A 6,6 0 1 0 18,12" Stroke="#8B5CF6" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Cosmic Liquid" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Galactic chromatic swirls" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="ink-diffusion" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#1E293B" Margin="0,0,8,0">
+                                                        <Ellipse Width="14" Height="14" Fill="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Ink Diffusion" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Organic watercolor plumes" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="glow-pulse" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
+                                                        <Ellipse Width="12" Height="12" Fill="#06B6D4" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Glow Pulse" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Soft luminous aura trail" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="comet-trail" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
+                                                        <Path Data="M 4,20 L 18,6 L 22,10 L 8,24 Z" Fill="#8B5CF6" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Comet Tail" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Aerodynamic ribbon" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="bubbles" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
+                                                        <Ellipse Width="14" Height="14" Stroke="#06B6D4" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Bubbles" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Translucent spheres" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="fireflies" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#063324" Margin="0,0,8,0">
+                                                        <Path Data="M 12,4 C 15,4 18,7 18,10 C 18,14 12,20 12,20 C 12,20 6,14 6,10 C 6,7 9,4 12,4 Z" Fill="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Fireflies" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Organic bioluminescence" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="star-dust" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#292006" Margin="0,0,8,0">
+                                                        <Path Data="M 12,2 L 14.5,9.5 L 22,12 L 14.5,14.5 L 12,22 L 9.5,14.5 L 2,12 L 9.5,9.5 Z" Fill="#EAB308" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Star Dust" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Twinkling 4-point stars" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="lightning" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
+                                                        <Path Data="M 13,2 L 5,14 L 12,14 L 11,22 L 19,10 L 12,10 Z" Fill="#F59E0B" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Lightning Arc" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Electric micro plasma" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="rainbow" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2E1022" Margin="0,0,8,0">
+                                                        <Path Data="M 4,18 A 10,10 0 0 1 20,18" Stroke="#EC4899" StrokeThickness="2.2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Rainbow Wave" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Chromatic color shifts" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="plasma" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
+                                                        <Ellipse Width="12" Height="12" Stroke="#8B5CF6" StrokeThickness="2" Fill="#3B1C66" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Plasma Field" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Ionized energy rings" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="matrix-rain" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#052E16" Margin="0,0,8,0">
+                                                        <TextBlock Text="ア" FontFamily="Consolas" FontWeight="Bold" FontSize="14" Foreground="#22C55E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Matrix Rain" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Cascading green code glyphs" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="fire-flame" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2E1010" Margin="0,0,8,0">
+                                                        <Path Data="M4,13 L8,3 L12,8 L16,2 L14,14 Z" Fill="#F97316" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Fire &amp; Flame" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Blazing buoyant embers" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="neon-cyber" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#1A0B2E" Margin="0,0,8,0">
+                                                        <Path Data="M 13,2 L 5,14 L 12,14 L 11,22 L 19,10 L 12,10 Z" Fill="#00F2FF" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Neon Cyber" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Electric cyan-magenta pulses" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="magic-dust" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2A1B3D" Margin="0,0,8,0">
+                                                        <Path Data="M 12,2 L 14.5,9.5 L 22,12 L 14.5,14.5 L 12,22 L 9.5,14.5 L 2,12 L 9.5,9.5 Z" Fill="#D97FFF" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Magic Dust" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Enchanted pastel shimmer" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="galaxy" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#1F1B3E" Margin="0,0,8,0">
+                                                        <Path Data="M 12,2 A 10,10 0 1 0 22,12 M 12,6 A 6,6 0 1 0 18,12" Stroke="#A78BFA" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Galaxy Supernova" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Deep-space stars &amp; nebula" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="minimal-beacon" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#18181B" BorderBrush="#3F3F46" BorderThickness="1" Margin="0,0,8,0">
+                                                        <Ellipse Width="8" Height="8" Fill="#FAFAFA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Minimalist Beacon" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Single subtle tracking dot" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </WrapPanel>
+
+                            <!-- Find Mouse Signature Flares -->
+                            <TextBlock Text="Find Mouse Signature Flare Animations" FontSize="12" FontWeight="Bold" Foreground="#06B6D4" Margin="0,0,0,8"/>
+                            <WrapPanel Margin="0,0,0,14">
+                                <Button Tag="solar-flare" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#06B6D4" BorderThickness="1.5" Cursor="Hand" Click="OnSelectFlarePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
+                                                        <Path Data="M 12,6 A 6,6 0 1 0 12,18 A 6,6 0 1 0 12,6 M 12,2 L 12,4 M 12,20 L 12,22 M 2,12 L 4,12 M 20,12 L 22,12" Stroke="#F59E0B" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Solar Flare" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Concentric shockwaves" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="fluid-vortex-burst" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
+                                                        <Path Data="M 12,4 A 8,8 0 1 0 20,12 M 12,8 A 4,4 0 1 0 16,12" Stroke="#06B6D4" StrokeThickness="2.2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Fluid Vortex Burst" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Pavel DoGreat dye shockwave" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="sonar-radar" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
+                                                        <Ellipse Width="14" Height="14" Stroke="#06B6D4" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Sonar Radar" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Radar rings &amp; reticle" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="neon-beacon" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#063324" Margin="0,0,8,0">
+                                                        <Path Data="M 12,2 L 12,22 M 2,12 L 22,12" Stroke="#10B981" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Neon Beacon" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Dual high-contrast rings" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="quantum-shockwave" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
+                                                        <Ellipse Width="14" Height="8" Stroke="#8B5CF6" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Quantum Wave" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Relativistic expanding wave" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="supernova" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2E1212" Margin="0,0,8,0">
+                                                        <Path Data="M 12,2 L 14,9 L 21,9 L 15,14 L 18,21 L 12,16 L 6,21 L 9,14 L 3,9 L 10,9 Z" Fill="#EF4444" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Supernova" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Starry flash explosion" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </WrapPanel>
+
+                            <!-- Color Palette Chips -->
+                            <TextBlock Text="Color Palette &amp; Glow Signature" FontSize="12" FontWeight="Bold" Foreground="#FAFAFA" Margin="0,0,0,8"/>
+                            <WrapPanel Margin="0,0,0,10">
+                                <Button Tag="color-amber" Width="116" Height="32" Margin="0,0,6,6" Background="#18181B" BorderBrush="#F59E0B" BorderThickness="1.5" Cursor="Hand" Click="OnColorAmber">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="#F59E0B" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Amber Flare" FontSize="10" FontWeight="SemiBold" Foreground="#F59E0B"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="color-cyan" Width="116" Height="32" Margin="0,0,6,6" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnColorCyan">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="#06B6D4" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Cyber Cyan" FontSize="10" FontWeight="SemiBold" Foreground="#06B6D4"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="color-emerald" Width="116" Height="32" Margin="0,0,6,6" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnColorEmerald">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="#10B981" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Emerald Glow" FontSize="10" FontWeight="SemiBold" Foreground="#10B981"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="color-violet" Width="116" Height="32" Margin="0,0,6,6" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnColorViolet">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="#8B5CF6" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Electric Violet" FontSize="10" FontWeight="SemiBold" Foreground="#8B5CF6"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="color-gold" Width="116" Height="32" Margin="0,0,6,6" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnColorGold">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="#EAB308" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Solar Gold" FontSize="10" FontWeight="SemiBold" Foreground="#EAB308"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="color-white" Width="116" Height="32" Margin="0,0,6,6" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnColorWhite">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="#FFFFFF" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Pure White" FontSize="10" FontWeight="SemiBold" Foreground="#FAFAFA"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Tag="color-crimson" Width="116" Height="32" Margin="0,0,6,6" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnColorCrimson">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="#EF4444" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Crimson Fire" FontSize="10" FontWeight="SemiBold" Foreground="#EF4444"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button x:Name="btnCustomColor" Tag="color-custom" Width="116" Height="32" Margin="0,0,6,6" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnApplyCustomHex">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="#F59E0B" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Custom Hex" FontSize="10" FontWeight="SemiBold" Foreground="#FAFAFA"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </WrapPanel>
+
+                            <!-- Custom Color Picker Sub-Panel -->
+                            <Border Background="#141417" BorderBrush="#27272A" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                        <TextBlock Text="Custom Color:" FontSize="11" FontWeight="SemiBold" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <Border x:Name="brdCustomPreview" Width="14" Height="14" CornerRadius="7" Background="#F59E0B" BorderBrush="#52525B" BorderThickness="1" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="txtCustomHex" Text="#F59E0B" Width="84" Height="26" Background="#18181B" Foreground="#FAFAFA" BorderBrush="#3F3F46" BorderThickness="1" FontSize="11" Padding="6,3" VerticalContentAlignment="Center" TextChanged="OnCustomHexChanged"/>
+                                    </StackPanel>
+
+                                    <!-- Quick Swatches -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Quick:" FontSize="10" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <Button Tag="#FF007F" Width="18" Height="18" Margin="0,0,4,0" Background="#FF007F" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnQuickColorSwatch">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button Tag="#3B82F6" Width="18" Height="18" Margin="0,0,4,0" Background="#3B82F6" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnQuickColorSwatch">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button Tag="#14B8A6" Width="18" Height="18" Margin="0,0,4,0" Background="#14B8A6" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnQuickColorSwatch">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button Tag="#F97316" Width="18" Height="18" Margin="0,0,4,0" Background="#F97316" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnQuickColorSwatch">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button Tag="#A855F7" Width="18" Height="18" Margin="0,0,4,0" Background="#A855F7" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnQuickColorSwatch">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="2" Content="Apply Color" Width="82" Height="26" Background="#27272A" Foreground="#FAFAFA" FontSize="10" FontWeight="SemiBold" Cursor="Hand" Click="OnApplyCustomHex">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="{x:Type Button}">
+                                                <Border Background="{TemplateBinding Background}" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="5">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Physics Controls Card -->
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="20"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="FX Intensity" FontSize="11" FontWeight="SemiBold" Foreground="#D4D4D8"/>
+                                            <TextBlock x:Name="txtIntensityVal" DockPanel.Dock="Right" Text="1.0x" FontSize="11" Foreground="#F59E0B" FontWeight="Bold"/>
+                                        </DockPanel>
+                                        <Slider x:Name="sliderIntensity" Minimum="0.5" Maximum="2.0" Value="1.0" ValueChanged="OnIntensityChanged" Margin="0,4,0,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,12">
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="Particle Density" FontSize="11" FontWeight="SemiBold" Foreground="#D4D4D8"/>
+                                            <TextBlock x:Name="txtDensityVal" DockPanel.Dock="Right" Text="5 / 10" FontSize="11" Foreground="#F59E0B" FontWeight="Bold"/>
+                                        </DockPanel>
+                                        <Slider x:Name="sliderDensity" Minimum="1" Maximum="10" Value="5" ValueChanged="OnDensityChanged" Margin="0,4,0,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0">
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="Animation Speed" FontSize="11" FontWeight="SemiBold" Foreground="#D4D4D8"/>
+                                            <TextBlock x:Name="txtSpeedVal" DockPanel.Dock="Right" Text="1.0x" FontSize="11" Foreground="#F59E0B" FontWeight="Bold"/>
+                                        </DockPanel>
+                                        <Slider x:Name="sliderSpeed" Minimum="0.5" Maximum="2.0" Value="1.0" ValueChanged="OnSpeedChanged" Margin="0,4,0,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="2">
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="Movement Threshold" FontSize="11" FontWeight="SemiBold" Foreground="#D4D4D8"/>
+                                            <TextBlock x:Name="txtThresholdVal" DockPanel.Dock="Right" Text="2 px" FontSize="11" Foreground="#F59E0B" FontWeight="Bold"/>
+                                        </DockPanel>
+                                        <Slider x:Name="sliderThreshold" Minimum="0" Maximum="15" Value="2" ValueChanged="OnThresholdChanged" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ============================================== -->
+                    <!-- TAB 1: GENERAL CONFIGURATION                   -->
+                    <!-- ============================================== -->
+                    <ScrollViewer x:Name="tabGeneral" Grid.Row="0" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Text="General Configuration" FontSize="17" FontWeight="Bold" Foreground="#FAFAFA"/>
+                            <TextBlock Text="Control master switches, global hotkey shortcut, and startup behavior." FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,16"/>
+
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkEnabled" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnMasterEnabledChanged" Unchecked="OnMasterEnabledChanged"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Enable Mouseflare" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                        <TextBlock Text="Global toggle for all cursor tracking, passive trail effects, and active flares." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkPassiveFx" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnPassiveFxChanged" Unchecked="OnPassiveFxChanged"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Enable Passive Trail FX" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                        <TextBlock Text="Renders subtle momentary particle trails behind pointer while moving." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <DockPanel LastChildFill="True">
+                                        <Button x:Name="btnHotkey" DockPanel.Dock="Right" Content="Ctrl + Shift + F" Padding="12,6" Background="#27272A" Foreground="#FBBF24" BorderBrush="#F59E0B" BorderThickness="1" FontWeight="Bold" FontSize="12" Cursor="Hand" Click="OnRecordHotkey">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <StackPanel>
+                                            <TextBlock Text="Find Mouse Global Hotkey" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                            <TextBlock Text="Press this shortcut anywhere in Windows to blast a beacon flare." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                        <TextBlock Text="Presets:" FontSize="11" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <Button Content="Ctrl+Shift+F" Margin="0,0,6,0" Padding="8,3" Background="#27272A" Foreground="#D4D4D8" FontSize="10" Cursor="Hand" Click="OnPresetHotkey"/>
+                                        <Button Content="Ctrl+Space" Margin="0,0,6,0" Padding="8,3" Background="#27272A" Foreground="#D4D4D8" FontSize="10" Cursor="Hand" Click="OnPresetHotkey"/>
+                                        <Button Content="Alt+M" Margin="0,0,6,0" Padding="8,3" Background="#27272A" Foreground="#D4D4D8" FontSize="10" Cursor="Hand" Click="OnPresetHotkey"/>
+                                        <Button Content="F1" Padding="8,3" Background="#27272A" Foreground="#D4D4D8" FontSize="10" Cursor="Hand" Click="OnPresetHotkey"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14">
+                                    <DockPanel LastChildFill="True">
+                                        <CheckBox x:Name="chkStartWithWindows" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Start with Windows" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                            <TextBlock Text="Launch upon login." FontSize="10" Foreground="#71717A" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                                <Border Grid.Column="2" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14">
+                                    <DockPanel LastChildFill="True">
+                                        <CheckBox x:Name="chkSoundFx" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnSoundFxChanged" Unchecked="OnSoundFxChanged"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Beacon Chime" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                            <TextBlock Text="Audio beacon cue." FontSize="10" Foreground="#71717A" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ============================================== -->
+                    <!-- TAB 3: BEHAVIOR & MONITORS                     -->
+                    <!-- ============================================== -->
+                    <ScrollViewer x:Name="tabBehavior" Grid.Row="0" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Text="Adaptive Behavior &amp; Multi-Monitor" FontSize="17" FontWeight="Bold" Foreground="#FAFAFA"/>
+                            <TextBlock Text="Configure situational triggers, boundary crossing detection, and motion accessibility." FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,16"/>
+
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkIdleBurst" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnIdleBurstChanged" Unchecked="OnIdleBurstChanged"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Wake-From-Idle Burst" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                        <TextBlock Text="Emits a spark burst when first moving the mouse after &gt;2 seconds of inactivity." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkMonitorCrossing" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnMonitorCrossingChanged" Unchecked="OnMonitorCrossingChanged"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Monitor-Crossing Transition FX" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                        <TextBlock Text="Fires a subtle pulse when the cursor passes between multiple displays." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkShakeToFind" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnShakeToFindChanged" Unchecked="OnShakeToFindChanged"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Shake-to-Find Cursor Detection" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                        <TextBlock Text="Rapidly shaking your mouse triggers the Find Mouse flare automatically." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkReducedMotion" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="False" Checked="OnReducedMotionChanged" Unchecked="OnReducedMotionChanged"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Accessibility: Reduced Motion" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                        <TextBlock Text="Replaces particle sprays with a single clean, high-contrast locator beacon." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ============================================== -->
+                    <!-- TAB 4: DIAGNOSTICS & SYSTEM TELEMETRY          -->
+                    <!-- ============================================== -->
+                    <ScrollViewer x:Name="tabDiagnostics" Grid.Row="0" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Text="Diagnostics &amp; System Telemetry" FontSize="17" FontWeight="Bold" Foreground="#FAFAFA"/>
+                            <TextBlock Text="Real-time rendering metrics and display configuration." FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,16"/>
+
+                            <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="10" Padding="16">
+                                <StackPanel>
+                                    <TextBlock Text="Hardware Engine: Direct2D / WPF Composition Target" FontWeight="Bold" FontSize="12" Foreground="#FAFAFA"/>
+                                    <TextBlock Text="Target Framerate: 60 / 120 / 144 Hz (VSync synchronized)" FontSize="11" Foreground="#A1A1AA" Margin="0,4,0,0"/>
+                                    <TextBlock Text="Virtual Desktop Span: Multi-Monitor Ready" FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,0"/>
+                                    <TextBlock Text="Input Interception: Low-level WH_MOUSE_LL Windows Hook (Zero Click Lag)" FontSize="11" Foreground="#F59E0B" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ============================================== -->
+                    <!-- FOOTER ACTION BAR                              -->
+                    <!-- ============================================== -->
+                    <Border Grid.Row="1" BorderBrush="#27272A" BorderThickness="0,1,0,0" Padding="0,10,0,0" Margin="0,6,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Dedicated Status Message Line (Above Buttons to Prevent Overlap) -->
+                            <Border Grid.Row="0" Margin="0,0,0,8" Background="#141417" BorderBrush="#27272A" BorderThickness="1" CornerRadius="6" Padding="10,6">
+                                <DockPanel LastChildFill="True">
+                                    <Border Width="8" Height="8" CornerRadius="4" Background="#10B981" Margin="0,0,8,0" VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                                    <TextBlock x:Name="txtSaveStatus" Text="Ready. Adjust settings and click Apply &amp; Save." FontSize="11" Foreground="#A1A1AA" FontWeight="Medium" VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </Border>
+
+                            <!-- Button Actions Line -->
+                            <DockPanel Grid.Row="1" LastChildFill="False">
+                                <Button Content="Reset Defaults" Width="96" Height="32" Background="Transparent" Foreground="#A1A1AA" FontSize="11" DockPanel.Dock="Left" Cursor="Hand" Click="OnResetDefaults">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button Content="Close" Width="76" Height="32" Background="#27272A" Foreground="#FAFAFA" DockPanel.Dock="Right" Cursor="Hand" Click="OnCloseWindow">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button x:Name="btnSave" Content="Apply &amp; Save" Width="116" Height="32" Background="#F59E0B" Foreground="#09090B" FontWeight="Bold" DockPanel.Dock="Right" Margin="0,0,8,0" Cursor="Hand" Click="OnSaveAndApply">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </DockPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
