@@ -260,9 +260,12 @@ Extend `.github/workflows/release-build.yml` (or a sibling `stable-release.yml`)
    yet. *Exit test: publish v0.1.0 by hand; verify assets + sigs.*
 2. **M2 — Web simulator on real data:** replace `updateChecker.ts` internals.
    *Exit test: sim shows v0.1.0 from the live API.*
-3. **M3 — macOS updater:** check + verify + swap + relaunch.
-   *Exit test: install a deliberately-old build, watch it self-update to
-   v0.1.x, verify the tampered-zip case hard-fails.*
+3. **M3 — macOS updater:** check + verify + swap + relaunch. **✅ Shipped.**
+   *Exit test passed: a locally-assembled v0.0.1 app self-updated to the
+   published v0.1.0 via `--self-update-test` (headless pipeline run), and
+   tampered zips hard-fail verification (`--verify` flag). minisign's
+   prehashed (BLAKE2b-512) format is verified natively via a vendored
+   RFC 7693 implementation + CryptoKit Ed25519.*
 4. **M4 — Windows updater:** same, with the rename-dance swap.
 5. **M5 — Polish:** "install on quit" option, update-available tray badge,
    README/PRD updates describing the update path and its privacy properties.

@@ -86,9 +86,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupMouseTracker()
         setupGlobalHotkey()
 
+        // Rebuild the menu when the updater changes phase (available/ready/…)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(settingsChanged),
+            name: Updater.phaseChangedNotification,
+            object: nil
+        )
+        Updater.shared.startBackgroundChecks()
+
         // Dev convenience: `Mouseflare --settings` opens the Settings window immediately
         if CommandLine.arguments.contains("--settings") {
             openPreferences()
+        }
+        // Headless exercise of the full update path (used by CI-adjacent testing)
+        if CommandLine.arguments.contains("--self-update-test") {
+            runSelfUpdateTest()
+        }
+        // `Mouseflare --verify <file> <file.minisig>`: check a download against
+        // the embedded release key, mirroring `minisign -Vm` without the tool
+        if let flagIndex = CommandLine.arguments.firstIndex(of: "--verify"),
+           CommandLine.arguments.count > flagIndex + 2 {
+            let filePath = CommandLine.arguments[flagIndex + 1]
+            let sigPath = CommandLine.arguments[flagIndex + 2]
+            do {
+                let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
+                let sig = try String(contentsOf: URL(fileURLWithPath: sigPath), encoding: .utf8)
+                let comment = try Minisign.verify(data: data, signatureFile: sig)
+                print("Signature verified ✓ (trusted comment: \(comment))")
+                exit(0)
+            } catch {
+                print("Signature verification FAILED: \(error.localizedDescription)")
+                exit(1)
+            }
         }
 
         // Reconfigure overlays if displays are attached/detached
@@ -184,7 +214,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         presetsParentItem.submenu = presetsMenu
         menu.addItem(presetsParentItem)
 
+        // Updater state surfaces at the top of the menu when relevant
+        switch Updater.shared.phase {
+        case .available(let release):
+            let item = NSMenuItem(title: "⬆️ Update to v\(release.version)…", action: #selector(startUpdateDownload), keyEquivalent: "")
+            menu.insertItem(item, at: 0)
+            menu.insertItem(NSMenuItem.separator(), at: 1)
+        case .downloading(let release):
+            let item = NSMenuItem(title: "Downloading v\(release.version)…", action: nil, keyEquivalent: "")
+            item.isEnabled = false
+            menu.insertItem(item, at: 0)
+            menu.insertItem(NSMenuItem.separator(), at: 1)
+        case .ready(let release, _):
+            let item = NSMenuItem(title: "🔁 Restart to Update to v\(release.version)", action: #selector(installStagedUpdate), keyEquivalent: "")
+            menu.insertItem(item, at: 0)
+            menu.insertItem(NSMenuItem.separator(), at: 1)
+        case .idle, .error:
+            break
+        }
+
         menu.addItem(NSMenuItem(title: "⚙ Settings & FX Studio...", action: #selector(openPreferences), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdatesManually), keyEquivalent: ""))
 
         let toggleItem = NSMenuItem(title: "Enable Effects", action: #selector(toggleEnabled), keyEquivalent: "")
         toggleItem.state = cfg.enabled ? .on : .off
@@ -351,6 +401,117 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Registration is best-effort for a bare SwiftPM binary; a bundled .app is
             // required for SMAppService to persist across reboots.
             print("ℹ️ Start-at-login could not be updated: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: Updates
+
+    @objc private func checkForUpdatesManually() {
+        if Updater.shared.isDevBuild {
+            showUpdateAlert(title: "Development Build", text: "This is an unversioned dev build — auto-update follows stable releases only. Download builds from GitHub Releases.")
+            return
+        }
+        Task { @MainActor in
+            do {
+                if let release = try await Updater.shared.check() {
+                    let alert = NSAlert()
+                    alert.messageText = "Mouseflare v\(release.version) is available"
+                    alert.informativeText = "You are running v\(Updater.shared.currentVersion). The update is downloaded from GitHub Releases and verified with the project's signing key before installing."
+                    alert.addButton(withTitle: "Install Update")
+                    alert.addButton(withTitle: "View Release Notes")
+                    alert.addButton(withTitle: "Later")
+                    switch alert.runModal() {
+                    case .alertFirstButtonReturn:
+                        startUpdateDownload()
+                    case .alertSecondButtonReturn:
+                        NSWorkspace.shared.open(release.pageURL)
+                    default:
+                        break
+                    }
+                } else {
+                    showUpdateAlert(title: "You're up to date", text: "Mouseflare v\(Updater.shared.currentVersion) is the latest stable release.")
+                }
+            } catch {
+                showUpdateAlert(title: "Update check failed", text: error.localizedDescription)
+            }
+        }
+    }
+
+    @objc private func startUpdateDownload() {
+        guard case .available(let release) = Updater.shared.phase else {
+            // Manual path can arrive here right after check(); re-read phase safely
+            if case .ready = Updater.shared.phase { installStagedUpdate() }
+            return
+        }
+        Task { @MainActor in
+            await Updater.shared.downloadAndStage(release)
+            switch Updater.shared.phase {
+            case .ready:
+                promptRestartToInstall()
+            case .error(let message):
+                showUpdateAlert(title: "Update failed", text: message)
+            default:
+                break
+            }
+        }
+    }
+
+    @objc private func installStagedUpdate() {
+        guard case .ready(_, let stagedApp) = Updater.shared.phase else { return }
+        do {
+            try Updater.shared.installAndRelaunch(stagedApp: stagedApp)
+        } catch {
+            showUpdateAlert(title: "Could not install update", text: error.localizedDescription)
+        }
+    }
+
+    private func promptRestartToInstall() {
+        guard case .ready(let release, _) = Updater.shared.phase else { return }
+        let alert = NSAlert()
+        alert.messageText = "Ready to update to v\(release.version)"
+        alert.informativeText = "The update was verified and staged. Restart Mouseflare now to finish installing?"
+        alert.addButton(withTitle: "Restart Now")
+        alert.addButton(withTitle: "Later")
+        if alert.runModal() == .alertFirstButtonReturn {
+            installStagedUpdate()
+        }
+    }
+
+    private func showUpdateAlert(title: String, text: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = text
+        alert.runModal()
+    }
+
+    /// Headless run of the entire update pipeline with printed state
+    /// transitions — the M3 acceptance test hook.
+    private func runSelfUpdateTest() {
+        Task { @MainActor in
+            do {
+                print("[updater-test] current version: \(Updater.shared.currentVersion), canSelfInstall: \(Updater.shared.canSelfInstall)")
+                guard let release = try await Updater.shared.check() else {
+                    print("[updater-test] up to date — nothing to do")
+                    exit(0)
+                }
+                print("[updater-test] available: v\(release.version) (\(release.zipURL.lastPathComponent))")
+                await Updater.shared.downloadAndStage(release)
+                switch Updater.shared.phase {
+                case .ready(_, let stagedApp):
+                    print("[updater-test] verified & staged: \(stagedApp.path)")
+                    try Updater.shared.installAndRelaunch(stagedApp: stagedApp)
+                    print("[updater-test] swap complete — relaunching new version")
+                case .error(let message):
+                    print("[updater-test] ERROR: \(message)")
+                    exit(1)
+                default:
+                    print("[updater-test] unexpected phase")
+                    exit(1)
+                }
+            } catch {
+                print("[updater-test] ERROR: \(error.localizedDescription)")
+                exit(1)
+            }
         }
     }
 

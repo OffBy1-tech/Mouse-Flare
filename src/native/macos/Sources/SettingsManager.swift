@@ -37,6 +37,7 @@ public struct MacFlareSettings: Codable {
     public var soundFx: Bool = true
     public var startAtLogin: Bool = false
     public var hotkey: String = "⌘ + Shift + F"
+    public var autoCheckUpdates: Bool = true
 
     public var primaryColor: NSColor {
         switch colorPreset {

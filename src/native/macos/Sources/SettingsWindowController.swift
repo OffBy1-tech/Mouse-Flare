@@ -120,6 +120,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var switchPassive: NSSwitch!
     private var switchStartAtLogin: NSSwitch!
     private var switchSound: NSSwitch!
+    private var switchAutoUpdate: NSSwitch!
     private var switchIdleBurst: NSSwitch!
     private var switchMonitorCrossing: NSSwitch!
     private var switchShakeToFind: NSSwitch!
@@ -427,6 +428,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         pair.distribution = .fillEqually
         stack.addArrangedSubview(pair)
         pair.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        switchAutoUpdate = NSSwitch()
+        switchAutoUpdate.target = self
+        switchAutoUpdate.action = #selector(togglesChanged)
+        addToggleCard(
+            to: stack,
+            title: "Automatic Update Checks",
+            subtitle: "Quietly check GitHub Releases every 6 hours (installed: v\(Updater.shared.currentVersion)). Use the menu bar for a manual check.",
+            control: switchAutoUpdate
+        )
     }
 
     // MARK: Tab: FX Studio
@@ -721,6 +732,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         switchPassive.state = cfg.passiveFxEnabled ? .on : .off
         switchStartAtLogin.state = cfg.startAtLogin ? .on : .off
         switchSound.state = cfg.soundFx ? .on : .off
+        switchAutoUpdate.state = cfg.autoCheckUpdates ? .on : .off
         switchIdleBurst.state = cfg.idleBurst ? .on : .off
         switchMonitorCrossing.state = cfg.monitorCrossingFx ? .on : .off
         switchShakeToFind.state = cfg.shakeToFind ? .on : .off
@@ -774,6 +786,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         cfg.passiveFxEnabled = switchPassive.state == .on
         cfg.startAtLogin = switchStartAtLogin.state == .on
         cfg.soundFx = switchSound.state == .on
+        cfg.autoCheckUpdates = switchAutoUpdate.state == .on
         cfg.idleBurst = switchIdleBurst.state == .on
         cfg.monitorCrossingFx = switchMonitorCrossing.state == .on
         cfg.shakeToFind = switchShakeToFind.state == .on
