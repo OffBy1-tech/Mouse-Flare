@@ -41,8 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           APP="dist/Mouseflare.app"
-          RES_BUNDLE="$APP/Contents/Resources/Mouseflare_Mouseflare.bundle"
-          mkdir -p "$APP/Contents/MacOS" "$RES_BUNDLE/Contents/Resources"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
           lipo -create \
             .build/arm64-apple-macosx/release/Mouseflare \
@@ -50,21 +49,10 @@ jobs:
             -output "$APP/Contents/MacOS/Mouseflare"
           lipo -archs "$APP/Contents/MacOS/Mouseflare"
 
-          # Repackage the SwiftPM resource bundle as a proper macOS bundle
-          # (Contents/Info.plist + Contents/Resources) so codesign --deep
-          # accepts it; Bundle.module finds it via Bundle.main.resourceURL.
-          cp .build/arm64-apple-macosx/release/Mouseflare_Mouseflare.bundle/* "$RES_BUNDLE/Contents/Resources/"
-          cat > "$RES_BUNDLE/Contents/Info.plist" <<'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CFBundleIdentifier</key><string>com.offby1.mouseflare.resources</string>
-            <key>CFBundleName</key><string>Mouseflare_Mouseflare</string>
-            <key>CFBundlePackageType</key><string>BNDL</string>
-          </dict>
-          </plist>
-          PLIST
+          # AppLogo resolves Contents/Resources/app-logo.png directly (the app
+          # deliberately avoids Bundle.module, whose swift-build accessor only
+          # knows the app root and the CI machine's build path)
+          cp Sources/Resources/app-logo.png "$APP/Contents/Resources/app-logo.png"
 
           cat > "$APP/Contents/Info.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>

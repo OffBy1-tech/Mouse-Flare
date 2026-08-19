@@ -3,11 +3,29 @@ import ApplicationServices
 import ServiceManagement
 
 enum AppLogo {
-    /// The bundled Mouseflare logo (assets/app-logo.png), or nil when the
-    /// resource bundle is unavailable (callers fall back to emoji/text).
+    /// The bundled Mouseflare logo (assets/app-logo.png), or nil when it is
+    /// unavailable (callers fall back to emoji/text).
+    ///
+    /// Resolved by hand rather than through Bundle.module: the accessor swift
+    /// build generates only checks the app-bundle root and the machine-specific
+    /// build directory, and it fatalErrors on a miss — which crashed the
+    /// CI-packaged .app on every machine except the one that built it.
     static let image: NSImage? = {
-        guard let url = Bundle.module.url(forResource: "app-logo", withExtension: "png") else { return nil }
-        return NSImage(contentsOf: url)
+        let fm = FileManager.default
+        var candidates: [URL] = []
+        if let resourceURL = Bundle.main.resourceURL {
+            // Packaged Mouseflare.app: Contents/Resources/app-logo.png
+            candidates.append(resourceURL.appendingPathComponent("app-logo.png"))
+        }
+        if let exeDir = Bundle.main.executableURL?.deletingLastPathComponent() {
+            // Dev flow (swift build): SwiftPM resource bundle next to the binary
+            candidates.append(exeDir.appendingPathComponent("Mouseflare_Mouseflare.bundle/app-logo.png"))
+            candidates.append(exeDir.appendingPathComponent("app-logo.png"))
+        }
+        for url in candidates where fm.fileExists(atPath: url.path) {
+            return NSImage(contentsOf: url)
+        }
+        return nil
     }()
 
     static func resized(to size: CGFloat) -> NSImage? {
