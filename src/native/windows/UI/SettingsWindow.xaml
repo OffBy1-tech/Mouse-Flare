@@ -220,6 +220,21 @@
                                 </Button.Template>
                             </Button>
 
+                            <Button x:Name="btnNavFxDesigner" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavFxDesigner">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="20" Height="20" CornerRadius="4" Background="#18181B" Margin="0,0,8,0">
+                                                    <TextBlock Text="🧪" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="FX Designer" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
                             <Button x:Name="btnNavBehavior" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavBehavior">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
@@ -1035,6 +1050,17 @@
                                     </Grid>
                                 </StackPanel>
                             </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ============================================== -->
+                    <!-- TAB: FX DESIGNER                               -->
+                    <!-- ============================================== -->
+                    <ScrollViewer x:Name="tabFxDesigner" Grid.Row="0" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Text="FX Designer" FontSize="17" FontWeight="Bold" Foreground="#FAFAFA"/>
+                            <TextBlock Text="Design your own particle effect — it previews live on your cursor and becomes the Custom FX preset." FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,16"/>
+                            <ContentControl x:Name="fxDesignerHost"/>
                         </StackPanel>
                     </ScrollViewer>
 

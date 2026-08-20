@@ -113,6 +113,7 @@ namespace Mouseflare.UI
         // Tab Navigation Handlers
         private void OnNavGeneral(object sender, RoutedEventArgs e) => UpdateTabSelection("general");
         private void OnNavFxStudio(object sender, RoutedEventArgs e) => UpdateTabSelection("fx-studio");
+        private void OnNavFxDesigner(object sender, RoutedEventArgs e) => UpdateTabSelection("fx-designer");
         private void OnNavBehavior(object sender, RoutedEventArgs e) => UpdateTabSelection("behavior");
         private void OnNavDiagnostics(object sender, RoutedEventArgs e) => UpdateTabSelection("diagnostics");
 
@@ -122,12 +123,19 @@ namespace Mouseflare.UI
 
             tabGeneral.Visibility = tab == "general" ? Visibility.Visible : Visibility.Collapsed;
             tabFxStudio.Visibility = tab == "fx-studio" ? Visibility.Visible : Visibility.Collapsed;
+            tabFxDesigner.Visibility = tab == "fx-designer" ? Visibility.Visible : Visibility.Collapsed;
+            if (tab == "fx-designer" && fxDesignerHost.Content == null && _overlay != null)
+            {
+                // Built lazily: 24 sliders + popups only materialize when opened
+                fxDesignerHost.Content = new FxDesignerPanel(_overlay, this, SetStatusText).Build();
+            }
             tabBehavior.Visibility = tab == "behavior" ? Visibility.Visible : Visibility.Collapsed;
             tabDiagnostics.Visibility = tab == "diagnostics" ? Visibility.Visible : Visibility.Collapsed;
 
             // Update sidebar nav button active states
             SetNavButtonState(btnNavGeneral, tab == "general");
             SetNavButtonState(btnNavFxStudio, tab == "fx-studio");
+            SetNavButtonState(btnNavFxDesigner, tab == "fx-designer");
             SetNavButtonState(btnNavBehavior, tab == "behavior");
             SetNavButtonState(btnNavDiagnostics, tab == "diagnostics");
         }
