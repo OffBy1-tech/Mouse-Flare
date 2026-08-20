@@ -30,6 +30,7 @@ namespace Mouseflare.Core
         public bool SoundFxEnabled { get; set; } = true;
         public string Hotkey { get; set; } = "Ctrl + Shift + F";
         public bool AutoCheckUpdates { get; set; } = true;
+        public string[] QuickSwatches { get; set; } = { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7" };
     }
 
     public static class SettingsStore

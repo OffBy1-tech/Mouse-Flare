@@ -32,6 +32,7 @@ namespace Mouseflare.UI
         public bool ReducedMotion { get; set; } = false;
         public bool SoundFxEnabled { get; set; } = true;
         public bool AutoCheckUpdates { get; set; } = true;
+        public string[] QuickSwatches { get; set; } = { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7" };
 
         private class Particle
         {

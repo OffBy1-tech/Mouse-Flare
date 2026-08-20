@@ -289,6 +289,7 @@ namespace Mouseflare
             overlay.ReducedMotion = s.ReducedMotion;
             overlay.SoundFxEnabled = s.SoundFxEnabled;
             overlay.AutoCheckUpdates = s.AutoCheckUpdates;
+            if (s.QuickSwatches is { Length: > 0 }) overlay.QuickSwatches = s.QuickSwatches;
             overlay.CurrentColor = ParseHexColor(s.CurrentColorHex, Color.FromRgb(245, 158, 11));
             overlay.SecondaryColor = ParseHexColor(s.SecondaryColorHex, Color.FromRgb(251, 191, 36));
         }

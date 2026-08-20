@@ -16,6 +16,7 @@ public struct MacFlareSettings: Codable {
     public var colorPreset: String = "color-amber"
     // color-amber, color-cyan, color-emerald, color-violet, color-gold, color-white, color-crimson, color-custom
     public var customColorHex: String = "#F59E0B"
+    public var quickSwatches: [String] = ["#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7"]
 
     // Physics & density
     public var intensity: Double = 1.0        // 0.5 ... 2.0
@@ -38,6 +39,36 @@ public struct MacFlareSettings: Codable {
     public var startAtLogin: Bool = false
     public var hotkey: String = "⌘ + Shift + F"
     public var autoCheckUpdates: Bool = true
+
+    public init() {}
+
+    // Tolerant decoding: every field falls back to its default when absent, so
+    // adding a setting in an update never resets an existing user's settings.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = MacFlareSettings()
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? d.enabled
+        passiveFxEnabled = try c.decodeIfPresent(Bool.self, forKey: .passiveFxEnabled) ?? d.passiveFxEnabled
+        passivePreset = try c.decodeIfPresent(String.self, forKey: .passivePreset) ?? d.passivePreset
+        flarePreset = try c.decodeIfPresent(String.self, forKey: .flarePreset) ?? d.flarePreset
+        colorPreset = try c.decodeIfPresent(String.self, forKey: .colorPreset) ?? d.colorPreset
+        customColorHex = try c.decodeIfPresent(String.self, forKey: .customColorHex) ?? d.customColorHex
+        quickSwatches = try c.decodeIfPresent([String].self, forKey: .quickSwatches) ?? d.quickSwatches
+        intensity = try c.decodeIfPresent(Double.self, forKey: .intensity) ?? d.intensity
+        particleDensity = try c.decodeIfPresent(Double.self, forKey: .particleDensity) ?? d.particleDensity
+        animationSpeed = try c.decodeIfPresent(Double.self, forKey: .animationSpeed) ?? d.animationSpeed
+        movementThreshold = try c.decodeIfPresent(Double.self, forKey: .movementThreshold) ?? d.movementThreshold
+        fluidVorticity = try c.decodeIfPresent(Double.self, forKey: .fluidVorticity) ?? d.fluidVorticity
+        fluidDissipation = try c.decodeIfPresent(Double.self, forKey: .fluidDissipation) ?? d.fluidDissipation
+        idleBurst = try c.decodeIfPresent(Bool.self, forKey: .idleBurst) ?? d.idleBurst
+        monitorCrossingFx = try c.decodeIfPresent(Bool.self, forKey: .monitorCrossingFx) ?? d.monitorCrossingFx
+        shakeToFind = try c.decodeIfPresent(Bool.self, forKey: .shakeToFind) ?? d.shakeToFind
+        reducedMotion = try c.decodeIfPresent(Bool.self, forKey: .reducedMotion) ?? d.reducedMotion
+        soundFx = try c.decodeIfPresent(Bool.self, forKey: .soundFx) ?? d.soundFx
+        startAtLogin = try c.decodeIfPresent(Bool.self, forKey: .startAtLogin) ?? d.startAtLogin
+        hotkey = try c.decodeIfPresent(String.self, forKey: .hotkey) ?? d.hotkey
+        autoCheckUpdates = try c.decodeIfPresent(Bool.self, forKey: .autoCheckUpdates) ?? d.autoCheckUpdates
+    }
 
     public var primaryColor: NSColor {
         switch colorPreset {
@@ -112,6 +143,16 @@ public extension NSColor {
             green: CGFloat((value >> 8) & 0xFF) / 255.0,
             blue: CGFloat(value & 0xFF) / 255.0,
             alpha: 1.0
+        )
+    }
+
+    var hexString: String {
+        guard let rgb = usingColorSpace(.deviceRGB) else { return "#FFFFFF" }
+        return String(
+            format: "#%02X%02X%02X",
+            Int(round(rgb.redComponent * 255)),
+            Int(round(rgb.greenComponent * 255)),
+            Int(round(rgb.blueComponent * 255))
         )
     }
 

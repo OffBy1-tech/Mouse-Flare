@@ -115,6 +115,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var hotkeyLabel: NSTextField!
     private var customHexField: NSTextField!
     private var customHexPreview: NSView!
+    private var quickSwatchButtons: [CardButton] = []
+    private var activeColorPicker: ColorPickerPanel?
+
+    private enum PickerTarget {
+        case custom
+        case swatch(Int)
+    }
 
     private var switchEnabled: NSSwitch!
     private var switchPassive: NSSwitch!
@@ -500,15 +507,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // Custom color panel
         let customCard = makeCard(background: Theme.insetBg)
         let customLabel = makeLabel("Custom Color:", size: 11, weight: .semibold, color: Theme.textSecondary)
-        customHexPreview = NSView()
-        customHexPreview.wantsLayer = true
-        customHexPreview.layer?.cornerRadius = 7
-        customHexPreview.layer?.borderWidth = 1
-        customHexPreview.layer?.borderColor = Theme.textFaint.cgColor
-        customHexPreview.layer?.backgroundColor = Theme.amber.cgColor
-        customHexPreview.translatesAutoresizingMaskIntoConstraints = false
-        customHexPreview.widthAnchor.constraint(equalToConstant: 14).isActive = true
-        customHexPreview.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        let previewButton = CardButton()
+        previewButton.layer?.cornerRadius = 8
+        previewButton.setStyle(background: Theme.amber, border: Theme.textFaint, borderWidth: 1)
+        previewButton.translatesAutoresizingMaskIntoConstraints = false
+        previewButton.widthAnchor.constraint(equalToConstant: 16).isActive = true
+        previewButton.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        previewButton.onClick = { [weak self] in self?.openColorPicker(.custom) }
+        customHexPreview = previewButton
 
         customHexField = NSTextField(string: SettingsManager.shared.settings.customColorHex)
         customHexField.font = .systemFont(ofSize: 11)
@@ -525,17 +531,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let customRow = NSStackView(views: [customLabel, customHexPreview, customHexField, NSView(), quickLabel])
         customRow.orientation = .horizontal
         customRow.spacing = 8
-        for hex in ["#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7"] {
+        // Editable quick swatches: clicking one opens the color picker for it
+        for (index, hex) in SettingsManager.shared.settings.quickSwatches.enumerated() {
             let swatch = CardButton()
             swatch.layer?.cornerRadius = 9
             swatch.setStyle(background: NSColor(hexString: hex), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
             swatch.translatesAutoresizingMaskIntoConstraints = false
             swatch.widthAnchor.constraint(equalToConstant: 18).isActive = true
             swatch.heightAnchor.constraint(equalToConstant: 18).isActive = true
-            swatch.onClick = { [weak self] in
-                self?.customHexField.stringValue = hex
-                self?.applyCustomHex()
-            }
+            swatch.onClick = { [weak self] in self?.openColorPicker(.swatch(index)) }
+            quickSwatchButtons.append(swatch)
             customRow.addArrangedSubview(swatch)
         }
         customRow.addArrangedSubview(applyButton)
@@ -749,6 +754,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         hotkeyLabel.stringValue = cfg.hotkey
         customHexField.stringValue = cfg.customColorHex
         customHexPreview.layer?.backgroundColor = NSColor(hexString: cfg.customColorHex).cgColor
+        refreshQuickSwatches()
         refreshPresetHighlights()
     }
 
@@ -814,6 +820,74 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         valueThreshold.stringValue = String(format: "%.0f px", sliderThreshold.doubleValue)
         valueVorticity.stringValue = String(format: "%.1fx", sliderVorticity.doubleValue)
         valueDissipation.stringValue = String(format: "%.0f%%", sliderDissipation.doubleValue * 100)
+    }
+
+    // MARK: Color picker
+
+    private func openColorPicker(_ target: PickerTarget) {
+        let cfg = SettingsManager.shared.settings
+        let initialHex: String
+        let title: String
+        switch target {
+        case .custom:
+            initialHex = cfg.customColorHex
+            title = "Custom Color"
+        case .swatch(let index):
+            initialHex = index < cfg.quickSwatches.count ? cfg.quickSwatches[index] : cfg.customColorHex
+            title = "Quick Color \(index + 1)"
+        }
+        let priorPreset = cfg.colorPreset
+        let priorCustom = cfg.customColorHex
+
+        let applyLive: (String) -> Void = { [weak self] hex in
+            var settings = SettingsManager.shared.settings
+            settings.colorPreset = "color-custom"
+            settings.customColorHex = hex
+            SettingsManager.shared.settings = settings
+            self?.customHexField.stringValue = hex
+            self?.customHexPreview.layer?.backgroundColor = NSColor(hexString: hex).cgColor
+            self?.refreshPresetHighlights()
+        }
+
+        let panel = ColorPickerPanel(
+            initial: NSColor(hexString: initialHex),
+            title: title,
+            swatches: cfg.quickSwatches,
+            onLive: applyLive,
+            onDone: { [weak self] hex in
+                applyLive(hex)
+                if case .swatch(let index) = target {
+                    var settings = SettingsManager.shared.settings
+                    if index < settings.quickSwatches.count {
+                        settings.quickSwatches[index] = hex
+                        SettingsManager.shared.settings = settings
+                    }
+                    self?.refreshQuickSwatches()
+                }
+                self?.setStatus("Color set to \(hex)")
+                self?.activeColorPicker = nil
+            },
+            onCancel: { [weak self] in
+                var settings = SettingsManager.shared.settings
+                settings.colorPreset = priorPreset
+                settings.customColorHex = priorCustom
+                SettingsManager.shared.settings = settings
+                self?.customHexField.stringValue = priorCustom
+                self?.customHexPreview.layer?.backgroundColor = NSColor(hexString: priorCustom).cgColor
+                self?.refreshPresetHighlights()
+                self?.activeColorPicker = nil
+            }
+        )
+        activeColorPicker = panel
+        panel.center()
+        panel.makeKeyAndOrderFront(nil)
+    }
+
+    private func refreshQuickSwatches() {
+        let swatches = SettingsManager.shared.settings.quickSwatches
+        for (index, button) in quickSwatchButtons.enumerated() where index < swatches.count {
+            button.setStyle(background: NSColor(hexString: swatches[index]), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
+        }
     }
 
     private func applyCustomHex() {

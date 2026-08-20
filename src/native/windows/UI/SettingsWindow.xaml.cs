@@ -71,6 +71,14 @@ namespace Mouseflare.UI
 
             btnHotkey.Content = _currentHotkey;
 
+            // Quick swatch colors from settings (editable via the color picker)
+            var swatchButtons = QuickSwatchButtons;
+            for (int i = 0; i < swatchButtons.Length && i < _overlay.QuickSwatches.Length; i++)
+            {
+                swatchButtons[i].Background = new SolidColorBrush(
+                    ColorPickerWindow.ParseHex(_overlay.QuickSwatches[i], Colors.White));
+            }
+
             // Highlight initial presets and color palettes
             RefreshActivePresetHighlights();
 
@@ -450,13 +458,72 @@ namespace Mouseflare.UI
             }
         }
 
-        private void OnQuickColorSwatch(object sender, RoutedEventArgs e)
+        // ---- Color picker (custom color + editable quick swatches) ----
+
+        private Button[] QuickSwatchButtons => new[] { btnQuickSwatch0, btnQuickSwatch1, btnQuickSwatch2, btnQuickSwatch3, btnQuickSwatch4 };
+
+        private void OnEditQuickSwatch(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is string hex)
+            if (sender is Button btn && btn.Tag is string tag && int.TryParse(tag, out int index))
             {
-                if (txtCustomHex != null) txtCustomHex.Text = hex;
-                OnApplyCustomHex(sender, e);
+                OpenColorPicker($"Quick Color {index + 1}", swatchIndex: index);
             }
+        }
+
+        private void OnEditCustomColor(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            OpenColorPicker("Custom Color", swatchIndex: null);
+        }
+
+        /// <summary>
+        /// Opens the popup picker. The chosen color always becomes the active
+        /// custom color (with live FX preview while dragging); when editing a
+        /// quick swatch, Done also stores the color into that swatch.
+        /// </summary>
+        private void OpenColorPicker(string title, int? swatchIndex)
+        {
+            if (_overlay == null) return;
+
+            string initialHex = swatchIndex is int i && i < _overlay.QuickSwatches.Length
+                ? _overlay.QuickSwatches[i]
+                : ColorPickerWindow.ToHex(_overlay.CurrentColor);
+            var priorPrimary = _overlay.CurrentColor;
+            var priorSecondary = _overlay.SecondaryColor;
+
+            var picker = new ColorPickerWindow(title, initialHex, _overlay.QuickSwatches) { Owner = this };
+            picker.LiveColorChanged += (hex) => ApplyCustomColorLive(hex);
+
+            bool confirmed = picker.ShowDialog() == true && picker.ResultHex != null;
+            if (confirmed)
+            {
+                string hex = picker.ResultHex!;
+                ApplyCustomColorLive(hex);
+                if (swatchIndex is int idx && idx < _overlay.QuickSwatches.Length)
+                {
+                    _overlay.QuickSwatches[idx] = hex;
+                    QuickSwatchButtons[idx].Background = new SolidColorBrush(ColorPickerWindow.ParseHex(hex, Colors.White));
+                }
+                SetStatusText($"Color set to {hex} • Click Apply & Save to persist");
+            }
+            else
+            {
+                // Cancelled: restore the colors from before the live preview
+                _overlay.CurrentColor = priorPrimary;
+                _overlay.SecondaryColor = priorSecondary;
+                UpdateCustomHexUI(ColorPickerWindow.ToHex(priorPrimary));
+            }
+        }
+
+        private void ApplyCustomColorLive(string hex)
+        {
+            if (_overlay == null) return;
+            var color = ColorPickerWindow.ParseHex(hex, Colors.White);
+            _overlay.CurrentColor = color;
+            _overlay.SecondaryColor = Color.FromRgb(
+                (byte)Math.Min(255, color.R + 30),
+                (byte)Math.Min(255, color.G + 30),
+                (byte)Math.Min(255, color.B + 30));
+            UpdateCustomHexUI(hex);
         }
 
         private void UpdateCustomHexUI(string hex)
@@ -647,6 +714,7 @@ namespace Mouseflare.UI
                 SoundFxEnabled = _overlay.SoundFxEnabled,
                 Hotkey = _currentHotkey,
                 AutoCheckUpdates = _overlay.AutoCheckUpdates,
+                QuickSwatches = _overlay.QuickSwatches,
             };
             return Core.SettingsStore.Save(s);
         }
