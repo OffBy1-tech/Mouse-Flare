@@ -270,7 +270,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.isOpaque = false
             window.backgroundColor = .clear
             window.hasShadow = false
-            window.level = .floating
+            // Above every normal window INCLUDING our own floating Settings
+            // window, so FX stay visible while previewing presets. The overlay
+            // is click-through, so drawing on top never blocks interaction.
+            window.level = .screenSaver
             window.ignoresMouseEvents = true // Pass clicks through to applications underneath
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
 
