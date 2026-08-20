@@ -240,6 +240,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let navItems: [(id: String, icon: String, title: String)] = [
             ("general", "🔥", "General"),
             ("fx-studio", "✨", "FX Studio"),
+            ("fx-designer", "🧪", "FX Designer"),
             ("behavior", "🎛️", "Behavior & Monitors"),
             ("diagnostics", "📊", "Diagnostics")
         ]
@@ -314,12 +315,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         ])
 
         // ---- Tabs ----
-        let tabIds = ["general", "fx-studio", "behavior", "diagnostics"]
+        let tabIds = ["general", "fx-studio", "fx-designer", "behavior", "diagnostics"]
         for id in tabIds {
             let (scroll, stack) = makeScrollTab()
             switch id {
             case "general": buildGeneralTab(into: stack)
             case "fx-studio": buildFxStudioTab(into: stack)
+            case "fx-designer": buildFxDesignerTab(into: stack)
             case "behavior": buildBehaviorTab(into: stack)
             default: buildDiagnosticsTab(into: stack)
             }
@@ -622,6 +624,20 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         fluidGrid.widthAnchor.constraint(equalTo: fluidStack.widthAnchor).isActive = true
         stack.addArrangedSubview(fluidCard)
         fluidCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    }
+
+    // MARK: Tab: FX Designer
+
+    private func buildFxDesignerTab(into stack: NSStackView) {
+        stack.addArrangedSubview(makeLabel("FX Designer", size: 17, weight: .bold, color: Theme.textPrimary))
+        let sub = makeLabel("Design your own particle effect — it previews live on your cursor and becomes the Custom FX preset.", size: 11, weight: .regular, color: Theme.textSecondary)
+        stack.addArrangedSubview(sub)
+        stack.setCustomSpacing(16, after: sub)
+
+        let designer = FxDesignerView()
+        designer.onStatus = { [weak self] message in self?.setStatus(message) }
+        stack.addArrangedSubview(designer)
+        designer.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     }
 
     // MARK: Tab: Behavior & Monitors
