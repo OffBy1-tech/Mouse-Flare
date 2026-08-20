@@ -1,46 +1,77 @@
-# Mouseflare
+<div align="center">
 
-**Never lose your mouse cursor again.**
+<img src="./assets/app-logo.png" alt="Mouseflare Logo" width="120" height="120" />
 
-Mouseflare is a lightweight desktop utility for **Windows and macOS** that makes your mouse pointer impossible to lose. It renders short-lived, GPU-friendly visual effects that follow the cursor as it moves, and a configurable global hotkey fires a high-visibility "flare" at the cursor's exact position when you need to find it *right now*.
+# 🌟 Mouseflare 🌟
+*Never lose your mouse cursor again.*
 
-> **"Where's my mouse?"** → hotkey → **"There it is."**
+> **"Where the #@!* is my mouse?!"** → *hotkey* → **"Ah, there it is."**
 
 An open source project by [Off By 1](https://github.com/OffBy1-tech) — [OffBy1-tech/Mouse-Flare](https://github.com/OffBy1-tech/Mouse-Flare).
 
-## How it works
+---
 
-Mouseflare combines two ideas:
+</div>
 
-1. **Passive visibility** — subtle particle FX (spark trails, glow pulses, fluid smoke, and more) trail the cursor during normal use, making it easy to track without being distracting.
-2. **Active discovery** — press the Find Mouse hotkey from any application and a bright flare (expanding rings, particle burst, rapid fade) erupts at the cursor's current position, then disappears within about a second.
+## 🚀 What is Mouseflare?
+Mouseflare is a lightweight desktop utility for **Windows and macOS** that makes your mouse pointer impossible to lose. It renders short-lived, GPU-friendly visual effects that follow the cursor as it moves, and a configurable global hotkey fires a high-visibility "flare" at the cursor's exact position when you need to find it *right now*.
 
 Effects render on a transparent, click-through overlay: they never intercept clicks, steal focus, or slow down mouse movement. Multi-monitor setups — mixed resolutions, mixed DPI scaling, arbitrary arrangements — are a first-class requirement, not an afterthought.
 
-## What's in this repo
+---
 
-| Path | What it is |
-|---|---|
-| `src/` | An interactive **web-based simulator** (React + Vite + TypeScript) — a simulated desktop where you can try every effect, tweak settings, and play the Find Mouse challenge in your browser |
-| `src/native/windows/` | The **native Windows app** (C# / .NET 8) — system-tray utility with global hotkey, transparent overlay, and settings window |
-| `src/native/macos/` | The **native macOS app** (Swift / AppKit) — menu bar agent with the same overlay and hotkey behavior across all connected displays |
-| `docs/mouseflare-prd.md` | The full product requirements document |
+## ⚡ How It Works
 
-The web simulator and the native apps share the same effect designs and settings model, so the simulator doubles as a live preview of what the desktop apps do.
+```text
+[Mouse Moves]  ---> 🌌 Passive Visibility (Subtle particle trails follow your movement)
+[Press Hotkey] ---> 💥 Active Discovery     (A bright, instant flare erupts at the cursor)
+```
 
-## Effects
+1. **Passive visibility:** Subtle particle FX (spark trails, glow pulses, fluid smoke) trail the cursor during normal use, making it easy to track without being distracting.
+2. **Active discovery:** Press the Find Mouse hotkey from any application and a bright flare (expanding rings, particle burst, rapid fade) erupts at the cursor's current position, then disappears within about a second.
 
-**Passive FX presets:** Spark Trail, Glow Pulse, Comet Trail, Bubbles, Fireflies, Star Dust, Lightning Arc, Rainbow Wave, Plasma Field, Fluid Simulation, Fluid Smoke Swirl, Neon Fluid Dye, Cosmic Liquid, Ink Diffusion, Matrix Rain, Fire & Flame, Neon Cyber, Magic Dust, Galaxy Supernova, Minimalist Beacon.
+---
 
-**Find Mouse flares:** Solar Flare, Sonar Radar, Neon Beacon, Quantum Shockwave, Supernova, Fluid Vortex Burst.
+## 📦 Repository Structure
 
-Everything is tunable: intensity, particle density, trail length, animation speed, color presets (or a custom color), minimum movement threshold, idle-burst behavior, monitor-crossing effects, reduced motion, sound FX, and FPS limits.
+| Path | Component | What it is |
+| :--- | :--- | :--- |
+| 🌐 `src/` | **Web Simulator** | Interactive simulator (React + Vite + TS) to try effects and play challenges in-browser. |
+| 🪟 `src/native/windows/` | **Windows App** | Native C# / .NET 8 system-tray utility with global hotkeys and transparent overlay. |
+| 🍎 `src/native/macos/` | **macOS App** | Native Swift / AppKit menu bar agent managing overlays across all displays. |
+| 📄 `docs/` | **Documentation** | Contains the full product requirements document (`mouseflare-prd.md`). |
 
-## Download
+---
 
-Prebuilt apps for every push to `main` are published on the [latest development build](https://github.com/OffBy1-tech/Mouse-Flare/releases/tag/latest) release: `Mouseflare-macOS.zip` (universal .app for Apple Silicon + Intel, macOS 13+) and `Mouseflare-Windows.zip` (x64, needs the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)).
+## 🎨 Visual Effects Library
 
-**Verify your download** against the `SHA256SUMS.txt` published alongside the zips:
+Everything is tunable: intensity, particle density, trail length, animation speed, custom colors, minimum movement thresholds, idle-burst behavior, monitor-crossing effects, reduced motion, sound FX, and FPS limits.
+
+<details>
+<summary>🔮 <b>Click to expand the full Effects Checklist</b></summary>
+
+### Passive FX Presets
+*   Spark Trail / Glow Pulse / Comet Trail
+*   Bubbles / Fireflies / Star Dust
+*   Lightning Arc / Rainbow Wave / Plasma Field
+*   Fluid Simulation / Fluid Smoke Swirl / Neon Fluid Dye
+*   Cosmic Liquid / Ink Diffusion / Matrix Rain
+*   Fire & Flame / Neon Cyber / Magic Dust
+*   Galaxy Supernova / Minimalist Beacon
+
+### Find Mouse Flares
+*   Solar Flare / Sonar Radar / Neon Beacon
+*   Quantum Shockwave / Supernova / Fluid Vortex Burst
+</details>
+
+---
+
+## 💾 Download & Verification
+
+Prebuilt apps for every push to `main` are published on the [latest development build](https://github.com/OffBy1-tech/Mouse-Flare/releases/tag/latest) release: `Mouseflare-macOS.zip` (universal .app for Apple Silicon + Intel, macOS 13+) and `Mouseflare-Windows.zip` (x64, requires free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)).
+
+### 🔍 Integrity Check
+Verify your download against the `SHA256SUMS.txt` published alongside the zips:
 
 ```bash
 # macOS (with the zip and SHA256SUMS.txt in the same folder)
@@ -50,71 +81,66 @@ shasum -a 256 -c SHA256SUMS.txt
 certutil -hashfile Mouseflare-Windows.zip SHA256
 ```
 
-Stable (versioned) releases additionally carry [minisign](https://jedisct1.github.io/minisign/) signatures — `.minisig` files verifiable against the repo's [`minisign.pub`](minisign.pub):
-
+Stable (versioned) releases additionally carry [minisign](https://jedisct1.github.io/minisign/) signatures verifiable against the repo's [`minisign.pub`](minisign.pub):
 ```bash
 minisign -Vm Mouseflare-macOS.zip -p minisign.pub
 ```
 
-The macOS app is ad-hoc signed but not notarized yet, so Gatekeeper blocks the first launch (and on macOS 15+ the old right-click → Open bypass no longer works). After verifying your download, strip the quarantine flag and open:
-
+### 🍏 macOS Gatekeeper Note
+The macOS app is ad-hoc signed but not notarized yet, so Gatekeeper blocks the first launch. After verifying your download, strip the quarantine flag and open:
 ```bash
 xattr -dr com.apple.quarantine Mouseflare.app
 open Mouseflare.app
 ```
+*(Alternatively: attempt launch → System Settings → Privacy & Security → Click "Open Anyway".)*
 
-(Alternatively: attempt the launch, then System Settings → Privacy & Security → "Open Anyway".) This is only needed once per download — auto-updates installed by the app itself are not quarantined.
+---
 
-## Running the web simulator
+## 🛠️ Developer Setup & Execution
 
-**Prerequisites:** Node.js (or Bun)
-
+### 🌐 1. Web Simulator
+**Prerequisites:** Node.js or Bun
 ```bash
 git clone https://github.com/OffBy1-tech/Mouse-Flare.git
 cd Mouse-Flare
 npm install    # or: bun install
 npm run dev    # or: bun run dev
 ```
+👉 Open http://localhost:3000 (No API keys required).
 
-Then open http://localhost:3000. No API keys or environment variables are needed.
-
-## Running natively on Windows
-
-**Prerequisites:** Windows 10 (1903+) or 11, and the [.NET 8.0 SDK](https://dotnet.microsoft.com/download)
-
-```
+### 🪟 2. Native Windows App
+**Prerequisites:** Windows 10 (1903+) / 11, [.NET 8.0 SDK](https://dotnet.microsoft.com/download)
+```cmd
 cd src/native/windows
 build.bat        # or: ./publish.ps1 in PowerShell
 ```
+👉 **Hotkey:** Press `Ctrl + Shift + F` anywhere. Right-click the system tray icon for settings. See [`src/native/windows/README.md`](src/native/windows/README.md).
 
-This compiles and launches `Mouseflare.exe` in your system tray. Press **`Ctrl + Shift + F`** anywhere to trigger Find Mouse; right-click the tray icon for settings. See [`src/native/windows/README.md`](src/native/windows/README.md) for details.
-
-## Running natively on macOS
-
-**Prerequisites:** macOS 13 (Ventura) or later, Xcode Command Line Tools (`xcode-select --install`)
-
+### 🍎 3. Native macOS App
+**Prerequisites:** macOS 13+ (Ventura), Xcode Command Line Tools (`xcode-select --install`)
 ```bash
 cd src/native/macos
 chmod +x build.sh
 ./build.sh
 ```
+👉 **Hotkey:** Press `⌘ + Shift + F` anywhere. Look for the ✨ icon in your menu bar. See [`src/native/macos/README.md`](src/native/macos/README.md).
 
-This builds with Swift Package Manager and starts the menu bar agent (look for the ✨ icon). Press **`⌘ + Shift + F`** from any app to trigger Find Mouse. See [`src/native/macos/README.md`](src/native/macos/README.md) for details.
+---
 
-## Design principles
+## 🧠 Design Principles
 
-- **Instant** — no perceptible delay between mouse movement and FX.
-- **Lightweight** — near-zero CPU when idle; bounded particle counts and animation lifetimes during FX. If it's ever prettier-effects vs. system responsiveness, responsiveness wins.
-- **Non-intrusive** — effects fade fast, never block clicks, and never steal focus.
-- **Private** — fully local. No network connection, no telemetry, no accounts, no data collection. Cursor position lives only transiently in memory.
-- **Restrained** — the product is the moment of finding your mouse, not a desktop effects platform.
+*   **⚡ Instant:** Near-zero lag between physical mouse movement and FX rendering.
+*   **🔋 Lightweight:** Near-zero CPU impact when idle; strict limits on particle lifetimes.
+*   **🛡️ Non-intrusive:** Effects fade rapidly, never steal focus, and never block mouse clicks.
+*   **🔒 Private:** Fully local operations. No networks, no telemetry, no tracking.
+*   **🎯 Restrained:** Built to help you find your pointer, not to act as a generic theme platform.
 
-The full vision, requirements, and roadmap live in the [PRD](docs/mouseflare-prd.md).
+---
 
-## Status
+## 📈 Status & Contributing
 
-Early development. The initial app was prototyped with Google AI Studio and is being developed into polished native utilities for both platforms. Contributions and feedback are welcome.
+Early development. The initial app was prototyped with Google AI Studio and is being actively developed into polished native utilities. Contributions, issue reports, and feedback are always welcome.
 
-## License
+## 📄 License
 
 [MIT](LICENSE) © Off By 1
