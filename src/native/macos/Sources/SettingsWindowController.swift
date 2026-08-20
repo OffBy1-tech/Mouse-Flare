@@ -254,7 +254,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
         let versionLabel = makeLabel(
             Updater.shared.isDevBuild ? "Mouseflare dev build" : "Mouseflare v\(Updater.shared.currentVersion)",
-            size: 10, weight: .regular, color: Theme.textFaint
+            size: 10, weight: .regular, color: Theme.textPrimary
         )
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
         sidebar.addSubview(versionLabel)
