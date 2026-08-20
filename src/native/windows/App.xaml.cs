@@ -28,6 +28,9 @@ namespace Mouseflare
             // Remove leftovers (*.old, update-staging) from a previous self-update
             Updater.CleanupAfterUpdate();
 
+            // Snapshot settings when Windows logs off / shuts down
+            SessionEnding += (s, args) => PersistCurrentSettings();
+
             // 1. Create transparent click-through overlay spanning all screens,
             //    restoring any persisted settings before it renders
             _overlay = new TransparentOverlayWindow();
@@ -82,9 +85,11 @@ namespace Mouseflare
             _tray.EnabledToggled += (enabled) =>
             {
                 if (_overlay != null) _overlay.IsFxEnabled = enabled;
+                PersistCurrentSettings();
             };
             _tray.ExitRequested += () =>
             {
+                PersistCurrentSettings();
                 _mouseTracker?.Dispose();
                 _hotkeyManager?.Dispose();
                 _tray?.Dispose();
@@ -200,6 +205,7 @@ namespace Mouseflare
             }
             try
             {
+                PersistCurrentSettings(); // survive the update restart with current settings
                 updater.InstallAndRestart(staged);
                 _mouseTracker?.Dispose();
                 _hotkeyManager?.Dispose();
@@ -234,6 +240,7 @@ namespace Mouseflare
                     return;
                 }
                 Log($"verified & staged: {updater.StagedDirectory}");
+                PersistCurrentSettings();
                 updater.InstallAndRestart(updater.StagedDirectory!);
                 Log("swap complete — relaunching new version");
                 Shutdown();
@@ -255,7 +262,13 @@ namespace Mouseflare
                     {
                         _settingsWindow = new SettingsWindow(_overlay, _hotkeyManager, _currentHotkey);
                         _settingsWindow.HotkeyChanged += (combo) => _currentHotkey = combo;
-                        _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+                        _settingsWindow.Closed += (s, e) =>
+                        {
+                            _settingsWindow = null;
+                            // Settings apply live as they change; snapshot them on
+                            // close so nothing is lost without an explicit Apply & Save
+                            PersistCurrentSettings();
+                        };
                         _settingsWindow.Show();
                     }
                     else
@@ -270,6 +283,15 @@ namespace Mouseflare
                     MessageBox.Show(ex.ToString(), "Could not open Settings", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             });
+        }
+
+        /// <summary>Snapshots the live overlay state to settings.json.</summary>
+        private void PersistCurrentSettings()
+        {
+            if (_overlay != null)
+            {
+                SettingsStore.Save(_overlay.ToSettings(_currentHotkey));
+            }
         }
 
         private static void ApplySettingsToOverlay(MouseflareSettings s, TransparentOverlayWindow overlay)

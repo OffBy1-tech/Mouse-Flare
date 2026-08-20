@@ -715,34 +715,8 @@ namespace Mouseflare.UI
         private bool PersistSettings()
         {
             if (_overlay == null) return false;
-            var s = new Core.MouseflareSettings
-            {
-                IsFxEnabled = _overlay.IsFxEnabled,
-                EnablePassiveFx = _overlay.EnablePassiveFx,
-                PassiveFxStyle = _overlay.PassiveFxStyle,
-                FlareFxStyle = _overlay.FlareFxStyle,
-                IntensityMultiplier = _overlay.IntensityMultiplier,
-                SparkDensityMultiplier = _overlay.SparkDensityMultiplier,
-                AnimationSpeedMultiplier = _overlay.AnimationSpeedMultiplier,
-                TrailLengthMultiplier = _overlay.TrailLengthMultiplier,
-                MinMovementThreshold = _overlay.MinMovementThreshold,
-                CurrentColorHex = ToHex(_overlay.CurrentColor),
-                SecondaryColorHex = ToHex(_overlay.SecondaryColor),
-                IdleBurstEnabled = _overlay.IdleBurstEnabled,
-                MonitorCrossingFxEnabled = _overlay.MonitorCrossingFxEnabled,
-                ShakeToFindEnabled = _overlay.ShakeToFindEnabled,
-                ReducedMotion = _overlay.ReducedMotion,
-                SoundFxEnabled = _overlay.SoundFxEnabled,
-                Hotkey = _currentHotkey,
-                AutoCheckUpdates = _overlay.AutoCheckUpdates,
-                QuickSwatches = _overlay.QuickSwatches,
-                FluidVorticity = _overlay.FluidVorticity,
-                FluidDissipation = _overlay.FluidDissipation,
-            };
-            return Core.SettingsStore.Save(s);
+            return Core.SettingsStore.Save(_overlay.ToSettings(_currentHotkey));
         }
-
-        private static string ToHex(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
 
         private void OnTestFlare(object sender, RoutedEventArgs e)
         {

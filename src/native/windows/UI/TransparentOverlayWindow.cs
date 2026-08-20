@@ -36,6 +36,32 @@ namespace Mouseflare.UI
         public double FluidVorticity { get; set; } = 0.85;    // 0.1 .. 2.0 (curl spin strength)
         public double FluidDissipation { get; set; } = 0.96;  // 0.90 .. 0.99 (smoke persistence)
 
+        /// <summary>Snapshot of every persisted setting, for SettingsStore.Save.</summary>
+        public Core.MouseflareSettings ToSettings(string hotkey) => new()
+        {
+            IsFxEnabled = IsFxEnabled,
+            EnablePassiveFx = EnablePassiveFx,
+            PassiveFxStyle = PassiveFxStyle,
+            FlareFxStyle = FlareFxStyle,
+            IntensityMultiplier = IntensityMultiplier,
+            SparkDensityMultiplier = SparkDensityMultiplier,
+            AnimationSpeedMultiplier = AnimationSpeedMultiplier,
+            TrailLengthMultiplier = TrailLengthMultiplier,
+            MinMovementThreshold = MinMovementThreshold,
+            CurrentColorHex = ColorPickerWindow.ToHex(CurrentColor),
+            SecondaryColorHex = ColorPickerWindow.ToHex(SecondaryColor),
+            IdleBurstEnabled = IdleBurstEnabled,
+            MonitorCrossingFxEnabled = MonitorCrossingFxEnabled,
+            ShakeToFindEnabled = ShakeToFindEnabled,
+            ReducedMotion = ReducedMotion,
+            SoundFxEnabled = SoundFxEnabled,
+            AutoCheckUpdates = AutoCheckUpdates,
+            QuickSwatches = QuickSwatches,
+            FluidVorticity = FluidVorticity,
+            FluidDissipation = FluidDissipation,
+            Hotkey = hotkey,
+        };
+
         private class Particle
         {
             public double X, Y, Vx, Vy, Size, Alpha, Decay;
