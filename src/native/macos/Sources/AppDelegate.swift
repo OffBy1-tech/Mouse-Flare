@@ -99,6 +99,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if CommandLine.arguments.contains("--self-update-test") {
             runSelfUpdateTest()
         }
+        // `Mouseflare --import-fx <file.json>`: import an FX Designer config
+        if let flagIndex = CommandLine.arguments.firstIndex(of: "--import-fx"),
+           CommandLine.arguments.count > flagIndex + 1 {
+            let path = CommandLine.arguments[flagIndex + 1]
+            if let json = try? String(contentsOf: URL(fileURLWithPath: path), encoding: .utf8),
+               let config = CustomFxConfig.fromJSON(json) {
+                var settings = SettingsManager.shared.settings
+                settings.customFxJson = json
+                settings.passivePreset = "custom-fx"
+                SettingsManager.shared.settings = settings
+                print("Imported custom FX: \(config.name)")
+            } else {
+                print("Could not import FX config from \(path)")
+            }
+        }
         // `Mouseflare --verify <file> <file.minisig>`: check a download against
         // the embedded release key, mirroring `minisign -Vm` without the tool
         if let flagIndex = CommandLine.arguments.firstIndex(of: "--verify"),

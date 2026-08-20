@@ -14,7 +14,7 @@ namespace Mouseflare.UI
         {
             "spark-trail", "glow-pulse", "comet-trail", "bubbles", "fireflies", "star-dust", "lightning", "rainbow", "plasma",
             "fluid-simulation", "fluid-smoke", "neon-fluid", "cosmic-vortex", "ink-diffusion",
-            "matrix-rain", "fire-flame", "neon-cyber", "magic-dust", "galaxy", "minimal-beacon"
+            "matrix-rain", "fire-flame", "neon-cyber", "magic-dust", "galaxy", "minimal-beacon", "custom-fx"
         };
 
         private static readonly HashSet<string> FlarePresets = new()
@@ -452,6 +452,27 @@ namespace Mouseflare.UI
             {
                 SetStatusText("⚠️ Invalid hex code. Please enter e.g. #FF5500 or #00FFCC");
             }
+        }
+
+        /// <summary>
+        /// Reads FX Designer JSON from the clipboard (exported via "Copy JSON"
+        /// in the web simulator's FX Designer) and activates it.
+        /// </summary>
+        private void OnImportCustomFx(object sender, RoutedEventArgs e)
+        {
+            if (_overlay == null) return;
+            string json;
+            try { json = Clipboard.GetText(); } catch { json = ""; }
+            var config = string.IsNullOrWhiteSpace(json) ? null : Core.CustomFxConfig.FromJson(json);
+            if (config == null)
+            {
+                SetStatusText("⚠️ Clipboard does not contain a valid FX Designer config. Use Copy JSON in the FX Designer.");
+                return;
+            }
+            _overlay.CustomFxJson = json;
+            _overlay.PassiveFxStyle = "custom-fx";
+            RefreshActivePresetHighlights();
+            SetStatusText($"Imported custom FX: {config.name} • Click Apply & Save to persist");
         }
 
         // ---- Color picker (custom color + editable quick swatches) ----

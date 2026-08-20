@@ -631,7 +631,35 @@
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
+                            
+                                <Button Tag="custom-fx" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2A1B3D" Margin="0,0,8,0">
+                                                        <TextBlock Text="🧪" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Custom FX" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Imported from the FX Designer" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
                             </WrapPanel>
+
+                            <Button Content="📋 Import Custom FX (JSON from clipboard)" Height="28" Margin="0,0,0,14" HorizontalAlignment="Left" Padding="12,0" Background="#27272A" Foreground="#FAFAFA" FontSize="11" Cursor="Hand" Click="OnImportCustomFx">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="6" Padding="12,0">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
 
                             <!-- Find Mouse Signature Flares -->
                             <TextBlock Text="Find Mouse Signature Flare Animations" FontSize="12" FontWeight="Bold" Foreground="#06B6D4" Margin="0,0,0,8"/>

@@ -1,5 +1,6 @@
 import { AppSettings, ColorPreset, FlarePreset, FxPreset, Particle, FlareRing } from '../types';
 import { FluidSimulationEngine } from './fluidSimulation';
+import { CustomFxRenderer } from './customFxRenderer';
 
 export const COLOR_MAP: Record<ColorPreset, { primary: string; secondary: string; glow: string; rgb: string }> = {
   amber: { primary: '#f59e0b', secondary: '#fbbf24', glow: 'rgba(245, 158, 11, 0.4)', rgb: '245, 158, 11' },
@@ -28,6 +29,8 @@ export class ParticleEngine {
 
   // Katakana + digits pool for the Matrix Rain digital-rain preset
   static readonly MATRIX_GLYPHS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789Z:・.=*+-<>¦|'.split('');
+
+  public customFxRenderer = new CustomFxRenderer();
 
   public fps = 60;
   public particleCount = 0;
@@ -504,6 +507,13 @@ export class ParticleEngine {
         break;
       }
 
+      case 'custom-fx': {
+        if (settings.customFxConfig) {
+          this.customFxRenderer.onMove(x, y, settings.customFxConfig);
+        }
+        break;
+      }
+
       case 'fluid-simulation':
       case 'fluid-smoke':
       case 'neon-fluid':
@@ -527,6 +537,10 @@ export class ParticleEngine {
 
   // Trigger Find Mouse signature flare
   public triggerFindMouse(x: number, y: number, settings: AppSettings) {
+    // Custom FX Designer effects join the flare with their own burst
+    if (settings.passiveFx === 'custom-fx' && settings.customFxConfig) {
+      this.customFxRenderer.triggerBurst(x, y, settings.customFxConfig);
+    }
     const colors = this.getColors(settings);
     const intensity = settings.intensity;
     const preset = settings.findMouseFx;
@@ -874,7 +888,11 @@ export class ParticleEngine {
 
     ctx.restore();
 
-    this.particleCount = this.particles.length + this.rings.length + this.fluidEngine.getDyeCount();
+    if (settings.passiveFx === 'custom-fx' && settings.customFxConfig) {
+      this.customFxRenderer.render(ctx, width, height, settings.customFxConfig, this.lastX, this.lastY);
+    }
+
+    this.particleCount = this.particles.length + this.rings.length + this.fluidEngine.getDyeCount() + this.customFxRenderer.activeCount;
     this.drawLatencyMs = Math.round((performance.now() - startTime) * 100) / 100;
   }
 }

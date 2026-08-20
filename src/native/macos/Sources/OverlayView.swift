@@ -43,6 +43,22 @@ final class OverlayView: NSView {
     private var lastPoint: CGPoint = .zero
     private var lastMotionTime: TimeInterval = 0
     private var pendingIdleBurst = false
+
+    // Custom FX Designer engine (passivePreset "custom-fx")
+    private let customFx = CustomFxEngine()
+    private var cachedFxJson = ""
+    private var cachedFxConfig = CustomFxConfig()
+
+    private func customConfig(_ cfg: MacFlareSettings) -> CustomFxConfig? {
+        guard let json = cfg.customFxJson, !json.isEmpty else { return nil }
+        if json != cachedFxJson {
+            guard let parsed = CustomFxConfig.fromJSON(json) else { return nil }
+            cachedFxJson = json
+            cachedFxConfig = parsed
+            customFx.clear()
+        }
+        return cachedFxConfig
+    }
     private let screenFrame: NSRect
     private var strokeIndex: Int = 0
 
@@ -108,6 +124,18 @@ final class OverlayView: NSView {
 
         let cfg = SettingsManager.shared.settings
         guard cfg.enabled, cfg.passiveFxEnabled else {
+            lastPoint = point
+            return
+        }
+
+        if cfg.passivePreset == "custom-fx" {
+            if let config = customConfig(cfg), dist > CGFloat(max(0.5, cfg.movementThreshold)) {
+                customFx.onMove(x: point.x, y: point.y, dx: dx, dy: dy, config: config)
+                if pendingIdleBurst && cfg.idleBurst {
+                    customFx.triggerBurst(x: point.x, y: point.y, config: config)
+                }
+                pendingIdleBurst = false
+            }
             lastPoint = point
             return
         }
@@ -426,6 +454,11 @@ final class OverlayView: NSView {
         let primary = cfg.primaryColor
         let secondary = cfg.secondaryColor
 
+        // Custom FX Designer effects join the flare with their own burst
+        if cfg.passivePreset == "custom-fx", let config = customConfig(cfg) {
+            customFx.triggerBurst(x: point.x, y: point.y, config: config)
+        }
+
         switch cfg.flarePreset {
         case "sonar-radar":
             for i in 0..<4 {
@@ -521,8 +554,12 @@ final class OverlayView: NSView {
     // MARK: Physics loop
 
     private func updatePhysics() {
-        guard !particles.isEmpty || !rings.isEmpty else { return }
         let cfg = SettingsManager.shared.settings
+        if cfg.passivePreset == "custom-fx", customFx.activeCount > 0, let config = customConfig(cfg) {
+            customFx.update(config: config, cursor: lastPoint)
+            needsDisplay = true
+        }
+        guard !particles.isEmpty || !rings.isEmpty else { return }
 
         let ringStep = CGFloat(0.04) * CGFloat(max(0.4, cfg.animationSpeed))
         for i in (0..<rings.count).reversed() {
@@ -577,6 +614,12 @@ final class OverlayView: NSView {
                 width: currentRadius * 2,
                 height: currentRadius * 2
             ))
+        }
+
+        // Custom FX Designer particles
+        let cfg = SettingsManager.shared.settings
+        if cfg.passivePreset == "custom-fx", let config = customConfig(cfg) {
+            customFx.draw(in: context, config: config)
         }
 
         // Draw particles

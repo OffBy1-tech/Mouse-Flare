@@ -38,6 +38,9 @@ public struct MacFlareSettings: Codable {
     public var hotkey: String = "⌘ + Shift + F"
     public var autoCheckUpdates: Bool = true
 
+    // Raw JSON exported by the web FX Designer (passivePreset "custom-fx")
+    public var customFxJson: String? = nil
+
     public init() {}
 
     // Tolerant decoding: every field falls back to its default when absent, so
@@ -68,6 +71,7 @@ public struct MacFlareSettings: Codable {
         startAtLogin = try c.decodeIfPresent(Bool.self, forKey: .startAtLogin) ?? d.startAtLogin
         hotkey = try c.decodeIfPresent(String.self, forKey: .hotkey) ?? d.hotkey
         autoCheckUpdates = try c.decodeIfPresent(Bool.self, forKey: .autoCheckUpdates) ?? d.autoCheckUpdates
+        customFxJson = try c.decodeIfPresent(String.self, forKey: .customFxJson) ?? d.customFxJson
     }
 
     public var primaryColor: NSColor {
