@@ -220,6 +220,21 @@
                                 </Button.Template>
                             </Button>
 
+                            <Button x:Name="btnNavFxDesigner" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavFxDesigner">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="20" Height="20" CornerRadius="4" Background="#18181B" Margin="0,0,8,0">
+                                                    <TextBlock Text="🧪" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="FX Designer" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
                             <Button x:Name="btnNavBehavior" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavBehavior">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
@@ -631,7 +646,35 @@
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
+                            
+                                <Button Tag="custom-fx" Width="195" Height="52" Margin="0,0,8,8" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2A1B3D" Margin="0,0,8,0">
+                                                        <TextBlock Text="🧪" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Custom FX" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Imported from the FX Designer" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
                             </WrapPanel>
+
+                            <Button Content="📋 Import Custom FX (JSON from clipboard)" Height="28" Margin="0,0,0,14" HorizontalAlignment="Left" Padding="12,0" Background="#27272A" Foreground="#FAFAFA" FontSize="11" Cursor="Hand" Click="OnImportCustomFx">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="6" Padding="12,0">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
 
                             <!-- Find Mouse Signature Flares -->
                             <TextBlock Text="Find Mouse Signature Flare Animations" FontSize="12" FontWeight="Bold" Foreground="#06B6D4" Margin="0,0,0,8"/>
@@ -1007,6 +1050,17 @@
                                     </Grid>
                                 </StackPanel>
                             </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ============================================== -->
+                    <!-- TAB: FX DESIGNER                               -->
+                    <!-- ============================================== -->
+                    <ScrollViewer x:Name="tabFxDesigner" Grid.Row="0" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Text="FX Designer" FontSize="17" FontWeight="Bold" Foreground="#FAFAFA"/>
+                            <TextBlock Text="Design your own particle effect — it previews live on your cursor and becomes the Custom FX preset." FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,16"/>
+                            <ContentControl x:Name="fxDesignerHost"/>
                         </StackPanel>
                     </ScrollViewer>
 

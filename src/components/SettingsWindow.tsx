@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppSettings, ColorPreset, FlarePreset, FxPreset } from '../types';
 import { NATIVE_SOURCE_FILES } from '../data/nativeSource';
+import { ParticleFxEditor } from './ParticleFxEditor';
 import { downloadWindowsNativeZip, downloadMacNativeZip, downloadCrossPlatformZip } from '../utils/nativeDownloader';
 import {
   CURRENT_BUILD_INFO,
@@ -50,7 +51,7 @@ interface SettingsWindowProps {
   initialTab?: TabType;
 }
 
-export type TabType = 'general' | 'fx-studio' | 'behavior' | 'diagnostics' | 'native-code' | 'updates';
+export type TabType = 'general' | 'fx-studio' | 'fx-designer' | 'behavior' | 'diagnostics' | 'native-code' | 'updates';
 
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
 
@@ -254,6 +255,23 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
               >
                 <Sparkles className="w-4 h-4 text-cyan-400" />
                 <span>FX Studio</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('fx-designer')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                  activeTab === 'fx-designer'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold shadow'
+                    : 'text-neutral-300 hover:bg-white/5'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Sliders className="w-4 h-4 text-amber-400" />
+                  <span>FX Designer</span>
+                </div>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                  NEW
+                </span>
               </button>
 
               <button
@@ -855,6 +873,23 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             )}
 
             {/* TAB 3: BEHAVIOR & MONITORS */}
+            {/* TAB: PARTICLE FX DESIGNER */}
+            {activeTab === 'fx-designer' && (
+              <div className="h-full flex flex-col -m-6">
+                <ParticleFxEditor
+                  currentActiveConfigId={settings.customFxConfig?.id}
+                  onApplyToCursor={(customConfig) => {
+                    updateDraft({
+                      passiveFx: 'custom-fx',
+                      customFxConfig: customConfig,
+                      enablePassiveFx: true,
+                    });
+                    onTriggerFlare();
+                  }}
+                />
+              </div>
+            )}
+
             {activeTab === 'behavior' && (
               <div className="space-y-6">
                 <div>

@@ -36,6 +36,21 @@ namespace Mouseflare.UI
         public double FluidVorticity { get; set; } = 0.85;    // 0.1 .. 2.0 (curl spin strength)
         public double FluidDissipation { get; set; } = 0.96;  // 0.90 .. 0.99 (smoke persistence)
 
+        // Custom FX Designer (passivePreset "custom-fx"): raw designer JSON
+        private string? _customFxJson;
+        private Core.CustomFxConfig? _customFxConfig;
+        private readonly Core.CustomFxEngine _customFx = new();
+        public string? CustomFxJson
+        {
+            get => _customFxJson;
+            set
+            {
+                _customFxJson = value;
+                _customFxConfig = value == null ? null : Core.CustomFxConfig.FromJson(value);
+                _customFx.Clear();
+            }
+        }
+
         /// <summary>Snapshot of every persisted setting, for SettingsStore.Save.</summary>
         public Core.MouseflareSettings ToSettings(string hotkey) => new()
         {
@@ -55,6 +70,7 @@ namespace Mouseflare.UI
             SoundFxEnabled = SoundFxEnabled,
             AutoCheckUpdates = AutoCheckUpdates,
             QuickSwatches = QuickSwatches,
+            CustomFxJson = CustomFxJson,
             FluidVorticity = FluidVorticity,
             FluidDissipation = FluidDissipation,
             Hotkey = hotkey,
@@ -198,6 +214,13 @@ namespace Mouseflare.UI
 
             switch (PassiveFxStyle)
             {
+                case "custom-fx":
+                    if (_customFxConfig != null)
+                    {
+                        _customFx.OnMove(x, y, dx, dy, _customFxConfig);
+                    }
+                    break;
+
                 case "spark-trail":
                     for (int i = 0; i < count; i++)
                     {
@@ -541,6 +564,12 @@ namespace Mouseflare.UI
             GetCursorPos(out POINT pt);
             (double localX, double localY) = ScreenToLocalDips(pt.X, pt.Y);
 
+            // Custom FX Designer effects join the flare with their own burst
+            if (PassiveFxStyle == "custom-fx" && _customFxConfig != null)
+            {
+                _customFx.TriggerBurst(localX, localY, _customFxConfig);
+            }
+
             if (SoundFxEnabled)
             {
                 try { System.Media.SystemSounds.Asterisk.Play(); } catch { }
@@ -616,10 +645,16 @@ namespace Mouseflare.UI
 
         private void OnRenderFrame(object? sender, EventArgs e)
         {
-            if (_particles.Count == 0 && _rings.Count == 0) return;
+            if (_particles.Count == 0 && _rings.Count == 0 && _customFx.ActiveCount == 0) return;
 
             using (DrawingContext dc = _visual.RenderOpen())
             {
+                // Custom FX Designer engine (updates physics and draws in one pass)
+                if (PassiveFxStyle == "custom-fx" && _customFxConfig != null)
+                {
+                    _customFx.UpdateAndDraw(dc, _customFxConfig, _lastX, _lastY);
+                }
+
                 for (int i = _rings.Count - 1; i >= 0; i--)
                 {
                     var r = _rings[i];

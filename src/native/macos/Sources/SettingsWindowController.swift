@@ -84,7 +84,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         ("neon-cyber", "⚡", "Neon Cyber", "Electric cyan-magenta pulses"),
         ("magic-dust", "✨", "Magic Dust", "Enchanted pastel shimmer"),
         ("galaxy", "🌌", "Galaxy Supernova", "Deep-space stars & nebula"),
-        ("minimal-beacon", "🎯", "Minimalist Beacon", "Single subtle tracking dot")
+        ("minimal-beacon", "🎯", "Minimalist Beacon", "Single subtle tracking dot"),
+        ("custom-fx", "🧪", "Custom FX", "Imported from the FX Designer")
     ]
 
     private static let flarePresets: [(id: String, icon: String, title: String, subtitle: String)] = [
@@ -239,6 +240,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let navItems: [(id: String, icon: String, title: String)] = [
             ("general", "🔥", "General"),
             ("fx-studio", "✨", "FX Studio"),
+            ("fx-designer", "🧪", "FX Designer"),
             ("behavior", "🎛️", "Behavior & Monitors"),
             ("diagnostics", "📊", "Diagnostics")
         ]
@@ -313,12 +315,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         ])
 
         // ---- Tabs ----
-        let tabIds = ["general", "fx-studio", "behavior", "diagnostics"]
+        let tabIds = ["general", "fx-studio", "fx-designer", "behavior", "diagnostics"]
         for id in tabIds {
             let (scroll, stack) = makeScrollTab()
             switch id {
             case "general": buildGeneralTab(into: stack)
             case "fx-studio": buildFxStudioTab(into: stack)
+            case "fx-designer": buildFxDesignerTab(into: stack)
             case "behavior": buildBehaviorTab(into: stack)
             default: buildDiagnosticsTab(into: stack)
             }
@@ -474,7 +477,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         stack.addArrangedSubview(passiveGrid)
         passiveGrid.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.setCustomSpacing(14, after: passiveGrid)
+        let importFxButton = makeFilledButton(title: "📋  Import Custom FX (JSON from clipboard)", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 11, height: 28, bold: false)
+        importFxButton.onClick = { [weak self] in self?.importCustomFxFromClipboard() }
+        stack.addArrangedSubview(importFxButton)
+        stack.setCustomSpacing(14, after: importFxButton)
 
         stack.addArrangedSubview(makeLabel("Find Mouse Signature Flare Animations", size: 12, weight: .bold, color: Theme.cyan))
         let flareGrid = makePresetGrid(items: Self.flarePresets, cards: &flareCards) { [weak self] id in
@@ -618,6 +624,20 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         fluidGrid.widthAnchor.constraint(equalTo: fluidStack.widthAnchor).isActive = true
         stack.addArrangedSubview(fluidCard)
         fluidCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    }
+
+    // MARK: Tab: FX Designer
+
+    private func buildFxDesignerTab(into stack: NSStackView) {
+        stack.addArrangedSubview(makeLabel("FX Designer", size: 17, weight: .bold, color: Theme.textPrimary))
+        let sub = makeLabel("Design your own particle effect — it previews live on your cursor and becomes the Custom FX preset.", size: 11, weight: .regular, color: Theme.textSecondary)
+        stack.addArrangedSubview(sub)
+        stack.setCustomSpacing(16, after: sub)
+
+        let designer = FxDesignerView()
+        designer.onStatus = { [weak self] message in self?.setStatus(message) }
+        stack.addArrangedSubview(designer)
+        designer.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     }
 
     // MARK: Tab: Behavior & Monitors
@@ -891,6 +911,22 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         refreshQuickSwatches()
         refreshPresetHighlights()
         setStatus("Color: \(hex) (double-click a swatch to edit it)")
+    }
+
+    /// Reads FX Designer JSON from the clipboard (exported via "Copy JSON" in
+    /// the web simulator's FX Designer) and activates it as the custom preset.
+    private func importCustomFxFromClipboard() {
+        guard let json = NSPasteboard.general.string(forType: .string),
+              let config = CustomFxConfig.fromJSON(json) else {
+            setStatus("⚠️ Clipboard does not contain a valid FX Designer config. Use Copy JSON in the FX Designer.")
+            return
+        }
+        var settings = SettingsManager.shared.settings
+        settings.customFxJson = json
+        settings.passivePreset = "custom-fx"
+        SettingsManager.shared.settings = settings
+        refreshPresetHighlights()
+        setStatus("Imported custom FX: \(config.name)")
     }
 
     private func refreshQuickSwatches() {

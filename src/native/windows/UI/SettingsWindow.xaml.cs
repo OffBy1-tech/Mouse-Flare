@@ -14,7 +14,7 @@ namespace Mouseflare.UI
         {
             "spark-trail", "glow-pulse", "comet-trail", "bubbles", "fireflies", "star-dust", "lightning", "rainbow", "plasma",
             "fluid-simulation", "fluid-smoke", "neon-fluid", "cosmic-vortex", "ink-diffusion",
-            "matrix-rain", "fire-flame", "neon-cyber", "magic-dust", "galaxy", "minimal-beacon"
+            "matrix-rain", "fire-flame", "neon-cyber", "magic-dust", "galaxy", "minimal-beacon", "custom-fx"
         };
 
         private static readonly HashSet<string> FlarePresets = new()
@@ -113,6 +113,7 @@ namespace Mouseflare.UI
         // Tab Navigation Handlers
         private void OnNavGeneral(object sender, RoutedEventArgs e) => UpdateTabSelection("general");
         private void OnNavFxStudio(object sender, RoutedEventArgs e) => UpdateTabSelection("fx-studio");
+        private void OnNavFxDesigner(object sender, RoutedEventArgs e) => UpdateTabSelection("fx-designer");
         private void OnNavBehavior(object sender, RoutedEventArgs e) => UpdateTabSelection("behavior");
         private void OnNavDiagnostics(object sender, RoutedEventArgs e) => UpdateTabSelection("diagnostics");
 
@@ -122,12 +123,19 @@ namespace Mouseflare.UI
 
             tabGeneral.Visibility = tab == "general" ? Visibility.Visible : Visibility.Collapsed;
             tabFxStudio.Visibility = tab == "fx-studio" ? Visibility.Visible : Visibility.Collapsed;
+            tabFxDesigner.Visibility = tab == "fx-designer" ? Visibility.Visible : Visibility.Collapsed;
+            if (tab == "fx-designer" && fxDesignerHost.Content == null && _overlay != null)
+            {
+                // Built lazily: 24 sliders + popups only materialize when opened
+                fxDesignerHost.Content = new FxDesignerPanel(_overlay, this, SetStatusText).Build();
+            }
             tabBehavior.Visibility = tab == "behavior" ? Visibility.Visible : Visibility.Collapsed;
             tabDiagnostics.Visibility = tab == "diagnostics" ? Visibility.Visible : Visibility.Collapsed;
 
             // Update sidebar nav button active states
             SetNavButtonState(btnNavGeneral, tab == "general");
             SetNavButtonState(btnNavFxStudio, tab == "fx-studio");
+            SetNavButtonState(btnNavFxDesigner, tab == "fx-designer");
             SetNavButtonState(btnNavBehavior, tab == "behavior");
             SetNavButtonState(btnNavDiagnostics, tab == "diagnostics");
         }
@@ -452,6 +460,27 @@ namespace Mouseflare.UI
             {
                 SetStatusText("⚠️ Invalid hex code. Please enter e.g. #FF5500 or #00FFCC");
             }
+        }
+
+        /// <summary>
+        /// Reads FX Designer JSON from the clipboard (exported via "Copy JSON"
+        /// in the web simulator's FX Designer) and activates it.
+        /// </summary>
+        private void OnImportCustomFx(object sender, RoutedEventArgs e)
+        {
+            if (_overlay == null) return;
+            string json;
+            try { json = Clipboard.GetText(); } catch { json = ""; }
+            var config = string.IsNullOrWhiteSpace(json) ? null : Core.CustomFxConfig.FromJson(json);
+            if (config == null)
+            {
+                SetStatusText("⚠️ Clipboard does not contain a valid FX Designer config. Use Copy JSON in the FX Designer.");
+                return;
+            }
+            _overlay.CustomFxJson = json;
+            _overlay.PassiveFxStyle = "custom-fx";
+            RefreshActivePresetHighlights();
+            SetStatusText($"Imported custom FX: {config.name} • Click Apply & Save to persist");
         }
 
         // ---- Color picker (custom color + editable quick swatches) ----

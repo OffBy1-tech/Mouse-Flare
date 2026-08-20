@@ -1,3 +1,5 @@
+import { ParticleFxConfig } from './types/fxEditor';
+
 export type FxPreset = 
   | 'fluid-simulation'
   | 'spark-trail'
@@ -15,6 +17,7 @@ export type FxPreset =
   | 'magic-dust'
   | 'galaxy'
   | 'minimal-beacon'
+  | 'custom-fx'
   | 'fluid-smoke'
   | 'neon-fluid'
   | 'cosmic-vortex'
@@ -71,6 +74,8 @@ export interface AppSettings {
   updateChannel: 'stable' | 'beta';
   notifyOnUpdate: boolean;
   lastCheckedTimestamp?: number;
+  // Custom Particle FX Designer
+  customFxConfig?: ParticleFxConfig;
 }
 
 export interface MousePosition {
