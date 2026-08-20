@@ -197,18 +197,24 @@ namespace Mouseflare.Core
         }
 
         /// <summary>
-        /// Swaps the staged files into place (a running exe can be renamed on
-        /// Windows, not overwritten), starts the new exe, and returns so the
-        /// caller can shut this instance down. Restores on partial failure.
+        /// Swaps the staged files into place, starts the new exe, and returns
+        /// so the caller can shut this instance down. Never overwrites a file
+        /// in place: every existing destination is renamed to .old first — a
+        /// rename succeeds even for the running exe and (usually) for files the
+        /// runtime has memory-mapped, where an overwrite would throw "in use by
+        /// another process" (seen in the field with a lazily-loaded .pdb).
+        /// Non-essential files that still cannot be replaced are skipped;
+        /// anything else rolls the whole swap back.
         /// </summary>
         public void InstallAndRestart(string stagedDirectory)
         {
             string exePath = Environment.ProcessPath
                 ?? throw new InvalidOperationException("Cannot locate the running executable.");
-            string oldPath = exePath + ".old";
+            var renamed = new System.Collections.Generic.List<(string Original, string Old)>();
 
-            if (File.Exists(oldPath)) File.Delete(oldPath);
-            File.Move(exePath, oldPath);
+            static bool IsNonEssential(string path) =>
+                Path.GetExtension(path).Equals(".pdb", StringComparison.OrdinalIgnoreCase);
+
             try
             {
                 foreach (string source in Directory.EnumerateFiles(stagedDirectory, "*", SearchOption.AllDirectories))
@@ -216,12 +222,32 @@ namespace Mouseflare.Core
                     string relative = Path.GetRelativePath(stagedDirectory, source);
                     string destination = Path.Combine(InstallDirectory, relative);
                     Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
-                    File.Copy(source, destination, overwrite: true);
+                    try
+                    {
+                        if (File.Exists(destination))
+                        {
+                            string old = destination + ".old";
+                            if (File.Exists(old)) File.Delete(old);
+                            File.Move(destination, old);
+                            renamed.Add((destination, old));
+                        }
+                        File.Copy(source, destination);
+                    }
+                    catch when (IsNonEssential(destination))
+                    {
+                        // e.g. a .pdb the runtime holds without delete-sharing:
+                        // stale debug symbols beat a failed update
+                    }
                 }
             }
             catch
             {
-                try { if (!File.Exists(exePath)) File.Move(oldPath, exePath); } catch { }
+                // Roll back so the current install keeps working
+                foreach (var (original, old) in renamed)
+                {
+                    try { if (File.Exists(original)) File.Delete(original); } catch { }
+                    try { if (!File.Exists(original)) File.Move(old, original); } catch { }
+                }
                 throw;
             }
             try { Directory.Delete(stagedDirectory, recursive: true); } catch { }
@@ -239,7 +265,7 @@ namespace Mouseflare.Core
         {
             try
             {
-                foreach (string old in Directory.EnumerateFiles(InstallDirectory, "*.old"))
+                foreach (string old in Directory.EnumerateFiles(InstallDirectory, "*.old", SearchOption.AllDirectories))
                 {
                     try { File.Delete(old); } catch { /* may still be releasing; next launch gets it */ }
                 }
