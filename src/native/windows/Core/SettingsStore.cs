@@ -31,6 +31,8 @@ namespace Mouseflare.Core
         public string Hotkey { get; set; } = "Ctrl + Shift + F";
         public bool AutoCheckUpdates { get; set; } = true;
         public string[] QuickSwatches { get; set; } = { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7" };
+        public double FluidVorticity { get; set; } = 0.85;
+        public double FluidDissipation { get; set; } = 0.96;
     }
 
     public static class SettingsStore

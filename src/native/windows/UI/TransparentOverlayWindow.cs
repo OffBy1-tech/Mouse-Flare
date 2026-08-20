@@ -33,6 +33,8 @@ namespace Mouseflare.UI
         public bool SoundFxEnabled { get; set; } = true;
         public bool AutoCheckUpdates { get; set; } = true;
         public string[] QuickSwatches { get; set; } = { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7" };
+        public double FluidVorticity { get; set; } = 0.85;    // 0.1 .. 2.0 (curl spin strength)
+        public double FluidDissipation { get; set; } = 0.96;  // 0.90 .. 0.99 (smoke persistence)
 
         private class Particle
         {
@@ -524,7 +526,8 @@ namespace Mouseflare.UI
                     for (int i = 0; i < Math.Min(6, count); i++)
                     {
                         double angle = Math.Atan2(dy, dx) + (_rand.NextDouble() - 0.5) * 1.2;
-                        double spin = (i % 2 == 0 ? 1 : -1) * 1.5;
+                        // ~1.5 at the default vorticity of 0.85, scaling with the slider
+                        double spin = (i % 2 == 0 ? 1 : -1) * FluidVorticity * 1.76;
                         Color dyeColor = PassiveFxStyle == "neon-fluid" ? HsvToRgb((_rainbowHue + i * 30) % 360, 0.95, 1.0)
                                        : PassiveFxStyle == "cosmic-vortex" ? (_rand.NextDouble() > 0.5 ? Color.FromRgb(139, 92, 246) : Color.FromRgb(6, 182, 212))
                                        : CurrentColor;
@@ -538,7 +541,8 @@ namespace Mouseflare.UI
                             Alpha = 0.85,
                             Decay = 0.03 * AnimationSpeedMultiplier,
                             Color = dyeColor,
-                            Type = "spark"
+                            Type = "fluid",
+                            Extra = (i % 2 == 0 ? 1 : -1) * FluidVorticity * 0.12 // curl spin
                         });
                     }
                     break;
@@ -680,7 +684,16 @@ namespace Mouseflare.UI
 
                     p.X += p.Vx;
                     p.Y += p.Vy;
-                    if (p.Type != "glyph") // glyphs fall at constant cascade speed
+                    if (p.Type == "fluid")
+                    {
+                        // Curl vector rotation + configurable dissipation (mirrors macOS)
+                        double curl = p.Extra * 0.05;
+                        double vx = p.Vx * Math.Cos(curl) - p.Vy * Math.Sin(curl);
+                        double vy = p.Vx * Math.Sin(curl) + p.Vy * Math.Cos(curl);
+                        p.Vx = vx * FluidDissipation;
+                        p.Vy = vy * FluidDissipation;
+                    }
+                    else if (p.Type != "glyph") // glyphs fall at constant cascade speed
                     {
                         p.Vx *= 0.94;
                         p.Vy *= 0.94;

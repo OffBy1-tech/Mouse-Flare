@@ -202,13 +202,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let flameTile = makeLogoTile(size: 20, corner: 5)
         let brandTitle = makeLabel("Mouseflare", size: 12, weight: .bold, color: Theme.textPrimary)
         let brandSub = makeLabel(" — Settings & FX Studio", size: 11, weight: .regular, color: Theme.textMuted)
-        let platformBadge = makeBadge(text: "macOS Native")
 
-        let brandStack = NSStackView(views: [flameTile, brandTitle, brandSub, platformBadge])
+        let brandStack = NSStackView(views: [flameTile, brandTitle, brandSub])
         brandStack.orientation = .horizontal
         brandStack.spacing = 8
         brandStack.setCustomSpacing(0, after: brandTitle)
-        brandStack.setCustomSpacing(10, after: brandSub)
         brandStack.translatesAutoresizingMaskIntoConstraints = false
         titleBar.addSubview(brandStack)
 
@@ -248,6 +246,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             navStack.addArrangedSubview(card)
             card.widthAnchor.constraint(equalTo: navStack.widthAnchor).isActive = true
         }
+
+        let versionLabel = makeLabel(
+            Updater.shared.isDevBuild ? "Mouseflare dev build" : "Mouseflare v\(Updater.shared.currentVersion)",
+            size: 10, weight: .regular, color: Theme.textFaint
+        )
+        versionLabel.translatesAutoresizingMaskIntoConstraints = false
+        sidebar.addSubview(versionLabel)
 
         let testFlareButton = makeFilledButton(title: "⚡  Test Flare Now", background: Theme.amber, foreground: Theme.windowBg)
         testFlareButton.onClick = { [weak self] in
@@ -290,6 +295,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             navStack.topAnchor.constraint(equalTo: sidebar.topAnchor, constant: 16),
             navStack.leadingAnchor.constraint(equalTo: sidebar.leadingAnchor, constant: 12),
             navStack.trailingAnchor.constraint(equalTo: sidebar.trailingAnchor, constant: -13),
+
+            versionLabel.centerXAnchor.constraint(equalTo: sidebar.centerXAnchor),
+            versionLabel.bottomAnchor.constraint(equalTo: testFlareButton.topAnchor, constant: -8),
 
             testFlareButton.leadingAnchor.constraint(equalTo: sidebar.leadingAnchor, constant: 12),
             testFlareButton.trailingAnchor.constraint(equalTo: sidebar.trailingAnchor, constant: -13),
@@ -1163,26 +1171,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             label.centerYAnchor.constraint(equalTo: tile.centerYAnchor)
         ])
         return tile
-    }
-
-    private func makeBadge(text: String) -> NSView {
-        let badge = NSView()
-        badge.wantsLayer = true
-        badge.layer?.backgroundColor = NSColor(hexString: "#1C1917").cgColor
-        badge.layer?.borderColor = NSColor(hexString: "#78350F").cgColor
-        badge.layer?.borderWidth = 1
-        badge.layer?.cornerRadius = 4
-        let label = makeLabel(text, size: 9, weight: .semibold, color: Theme.amber)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        badge.addSubview(label)
-        badge.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: badge.leadingAnchor, constant: 6),
-            label.trailingAnchor.constraint(equalTo: badge.trailingAnchor, constant: -6),
-            label.topAnchor.constraint(equalTo: badge.topAnchor, constant: 2),
-            label.bottomAnchor.constraint(equalTo: badge.bottomAnchor, constant: -2)
-        ])
-        return badge
     }
 
     private func makeDivider() -> NSView {

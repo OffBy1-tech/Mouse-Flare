@@ -63,6 +63,13 @@ namespace Mouseflare.UI
             sliderDensity.Value = _overlay.SparkDensityMultiplier * 5.0;
             sliderSpeed.Value = _overlay.AnimationSpeedMultiplier;
             sliderThreshold.Value = _overlay.MinMovementThreshold;
+            sliderVorticity.Value = _overlay.FluidVorticity;
+            sliderDissipation.Value = _overlay.FluidDissipation;
+            txtVorticityVal.Text = string.Format("{0:0.0}x", _overlay.FluidVorticity);
+            txtDissipationVal.Text = string.Format("{0:0}%", _overlay.FluidDissipation * 100);
+            txtSidebarVersion.Text = Core.Updater.Shared.IsDevBuild
+                ? "Mouseflare dev build"
+                : $"Mouseflare v{Core.Updater.Shared.CurrentVersion}";
 
             txtIntensityVal.Text = string.Format("{0:0.0}x", _overlay.IntensityMultiplier);
             txtDensityVal.Text = string.Format("{0:0} / 10", _overlay.SparkDensityMultiplier * 5.0);
@@ -573,6 +580,18 @@ namespace Mouseflare.UI
             if (txtThresholdVal != null) txtThresholdVal.Text = string.Format("{0:0} px", sliderThreshold.Value);
         }
 
+        private void OnVorticityChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_overlay != null) _overlay.FluidVorticity = sliderVorticity.Value;
+            if (txtVorticityVal != null) txtVorticityVal.Text = string.Format("{0:0.0}x", sliderVorticity.Value);
+        }
+
+        private void OnDissipationChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_overlay != null) _overlay.FluidDissipation = sliderDissipation.Value;
+            if (txtDissipationVal != null) txtDissipationVal.Text = string.Format("{0:0}%", sliderDissipation.Value * 100);
+        }
+
         // Hotkey & Actions
         private void OnRecordHotkey(object sender, RoutedEventArgs e)
         {
@@ -673,6 +692,8 @@ namespace Mouseflare.UI
                 _overlay.ReducedMotion = false;
                 _overlay.SoundFxEnabled = true;
                 _overlay.AutoCheckUpdates = true;
+                _overlay.FluidVorticity = 0.85;
+                _overlay.FluidDissipation = 0.96;
             }
             LoadCurrentSettings();
             SetStatusText("✓ All Settings Reset to Factory Defaults!");
@@ -715,6 +736,8 @@ namespace Mouseflare.UI
                 Hotkey = _currentHotkey,
                 AutoCheckUpdates = _overlay.AutoCheckUpdates,
                 QuickSwatches = _overlay.QuickSwatches,
+                FluidVorticity = _overlay.FluidVorticity,
+                FluidDissipation = _overlay.FluidDissipation,
             };
             return Core.SettingsStore.Save(s);
         }

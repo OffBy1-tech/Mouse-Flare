@@ -155,9 +155,6 @@
                         </Border>
                         <TextBlock Text="Mouseflare" FontSize="12" FontWeight="Bold" Foreground="#FAFAFA" VerticalAlignment="Center"/>
                         <TextBlock Text=" — Settings &amp; FX Studio" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
-                        <Border Background="#1C1917" BorderBrush="#78350F" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="10,0,0,0">
-                            <TextBlock Text="Windows 11 Native" FontSize="9" FontWeight="SemiBold" Foreground="#F59E0B"/>
-                        </Border>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -174,6 +171,7 @@
                     <DockPanel LastChildFill="True">
                         <!-- Bottom Action Button -->
                         <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                            <TextBlock x:Name="txtSidebarVersion" Text="Mouseflare v0.0.0" FontSize="10" Foreground="#52525B" HorizontalAlignment="Center" Margin="0,0,0,6"/>
                             <Button x:Name="btnTestFlareSidebar" Height="36" Background="#F59E0B" Foreground="#09090B" FontWeight="Bold" FontSize="12" Cursor="Hand" BorderThickness="0" Click="OnTestFlare">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
@@ -967,6 +965,35 @@
                                         <Slider x:Name="sliderThreshold" Minimum="0" Maximum="15" Value="2" ValueChanged="OnThresholdChanged" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Grid>
+                            </Border>
+
+                            <!-- Fluid Dynamics & Vorticity Engine (cyan accent, matches macOS) -->
+                            <Border Background="#18181B" BorderBrush="#730E7490" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Fluid Dynamics &amp; Vorticity Engine" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                    <TextBlock Text="Vorticity curl, turbulent smoke diffusion &amp; glowing dye for the fluid presets." FontSize="11" Foreground="#71717A" Margin="0,2,0,12"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="20"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <DockPanel LastChildFill="False">
+                                                <TextBlock Text="Vorticity (Curl Spin Strength)" FontSize="11" FontWeight="SemiBold" Foreground="#D4D4D8"/>
+                                                <TextBlock x:Name="txtVorticityVal" DockPanel.Dock="Right" Text="0.9x" FontSize="11" Foreground="#06B6D4" FontWeight="Bold"/>
+                                            </DockPanel>
+                                            <Slider x:Name="sliderVorticity" Minimum="0.1" Maximum="2.0" Value="0.85" ValueChanged="OnVorticityChanged" Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <DockPanel LastChildFill="False">
+                                                <TextBlock Text="Smoke Persistence (Dissipation)" FontSize="11" FontWeight="SemiBold" Foreground="#D4D4D8"/>
+                                                <TextBlock x:Name="txtDissipationVal" DockPanel.Dock="Right" Text="96%" FontSize="11" Foreground="#06B6D4" FontWeight="Bold"/>
+                                            </DockPanel>
+                                            <Slider x:Name="sliderDissipation" Minimum="0.90" Maximum="0.99" Value="0.96" ValueChanged="OnDissipationChanged" Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
                             </Border>
                         </StackPanel>
                     </ScrollViewer>
