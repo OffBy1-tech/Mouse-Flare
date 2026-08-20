@@ -24,6 +24,7 @@ enum Theme {
 /// A rounded, bordered, clickable card — used for nav items, preset cards, and color chips.
 final class CardButton: NSView {
     var onClick: (() -> Void)?
+    var onDoubleClick: (() -> Void)?
 
     init() {
         super.init(frame: .zero)
@@ -42,7 +43,11 @@ final class CardButton: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        onClick?()
+        if event.clickCount == 2, let onDoubleClick {
+            onDoubleClick()
+        } else {
+            onClick?()
+        }
     }
 
     override func resetCursorRects() {
@@ -505,6 +510,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 self?.customHexField.stringValue = preset.hex
                 self?.customHexPreview.layer?.backgroundColor = dotColor.cgColor
                 self?.refreshPresetHighlights()
+                self?.refreshQuickSwatches()
                 self?.setStatus("Color: \(preset.title)")
             }
             colorChips[preset.id] = (chip, chipLabel)
@@ -531,15 +537,15 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         customHexField.isBordered = true
         customHexField.translatesAutoresizingMaskIntoConstraints = false
         customHexField.widthAnchor.constraint(equalToConstant: 84).isActive = true
-
-        let applyButton = makeFilledButton(title: "Apply Color", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 10, height: 26)
-        applyButton.onClick = { [weak self] in self?.applyCustomHex() }
+        customHexField.target = self
+        customHexField.action = #selector(hexFieldEntered) // Enter applies
 
         let quickLabel = makeLabel("Quick:", size: 10, weight: .regular, color: Theme.textMuted)
         let customRow = NSStackView(views: [customLabel, customHexPreview, customHexField, NSView(), quickLabel])
         customRow.orientation = .horizontal
         customRow.spacing = 8
-        // Editable quick swatches: clicking one opens the color picker for it
+        // Quick swatches: click selects the color, double-click opens the picker
+        // to edit it; the selected swatch is marked with a white ring
         for (index, hex) in SettingsManager.shared.settings.quickSwatches.enumerated() {
             let swatch = CardButton()
             swatch.layer?.cornerRadius = 9
@@ -547,11 +553,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             swatch.translatesAutoresizingMaskIntoConstraints = false
             swatch.widthAnchor.constraint(equalToConstant: 18).isActive = true
             swatch.heightAnchor.constraint(equalToConstant: 18).isActive = true
-            swatch.onClick = { [weak self] in self?.openColorPicker(.swatch(index)) }
+            swatch.toolTip = "Click to use this color • double-click to edit it"
+            swatch.onClick = { [weak self] in self?.selectQuickSwatch(index) }
+            swatch.onDoubleClick = { [weak self] in self?.openColorPicker(.swatch(index)) }
             quickSwatchButtons.append(swatch)
             customRow.addArrangedSubview(swatch)
         }
-        customRow.addArrangedSubview(applyButton)
         embed(customRow, in: customCard, padding: 12)
         stack.addArrangedSubview(customCard)
         customCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -855,6 +862,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             self?.customHexField.stringValue = hex
             self?.customHexPreview.layer?.backgroundColor = NSColor(hexString: hex).cgColor
             self?.refreshPresetHighlights()
+            self?.refreshQuickSwatches()
         }
 
         let panel = ColorPickerPanel(
@@ -883,6 +891,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 self?.customHexField.stringValue = priorCustom
                 self?.customHexPreview.layer?.backgroundColor = NSColor(hexString: priorCustom).cgColor
                 self?.refreshPresetHighlights()
+                self?.refreshQuickSwatches()
                 self?.activeColorPicker = nil
             }
         )
@@ -891,10 +900,35 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         panel.makeKeyAndOrderFront(nil)
     }
 
+    @objc private func hexFieldEntered() {
+        applyCustomHex()
+    }
+
+    private func selectQuickSwatch(_ index: Int) {
+        var settings = SettingsManager.shared.settings
+        guard index < settings.quickSwatches.count else { return }
+        let hex = settings.quickSwatches[index]
+        settings.colorPreset = "color-custom"
+        settings.customColorHex = hex
+        SettingsManager.shared.settings = settings
+        customHexField.stringValue = hex
+        customHexPreview.layer?.backgroundColor = NSColor(hexString: hex).cgColor
+        refreshQuickSwatches()
+        refreshPresetHighlights()
+        setStatus("Color: \(hex) (double-click a swatch to edit it)")
+    }
+
     private func refreshQuickSwatches() {
-        let swatches = SettingsManager.shared.settings.quickSwatches
-        for (index, button) in quickSwatchButtons.enumerated() where index < swatches.count {
-            button.setStyle(background: NSColor(hexString: swatches[index]), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
+        let cfg = SettingsManager.shared.settings
+        for (index, button) in quickSwatchButtons.enumerated() where index < cfg.quickSwatches.count {
+            let hex = cfg.quickSwatches[index]
+            let isSelected = cfg.colorPreset == "color-custom"
+                && cfg.customColorHex.uppercased() == hex.uppercased()
+            button.setStyle(
+                background: NSColor(hexString: hex),
+                border: isSelected ? .white : NSColor(hexString: "#3F3F46"),
+                borderWidth: isSelected ? 2 : 1
+            )
         }
     }
 
@@ -912,6 +946,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         SettingsManager.shared.settings = cfg
         customHexPreview.layer?.backgroundColor = NSColor(hexString: hex).cgColor
         refreshPresetHighlights()
+        refreshQuickSwatches()
         setStatus("Custom Color Applied: \(hex.uppercased())")
     }
 

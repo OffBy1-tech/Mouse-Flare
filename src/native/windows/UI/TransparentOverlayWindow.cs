@@ -32,7 +32,9 @@ namespace Mouseflare.UI
         public bool ReducedMotion { get; set; } = false;
         public bool SoundFxEnabled { get; set; } = true;
         public bool AutoCheckUpdates { get; set; } = true;
-        public string[] QuickSwatches { get; set; } = { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7" };
+        public static readonly string[] DefaultQuickSwatches =
+            { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7", "#EF4444", "#FACC15", "#22C55E" };
+        public string[] QuickSwatches { get; set; } = (string[])DefaultQuickSwatches.Clone();
         public double FluidVorticity { get; set; } = 0.85;    // 0.1 .. 2.0 (curl spin strength)
         public double FluidDissipation { get; set; } = 0.96;  // 0.90 .. 0.99 (smoke persistence)
 

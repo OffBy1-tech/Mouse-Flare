@@ -85,6 +85,7 @@ namespace Mouseflare.UI
                 swatchButtons[i].Background = new SolidColorBrush(
                     ColorPickerWindow.ParseHex(_overlay.QuickSwatches[i], Colors.White));
             }
+            RefreshSwatchSelection();
 
             // Highlight initial presets and color palettes
             RefreshActivePresetHighlights();
@@ -467,13 +468,52 @@ namespace Mouseflare.UI
 
         // ---- Color picker (custom color + editable quick swatches) ----
 
-        private Button[] QuickSwatchButtons => new[] { btnQuickSwatch0, btnQuickSwatch1, btnQuickSwatch2, btnQuickSwatch3, btnQuickSwatch4 };
+        private Button[] QuickSwatchButtons => new[]
+        {
+            btnQuickSwatch0, btnQuickSwatch1, btnQuickSwatch2, btnQuickSwatch3,
+            btnQuickSwatch4, btnQuickSwatch5, btnQuickSwatch6, btnQuickSwatch7
+        };
 
-        private void OnEditQuickSwatch(object sender, RoutedEventArgs e)
+        /// <summary>Single click: use this swatch's color.</summary>
+        private void OnSelectQuickSwatch(object sender, RoutedEventArgs e)
+        {
+            if (_overlay != null && sender is Button btn && btn.Tag is string tag
+                && int.TryParse(tag, out int index) && index < _overlay.QuickSwatches.Length)
+            {
+                ApplyCustomColorLive(_overlay.QuickSwatches[index]);
+                SetStatusText($"Color: {_overlay.QuickSwatches[index]} (double-click a swatch to edit it)");
+            }
+        }
+
+        /// <summary>Double click: edit this swatch in the color picker.</summary>
+        private void OnEditQuickSwatch(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (sender is Button btn && btn.Tag is string tag && int.TryParse(tag, out int index))
             {
+                e.Handled = true;
                 OpenColorPicker($"Quick Color {index + 1}", swatchIndex: index);
+            }
+        }
+
+        /// <summary>White ring on whichever swatch matches the active color.</summary>
+        private void RefreshSwatchSelection()
+        {
+            if (_overlay == null) return;
+            string current = ColorPickerWindow.ToHex(_overlay.CurrentColor);
+            var buttons = QuickSwatchButtons;
+            for (int i = 0; i < buttons.Length && i < _overlay.QuickSwatches.Length; i++)
+            {
+                bool selected = string.Equals(_overlay.QuickSwatches[i], current, StringComparison.OrdinalIgnoreCase);
+                buttons[i].BorderBrush = selected ? Brushes.White : new SolidColorBrush(Color.FromRgb(0x3F, 0x3F, 0x46));
+                buttons[i].BorderThickness = new Thickness(selected ? 2 : 1);
+            }
+        }
+
+        private void OnCustomHexKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                OnApplyCustomHex(sender, e);
             }
         }
 
@@ -545,6 +585,7 @@ namespace Mouseflare.UI
                 }
             }
             catch { }
+            RefreshSwatchSelection();
         }
 
         private void SetStatusText(string msg)

@@ -865,58 +865,70 @@
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
                                         <TextBlock Text="Custom Color:" FontSize="11" FontWeight="SemiBold" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <Border x:Name="brdCustomPreview" Width="16" Height="16" CornerRadius="8" Background="#F59E0B" BorderBrush="#52525B" BorderThickness="1" Margin="0,0,8,0" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="OnEditCustomColor" ToolTip="Click to open the color picker"/>
-                                        <TextBox x:Name="txtCustomHex" Text="#F59E0B" Width="84" Height="26" Background="#18181B" Foreground="#FAFAFA" BorderBrush="#3F3F46" BorderThickness="1" FontSize="11" Padding="6,3" VerticalContentAlignment="Center" TextChanged="OnCustomHexChanged"/>
+                                        <TextBox x:Name="txtCustomHex" Text="#F59E0B" Width="84" Height="26" Background="#18181B" Foreground="#FAFAFA" BorderBrush="#3F3F46" BorderThickness="1" FontSize="11" Padding="6,3" VerticalContentAlignment="Center" TextChanged="OnCustomHexChanged" KeyDown="OnCustomHexKeyDown"/>
                                     </StackPanel>
 
                                     <!-- Quick Swatches -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="Quick:" FontSize="10" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                        <Button x:Name="btnQuickSwatch0" Tag="0" Width="18" Height="18" Margin="0,0,4,0" Background="#FF007F" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnEditQuickSwatch" ToolTip="Click to edit this quick color">
+                                        <Button x:Name="btnQuickSwatch0" Tag="0" Width="18" Height="18" Margin="0,0,4,0" Background="#FF007F" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
-                                        <Button x:Name="btnQuickSwatch1" Tag="1" Width="18" Height="18" Margin="0,0,4,0" Background="#3B82F6" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnEditQuickSwatch" ToolTip="Click to edit this quick color">
+                                        <Button x:Name="btnQuickSwatch1" Tag="1" Width="18" Height="18" Margin="0,0,4,0" Background="#3B82F6" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
-                                        <Button x:Name="btnQuickSwatch2" Tag="2" Width="18" Height="18" Margin="0,0,4,0" Background="#14B8A6" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnEditQuickSwatch" ToolTip="Click to edit this quick color">
+                                        <Button x:Name="btnQuickSwatch2" Tag="2" Width="18" Height="18" Margin="0,0,4,0" Background="#14B8A6" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
-                                        <Button x:Name="btnQuickSwatch3" Tag="3" Width="18" Height="18" Margin="0,0,4,0" Background="#F97316" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnEditQuickSwatch" ToolTip="Click to edit this quick color">
+                                        <Button x:Name="btnQuickSwatch3" Tag="3" Width="18" Height="18" Margin="0,0,4,0" Background="#F97316" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
-                                        <Button x:Name="btnQuickSwatch4" Tag="4" Width="18" Height="18" Margin="0,0,4,0" Background="#A855F7" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnEditQuickSwatch" ToolTip="Click to edit this quick color">
+                                        <Button x:Name="btnQuickSwatch4" Tag="4" Width="18" Height="18" Margin="0,0,4,0" Background="#A855F7" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="9"/>
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button x:Name="btnQuickSwatch5" Tag="5" Width="18" Height="18" Margin="0,0,4,0" Background="#EF4444" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button x:Name="btnQuickSwatch6" Tag="6" Width="18" Height="18" Margin="0,0,4,0" Background="#FACC15" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button x:Name="btnQuickSwatch7" Tag="7" Width="18" Height="18" Margin="0,0,4,0" Background="#22C55E" BorderBrush="#3F3F46" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
                                     </StackPanel>
 
-                                    <Button Grid.Column="2" Content="Apply Color" Width="82" Height="26" Background="#27272A" Foreground="#FAFAFA" FontSize="10" FontWeight="SemiBold" Cursor="Hand" Click="OnApplyCustomHex">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="{x:Type Button}">
-                                                <Border Background="{TemplateBinding Background}" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="5">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
                                 </Grid>
                             </Border>
 

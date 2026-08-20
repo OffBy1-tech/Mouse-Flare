@@ -311,7 +311,14 @@ namespace Mouseflare
             overlay.ReducedMotion = s.ReducedMotion;
             overlay.SoundFxEnabled = s.SoundFxEnabled;
             overlay.AutoCheckUpdates = s.AutoCheckUpdates;
-            if (s.QuickSwatches is { Length: > 0 }) overlay.QuickSwatches = s.QuickSwatches;
+            if (s.QuickSwatches is { Length: > 0 })
+            {
+                // Older installs saved fewer swatches; pad with the new defaults
+                var defaults = TransparentOverlayWindow.DefaultQuickSwatches;
+                overlay.QuickSwatches = s.QuickSwatches.Length >= defaults.Length
+                    ? s.QuickSwatches
+                    : s.QuickSwatches.Concat(defaults.Skip(s.QuickSwatches.Length)).ToArray();
+            }
             overlay.FluidVorticity = s.FluidVorticity;
             overlay.FluidDissipation = s.FluidDissipation;
             overlay.CurrentColor = ParseHexColor(s.CurrentColorHex, Color.FromRgb(245, 158, 11));

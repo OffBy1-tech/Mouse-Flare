@@ -16,7 +16,7 @@ public struct MacFlareSettings: Codable {
     public var colorPreset: String = "color-amber"
     // color-amber, color-cyan, color-emerald, color-violet, color-gold, color-white, color-crimson, color-custom
     public var customColorHex: String = "#F59E0B"
-    public var quickSwatches: [String] = ["#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7"]
+    public var quickSwatches: [String] = ["#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7", "#EF4444", "#FACC15", "#22C55E"]
 
     // Physics & density
     public var intensity: Double = 1.0        // 0.5 ... 2.0
@@ -54,6 +54,10 @@ public struct MacFlareSettings: Codable {
         colorPreset = try c.decodeIfPresent(String.self, forKey: .colorPreset) ?? d.colorPreset
         customColorHex = try c.decodeIfPresent(String.self, forKey: .customColorHex) ?? d.customColorHex
         quickSwatches = try c.decodeIfPresent([String].self, forKey: .quickSwatches) ?? d.quickSwatches
+        // Older installs saved fewer swatches; pad with the new defaults
+        if quickSwatches.count < d.quickSwatches.count {
+            quickSwatches += d.quickSwatches[quickSwatches.count...]
+        }
         intensity = try c.decodeIfPresent(Double.self, forKey: .intensity) ?? d.intensity
         particleDensity = try c.decodeIfPresent(Double.self, forKey: .particleDensity) ?? d.particleDensity
         animationSpeed = try c.decodeIfPresent(Double.self, forKey: .animationSpeed) ?? d.animationSpeed
