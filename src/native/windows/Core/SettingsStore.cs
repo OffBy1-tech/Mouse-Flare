@@ -25,8 +25,6 @@ namespace Mouseflare.Core
         public string SecondaryColorHex { get; set; } = "#FBBF24";
         public bool IdleBurstEnabled { get; set; } = true;
         public bool MonitorCrossingFxEnabled { get; set; } = true;
-        public bool ShakeToFindEnabled { get; set; } = true;
-        public bool ReducedMotion { get; set; } = false;
         public bool SoundFxEnabled { get; set; } = true;
         public string Hotkey { get; set; } = "Ctrl + Shift + F";
         public bool AutoCheckUpdates { get; set; } = true;

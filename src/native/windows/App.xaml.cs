@@ -307,8 +307,6 @@ namespace Mouseflare
             overlay.MinMovementThreshold = s.MinMovementThreshold;
             overlay.IdleBurstEnabled = s.IdleBurstEnabled;
             overlay.MonitorCrossingFxEnabled = s.MonitorCrossingFxEnabled;
-            overlay.ShakeToFindEnabled = s.ShakeToFindEnabled;
-            overlay.ReducedMotion = s.ReducedMotion;
             overlay.SoundFxEnabled = s.SoundFxEnabled;
             overlay.AutoCheckUpdates = s.AutoCheckUpdates;
             if (s.QuickSwatches is { Length: > 0 })

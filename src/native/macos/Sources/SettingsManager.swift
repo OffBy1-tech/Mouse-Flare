@@ -31,8 +31,6 @@ public struct MacFlareSettings: Codable {
     // Behavior & monitors
     public var idleBurst: Bool = true
     public var monitorCrossingFx: Bool = true
-    public var shakeToFind: Bool = true
-    public var reducedMotion: Bool = false
 
     // General
     public var soundFx: Bool = true
@@ -66,8 +64,6 @@ public struct MacFlareSettings: Codable {
         fluidDissipation = try c.decodeIfPresent(Double.self, forKey: .fluidDissipation) ?? d.fluidDissipation
         idleBurst = try c.decodeIfPresent(Bool.self, forKey: .idleBurst) ?? d.idleBurst
         monitorCrossingFx = try c.decodeIfPresent(Bool.self, forKey: .monitorCrossingFx) ?? d.monitorCrossingFx
-        shakeToFind = try c.decodeIfPresent(Bool.self, forKey: .shakeToFind) ?? d.shakeToFind
-        reducedMotion = try c.decodeIfPresent(Bool.self, forKey: .reducedMotion) ?? d.reducedMotion
         soundFx = try c.decodeIfPresent(Bool.self, forKey: .soundFx) ?? d.soundFx
         startAtLogin = try c.decodeIfPresent(Bool.self, forKey: .startAtLogin) ?? d.startAtLogin
         hotkey = try c.decodeIfPresent(String.self, forKey: .hotkey) ?? d.hotkey

@@ -135,8 +135,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var switchAutoUpdate: NSSwitch!
     private var switchIdleBurst: NSSwitch!
     private var switchMonitorCrossing: NSSwitch!
-    private var switchShakeToFind: NSSwitch!
-    private var switchReducedMotion: NSSwitch!
 
     private var sliderIntensity: NSSlider!
     private var sliderDensity: NSSlider!
@@ -650,25 +648,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             control: switchMonitorCrossing
         )
 
-        switchShakeToFind = NSSwitch()
-        switchShakeToFind.target = self
-        switchShakeToFind.action = #selector(togglesChanged)
-        addToggleCard(
-            to: stack,
-            title: "Shake-to-Find Cursor Detection",
-            subtitle: "Rapidly shaking your mouse triggers the Find Mouse flare automatically.",
-            control: switchShakeToFind
-        )
-
-        switchReducedMotion = NSSwitch()
-        switchReducedMotion.target = self
-        switchReducedMotion.action = #selector(togglesChanged)
-        addToggleCard(
-            to: stack,
-            title: "Accessibility: Reduced Motion",
-            subtitle: "Replaces particle sprays with a single clean, high-contrast locator beacon.",
-            control: switchReducedMotion
-        )
     }
 
     // MARK: Tab: Diagnostics
@@ -755,8 +734,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         switchAutoUpdate.state = cfg.autoCheckUpdates ? .on : .off
         switchIdleBurst.state = cfg.idleBurst ? .on : .off
         switchMonitorCrossing.state = cfg.monitorCrossingFx ? .on : .off
-        switchShakeToFind.state = cfg.shakeToFind ? .on : .off
-        switchReducedMotion.state = cfg.reducedMotion ? .on : .off
 
         sliderIntensity.doubleValue = cfg.intensity
         sliderDensity.doubleValue = cfg.particleDensity
@@ -810,8 +787,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         cfg.autoCheckUpdates = switchAutoUpdate.state == .on
         cfg.idleBurst = switchIdleBurst.state == .on
         cfg.monitorCrossingFx = switchMonitorCrossing.state == .on
-        cfg.shakeToFind = switchShakeToFind.state == .on
-        cfg.reducedMotion = switchReducedMotion.state == .on
         SettingsManager.shared.settings = cfg
         (NSApp.delegate as? AppDelegate)?.applyStartAtLogin(cfg.startAtLogin)
     }

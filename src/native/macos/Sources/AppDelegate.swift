@@ -49,10 +49,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var mouseTracker: MouseTracker?
     private var settingsWindowController: SettingsWindowController?
 
-    // Shake-to-find state
-    private var lastShakeDx: CGFloat = 0
-    private var shakeFlips: [TimeInterval] = []
-    private var lastShakeTrigger: TimeInterval = 0
     private var lastMousePoint: CGPoint = .zero
 
     // Monitor-crossing state
@@ -293,30 +289,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     view.addCursorMotion(atScreenPoint: screenPoint)
                 }
             }
-            self.detectShake(at: screenPoint)
             self.detectMonitorCrossing(at: screenPoint)
             self.lastMousePoint = screenPoint
-        }
-    }
-
-    // MARK: Shake-to-Find
-
-    private func detectShake(at point: CGPoint) {
-        guard SettingsManager.shared.settings.shakeToFind else { return }
-        let dx = point.x - lastMousePoint.x
-        let now = Date.timeIntervalSinceReferenceDate
-
-        // Count rapid horizontal direction reversals within a short window
-        if abs(dx) > 18, dx.sign != lastShakeDx.sign, abs(lastShakeDx) > 18 {
-            shakeFlips.append(now)
-        }
-        if abs(dx) > 4 { lastShakeDx = dx }
-        shakeFlips.removeAll { now - $0 > 0.7 }
-
-        if shakeFlips.count >= 4, now - lastShakeTrigger > 2.0 {
-            lastShakeTrigger = now
-            shakeFlips.removeAll()
-            triggerFindMouse()
         }
     }
 

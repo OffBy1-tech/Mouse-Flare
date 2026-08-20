@@ -42,6 +42,7 @@ final class OverlayView: NSView {
     private var displayTimer: Timer?
     private var lastPoint: CGPoint = .zero
     private var lastMotionTime: TimeInterval = 0
+    private var pendingIdleBurst = false
     private let screenFrame: NSRect
     private var strokeIndex: Int = 0
 
@@ -90,23 +91,26 @@ final class OverlayView: NSView {
         let dy = point.y - lastPoint.y
         let dist = hypot(dx, dy)
 
+        let now = Date.timeIntervalSinceReferenceDate
+        // Arm the idle burst BEFORE consuming lastMotionTime: the first post-idle
+        // event is usually a 1-2px twitch below the movement threshold, so the
+        // flag must survive until a real movement can fire the burst.
+        if now - lastMotionTime > 2.0 {
+            pendingIdleBurst = true
+        }
+        lastMotionTime = now
+
         // Smoothly re-anchor if cursor teleported or woke from idle (>150pt gap)
         if dist > 150.0 || lastPoint == .zero {
             lastPoint = point
-            lastMotionTime = Date.timeIntervalSinceReferenceDate
             return
         }
 
         let cfg = SettingsManager.shared.settings
-        guard cfg.enabled, cfg.passiveFxEnabled, !cfg.reducedMotion else {
+        guard cfg.enabled, cfg.passiveFxEnabled else {
             lastPoint = point
-            lastMotionTime = Date.timeIntervalSinceReferenceDate
             return
         }
-
-        let now = Date.timeIntervalSinceReferenceDate
-        let wasIdle = (now - lastMotionTime) > 2.0
-        lastMotionTime = now
 
         if dist > CGFloat(max(0.5, cfg.movementThreshold)) {
             let speed = min(35.0, Double(dist))
@@ -119,9 +123,10 @@ final class OverlayView: NSView {
                 particles.append(generateParticle(at: point, angle: angle, speed: speed, cfg: cfg, index: i))
             }
 
-            if wasIdle && cfg.idleBurst {
+            if pendingIdleBurst && cfg.idleBurst {
                 spawnBurst(at: point, count: 14, speedRange: 2.0...4.5, color: cfg.primaryColor, cfg: cfg)
             }
+            pendingIdleBurst = false
         }
         lastPoint = point
     }
@@ -421,14 +426,6 @@ final class OverlayView: NSView {
         let primary = cfg.primaryColor
         let secondary = cfg.secondaryColor
 
-        if cfg.reducedMotion {
-            // Single clean, high-contrast locator beacon
-            rings.append(BeaconRing(center: point, radius: 8, maxRadius: 110, alpha: 1.0, progress: 0, color: .white, lineWidth: 5.0))
-            rings.append(BeaconRing(center: point, radius: 8, maxRadius: 80, alpha: 1.0, progress: -0.1, color: primary, lineWidth: 4.0))
-            needsDisplay = true
-            return
-        }
-
         switch cfg.flarePreset {
         case "sonar-radar":
             for i in 0..<4 {
@@ -485,7 +482,7 @@ final class OverlayView: NSView {
     func monitorCrossingPulse(atScreenPoint screenPoint: CGPoint) {
         guard screenFrame.contains(screenPoint) else { return }
         let cfg = SettingsManager.shared.settings
-        guard cfg.enabled, !cfg.reducedMotion else { return }
+        guard cfg.enabled else { return }
         let point = CGPoint(
             x: screenPoint.x - screenFrame.origin.x,
             y: screenPoint.y - screenFrame.origin.y

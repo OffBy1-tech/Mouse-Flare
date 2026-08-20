@@ -53,8 +53,6 @@ namespace Mouseflare.UI
             chkPassiveFx.IsChecked = _overlay.EnablePassiveFx;
             chkIdleBurst.IsChecked = _overlay.IdleBurstEnabled;
             chkMonitorCrossing.IsChecked = _overlay.MonitorCrossingFxEnabled;
-            chkShakeToFind.IsChecked = _overlay.ShakeToFindEnabled;
-            chkReducedMotion.IsChecked = _overlay.ReducedMotion;
             chkSoundFx.IsChecked = _overlay.SoundFxEnabled;
             chkAutoUpdates.IsChecked = _overlay.AutoCheckUpdates;
             txtAutoUpdatesSub.Text = $"Quietly check GitHub Releases every 6 hours (installed: v{Core.Updater.Shared.CurrentVersion}). Use the tray menu for a manual check.";
@@ -161,16 +159,6 @@ namespace Mouseflare.UI
         private void OnMonitorCrossingChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.MonitorCrossingFxEnabled = chkMonitorCrossing.IsChecked == true;
-        }
-
-        private void OnShakeToFindChanged(object sender, RoutedEventArgs e)
-        {
-            if (_overlay != null) _overlay.ShakeToFindEnabled = chkShakeToFind.IsChecked == true;
-        }
-
-        private void OnReducedMotionChanged(object sender, RoutedEventArgs e)
-        {
-            if (_overlay != null) _overlay.ReducedMotion = chkReducedMotion.IsChecked == true;
         }
 
         private void OnSoundFxChanged(object sender, RoutedEventArgs e)
@@ -729,8 +717,6 @@ namespace Mouseflare.UI
                 _overlay.SecondaryColor = Color.FromRgb(251, 191, 36);
                 _overlay.IdleBurstEnabled = true;
                 _overlay.MonitorCrossingFxEnabled = true;
-                _overlay.ShakeToFindEnabled = true;
-                _overlay.ReducedMotion = false;
                 _overlay.SoundFxEnabled = true;
                 _overlay.AutoCheckUpdates = true;
                 _overlay.FluidVorticity = 0.85;

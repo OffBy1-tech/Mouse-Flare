@@ -28,8 +28,6 @@ namespace Mouseflare.UI
         public double MinMovementThreshold { get; set; } = 2.0;
         public bool IdleBurstEnabled { get; set; } = true; // matches Reset Defaults and the macOS/web defaults
         public bool MonitorCrossingFxEnabled { get; set; } = true;
-        public bool ShakeToFindEnabled { get; set; } = true;
-        public bool ReducedMotion { get; set; } = false;
         public bool SoundFxEnabled { get; set; } = true;
         public bool AutoCheckUpdates { get; set; } = true;
         public static readonly string[] DefaultQuickSwatches =
@@ -54,8 +52,6 @@ namespace Mouseflare.UI
             SecondaryColorHex = ColorPickerWindow.ToHex(SecondaryColor),
             IdleBurstEnabled = IdleBurstEnabled,
             MonitorCrossingFxEnabled = MonitorCrossingFxEnabled,
-            ShakeToFindEnabled = ShakeToFindEnabled,
-            ReducedMotion = ReducedMotion,
             SoundFxEnabled = SoundFxEnabled,
             AutoCheckUpdates = AutoCheckUpdates,
             QuickSwatches = QuickSwatches,
@@ -88,7 +84,6 @@ namespace Mouseflare.UI
 
         private readonly List<Particle> _particles = new();
         private readonly List<FlareRing> _rings = new();
-        private readonly Queue<(double X, double Y, long Time)> _motionHistory = new();
         private readonly Random _rand = new();
         private double _lastX, _lastY;
         private long _lastMoveTime;
@@ -163,24 +158,7 @@ namespace Mouseflare.UI
                 _lastX = localX;
                 _lastY = localY;
                 _lastMoveTime = now;
-                _motionHistory.Clear();
                 return;
-            }
-
-            // 1. Shake-to-Find Detection (rapid cursor reversals)
-            if (ShakeToFindEnabled)
-            {
-                _motionHistory.Enqueue((localX, localY, now));
-                while (_motionHistory.Count > 0 && (now - _motionHistory.Peek().Time) > 450)
-                {
-                    _motionHistory.Dequeue();
-                }
-
-                if (_motionHistory.Count >= 8 && CountDirectionReversals() >= 4)
-                {
-                    _motionHistory.Clear();
-                    TriggerFindMouse();
-                }
             }
 
             _lastMoveTime = now;
@@ -191,27 +169,6 @@ namespace Mouseflare.UI
 
             _lastX = localX;
             _lastY = localY;
-        }
-
-        private int CountDirectionReversals()
-        {
-            var points = _motionHistory.ToArray();
-            int reversals = 0;
-            double lastDx = 0;
-
-            for (int i = 1; i < points.Length; i++)
-            {
-                double curDx = points[i].X - points[i - 1].X;
-                if (Math.Abs(curDx) > 14)
-                {
-                    if (lastDx != 0 && Math.Sign(curDx) != Math.Sign(lastDx))
-                    {
-                        reversals++;
-                    }
-                    lastDx = curDx;
-                }
-            }
-            return reversals;
         }
 
         private void SpawnIdleBurst(double x, double y)
@@ -587,16 +544,6 @@ namespace Mouseflare.UI
             if (SoundFxEnabled)
             {
                 try { System.Media.SystemSounds.Asterisk.Play(); } catch { }
-            }
-
-            if (ReducedMotion)
-            {
-                _rings.Add(new FlareRing
-                {
-                    X = localX, Y = localY, Radius = 6, MaxRadius = 80, Alpha = 1.0, Progress = 0,
-                    Color = CurrentColor, FlareType = "solar-flare", LineWidth = 4.0
-                });
-                return;
             }
 
             switch (FlareFxStyle)
