@@ -85,9 +85,13 @@ namespace Mouseflare.Tray
         {
             try
             {
-                string path = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app-logo.png");
-                if (!System.IO.File.Exists(path)) return null;
-                using var source = new Bitmap(path);
+                // Read the embedded WPF resource (works under single-file
+                // publish, unlike loose content files)
+                var resource = System.Windows.Application.GetResourceStream(
+                    new Uri("pack://application:,,,/Assets/app-logo.png"));
+                if (resource == null) return null;
+                using var stream = resource.Stream;
+                using var source = new Bitmap(stream);
                 using var bmp = new Bitmap(source, new Size(32, 32));
                 IntPtr hIcon = bmp.GetHicon();
                 return Icon.FromHandle(hIcon);

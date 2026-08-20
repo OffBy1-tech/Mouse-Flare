@@ -17,15 +17,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Embedded for XAML (window icon / title bar brand) -->
+    <!-- Embedded WPF resource ONLY (XAML brand image, window icon, and the
+         tray icon via Application.GetResourceStream). It must NOT also be a
+         Content item: content-file pack URIs resolve through Assembly.Location,
+         which is empty under PublishSingleFile — the XAML loader then crashes
+         with ArgumentNullException in Path.Combine. -->
     <Resource Include="Assets\app-logo.png" />
-    <!-- Loose copy for the WinForms tray icon (System.Drawing reads from disk) -->
-    <Content Include="Assets\app-logo.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\app-logo.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>

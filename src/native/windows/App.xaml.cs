@@ -249,16 +249,25 @@ namespace Mouseflare
         {
             Dispatcher.Invoke(() =>
             {
-                if (_settingsWindow == null || !_settingsWindow.IsLoaded)
+                try
                 {
-                    _settingsWindow = new SettingsWindow(_overlay, _hotkeyManager, _currentHotkey);
-                    _settingsWindow.HotkeyChanged += (combo) => _currentHotkey = combo;
-                    _settingsWindow.Closed += (s, e) => _settingsWindow = null;
-                    _settingsWindow.Show();
+                    if (_settingsWindow == null || !_settingsWindow.IsLoaded)
+                    {
+                        _settingsWindow = new SettingsWindow(_overlay, _hotkeyManager, _currentHotkey);
+                        _settingsWindow.HotkeyChanged += (combo) => _currentHotkey = combo;
+                        _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+                        _settingsWindow.Show();
+                    }
+                    else
+                    {
+                        _settingsWindow.Activate();
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    _settingsWindow.Activate();
+                    // Keep the tray app alive rather than surfacing the WinForms
+                    // unhandled-exception dialog
+                    MessageBox.Show(ex.ToString(), "Could not open Settings", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             });
         }
