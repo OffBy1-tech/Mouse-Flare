@@ -2,6 +2,21 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.6.0 (2026-08-21)
+
+## Mouseflare 0.6.0 — Hover Polish & True Additive FX on Windows
+
+### 🖱️ Hover states everywhere
+- Every button on all three platforms now responds to the mouse with one shared language: quiet buttons brighten their violet border with a faint glow and a slight lift, primary gradient buttons glow warmer, and selected items stay stable under the pointer.
+- macOS buttons gained hover for the first time (with reduced-motion support); Windows' inline-styled buttons (nav, preset cards, chips, swatches) join the already-hovering templated controls; the web filled its last few gaps.
+
+### 🌟 Windows custom FX: real additive blending and glow bloom (#1)
+- FX Designer configs using `lighter`, `screen`, or `color-dodge` blends — and glow bloom — now render on Windows through a new pixel compositor instead of falling back to flat compositing. Additive-heavy designs like **Cyberpunk Surge** finally match the web simulator and macOS.
+- Plain designs keep the original fast path, and the compositor tracks the particle cloud with dirty-region updates to stay light at full frame rate.
+
+### 🔍 Crisp text on Windows
+- Fixed blurry, ghosted text throughout the settings window — most visibly on dropdowns. Glow effects were rasterizing the text they wrapped (including the window frame's own glow, which softened every label in the app); glows now live on dedicated carrier elements behind the content, with pixel-snapped layout on both windows.
+
 ## Mouseflare v0.5.0 (2026-08-21)
 
 ## Mouseflare 0.5.0 — Neon Settings & Smarter Saves
