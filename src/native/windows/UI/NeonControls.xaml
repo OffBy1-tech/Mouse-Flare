@@ -133,16 +133,18 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
-                    <Border x:Name="bd"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8"
-                            Padding="{TemplateBinding Padding}"
-                            RenderTransformOrigin="0.5,0.5"
-                            SnapsToDevicePixels="True">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
-                    </Border>
+                    <!-- The glow lives on a childless carrier: an Effect
+                         rasterizes its whole subtree, so text must never sit
+                         inside the element that glows. -->
+                    <Grid x:Name="root" RenderTransformOrigin="0.5,0.5">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                SnapsToDevicePixels="True"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="bd" Property="BorderBrush" Value="#A855F7"/>
@@ -150,7 +152,7 @@
                             <Setter TargetName="bd" Property="Effect" Value="{StaticResource NeonQuietGlow}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bd" Property="RenderTransform">
+                            <Setter TargetName="root" Property="RenderTransform">
                                 <Setter.Value>
                                     <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
                                 </Setter.Value>
@@ -160,7 +162,7 @@
                             <Setter TargetName="bd" Property="BorderBrush" Value="#A855F7"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                            <Setter TargetName="root" Property="Opacity" Value="0.5"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -178,16 +180,19 @@
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Padding" Value="14,6"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Effect" Value="{StaticResource NeonWarmGlow}"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource NeonFocusVisual}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
                     <Grid RenderTransformOrigin="0.5,0.5" x:Name="root">
-                        <Border Background="{TemplateBinding Background}"
+                        <!-- glowBd carries the always-on warm glow; keeping the
+                             text outside the Effect subtree keeps it crisp -->
+                        <Border x:Name="glowBd"
+                                Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8"
+                                Effect="{StaticResource NeonWarmGlow}"
                                 SnapsToDevicePixels="True"/>
                         <Border x:Name="sheen" Background="#FFFFFF" Opacity="0" CornerRadius="8" IsHitTestVisible="False"/>
                         <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
@@ -195,7 +200,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="sheen" Property="Opacity" Value="0.12"/>
-                            <Setter Property="Effect" Value="{StaticResource NeonWarmGlowHover}"/>
+                            <Setter TargetName="glowBd" Property="Effect" Value="{StaticResource NeonWarmGlowHover}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="root" Property="RenderTransform">
@@ -230,19 +235,23 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBox}">
-                    <Border x:Name="bd"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6"
-                            SnapsToDevicePixels="True">
-                        <ScrollViewer x:Name="PART_ContentHost"
-                                      Margin="{TemplateBinding Padding}"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                      Focusable="False"
-                                      HorizontalScrollBarVisibility="Hidden"
-                                      VerticalScrollBarVisibility="Hidden"/>
-                    </Border>
+                    <!-- Focus glow lives on the childless bd so the text is
+                         never inside the rasterized Effect subtree -->
+                    <Grid>
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True"/>
+                        <Border BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="Transparent" Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="bd" Property="BorderBrush" Value="#6E4A9E"/>
@@ -528,14 +537,20 @@
                                AllowsTransparency="True"
                                PopupAnimation="Fade"
                                Focusable="False">
-                            <Grid Margin="8" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                            <!-- Explicit Display mode: TextOptions doesn't
+                                 reliably inherit across the popup boundary.
+                                 The glow sits on a childless carrier so the
+                                 item text never gets rasterized by it. -->
+                            <Grid Margin="8" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                  TextOptions.TextFormattingMode="Display">
                                 <Border Background="#120A20"
                                         BorderBrush="#8CA855F7"
                                         BorderThickness="1"
                                         CornerRadius="10"
                                         Effect="{StaticResource NeonPopupGlow}"
-                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                                        SnapsToDevicePixels="True">
+                                        SnapsToDevicePixels="True"/>
+                                <Border BorderThickness="1" BorderBrush="Transparent" CornerRadius="10"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                     <ScrollViewer Margin="0,4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                         <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
                                     </ScrollViewer>

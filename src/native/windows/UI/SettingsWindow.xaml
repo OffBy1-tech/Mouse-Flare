@@ -8,6 +8,7 @@
         PreviewKeyDown="OnHotkeyPreviewKeyDown"
         FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
         TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True"
         RenderOptions.ClearTypeHint="Enabled">
 
     <Window.Resources>
@@ -20,24 +21,31 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <!-- MAIN WINDOW CONTAINER: neon gradient frame with violet glow -->
-    <Border BorderThickness="2" CornerRadius="14" Margin="10">
-        <Border.Background>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
-                <GradientStop Color="#120A20" Offset="0"/>
-                <GradientStop Color="#0A0512" Offset="1"/>
-            </LinearGradientBrush>
-        </Border.Background>
-        <Border.BorderBrush>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#A855F7" Offset="0"/>
-                <GradientStop Color="#4F7CFF" Offset="0.55"/>
-                <GradientStop Color="#F043C8" Offset="1"/>
-            </LinearGradientBrush>
-        </Border.BorderBrush>
-        <Border.Effect>
-            <DropShadowEffect Color="#A855F7" BlurRadius="26" ShadowDepth="0" Opacity="0.45"/>
-        </Border.Effect>
+    <!-- MAIN WINDOW CONTAINER: neon gradient frame with violet glow.
+         The glowing frame is a childless sibling BEHIND the content: a WPF
+         Effect rasterizes its entire subtree, so a glow on a border wrapping
+         the UI would blur every piece of text in the window. -->
+    <Grid Margin="10">
+        <Border BorderThickness="2" CornerRadius="14">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
+                    <GradientStop Color="#120A20" Offset="0"/>
+                    <GradientStop Color="#0A0512" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#A855F7" Offset="0"/>
+                    <GradientStop Color="#4F7CFF" Offset="0.55"/>
+                    <GradientStop Color="#F043C8" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <Border.Effect>
+                <DropShadowEffect Color="#A855F7" BlurRadius="26" ShadowDepth="0" Opacity="0.45"/>
+            </Border.Effect>
+        </Border>
+
+        <Border BorderThickness="2" BorderBrush="Transparent" CornerRadius="14">
 
         <Grid>
             <Grid.RowDefinitions>
@@ -124,7 +132,8 @@
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
                                         <Grid>
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                        <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" SnapsToDevicePixels="True"/>
+                                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
                                                     <TextBlock Text="🔥" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -147,7 +156,8 @@
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
                                         <Grid>
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                        <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" SnapsToDevicePixels="True"/>
+                                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#2E1B4A" Margin="0,0,8,0">
                                                     <TextBlock Text="✨" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -170,7 +180,8 @@
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
                                         <Grid>
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                        <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" SnapsToDevicePixels="True"/>
+                                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
                                                     <TextBlock Text="🧪" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -193,7 +204,8 @@
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
                                         <Grid>
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                        <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" SnapsToDevicePixels="True"/>
+                                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
                                                     <TextBlock Text="🎛️" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -216,7 +228,8 @@
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
                                         <Grid>
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                        <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" SnapsToDevicePixels="True"/>
+                                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
                                                     <TextBlock Text="📊" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -239,7 +252,8 @@
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
                                         <Grid>
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                        <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" SnapsToDevicePixels="True"/>
+                                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
                                                     <TextBlock Text="🔄" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -284,7 +298,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
                                                         <Path Data="M 12,2 A 10,10 0 1 0 22,12 M 12,6 A 6,6 0 1 0 18,12" Stroke="#2FD4F5" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -310,7 +325,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
                                                         <Path Data="M 14,3 L 16,11 L 24,14 L 16,17 L 14,25 L 12,17 L 4,14 L 12,11 Z" Fill="#FFA62E" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -336,7 +352,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#281A3C" Margin="0,0,8,0">
                                                         <Path Data="M 12,3 C 8,3 5,7 7,12 C 5,14 6,18 10,19 C 14,20 18,17 17,13 C 19,9 16,3 12,3 Z" Fill="#A855F7" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -362,7 +379,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
                                                         <Path Data="M 4,12 C 8,4 16,20 20,12" Stroke="#2FD4F5" StrokeThickness="2.5" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -388,7 +406,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1F1B3E" Margin="0,0,8,0">
                                                         <Path Data="M 12,2 A 10,10 0 1 0 22,12 M 12,6 A 6,6 0 1 0 18,12" Stroke="#8B5CF6" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -414,7 +433,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1E293B" Margin="0,0,8,0">
                                                         <Ellipse Width="14" Height="14" Fill="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -440,7 +460,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
                                                         <Ellipse Width="12" Height="12" Fill="#2FD4F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -466,7 +487,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
                                                         <Path Data="M 4,20 L 18,6 L 22,10 L 8,24 Z" Fill="#8B5CF6" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
@@ -492,7 +514,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
                                                         <Ellipse Width="14" Height="14" Stroke="#2FD4F5" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -518,7 +541,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#063324" Margin="0,0,8,0">
                                                         <Path Data="M 12,4 C 15,4 18,7 18,10 C 18,14 12,20 12,20 C 12,20 6,14 6,10 C 6,7 9,4 12,4 Z" Fill="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
@@ -544,7 +568,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#292006" Margin="0,0,8,0">
                                                         <Path Data="M 12,2 L 14.5,9.5 L 22,12 L 14.5,14.5 L 12,22 L 9.5,14.5 L 2,12 L 9.5,9.5 Z" Fill="#EAB308" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
@@ -570,7 +595,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
                                                         <Path Data="M 13,2 L 5,14 L 12,14 L 11,22 L 19,10 L 12,10 Z" Fill="#FFA62E" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
@@ -596,7 +622,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2E1022" Margin="0,0,8,0">
                                                         <Path Data="M 4,18 A 10,10 0 0 1 20,18" Stroke="#EC4899" StrokeThickness="2.2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -622,7 +649,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
                                                         <Ellipse Width="12" Height="12" Stroke="#8B5CF6" StrokeThickness="2" Fill="#3B1C66" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -648,7 +676,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#052E16" Margin="0,0,8,0">
                                                         <TextBlock Text="ア" FontFamily="Consolas" FontWeight="Bold" FontSize="14" Foreground="#22C55E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -674,7 +703,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2E1010" Margin="0,0,8,0">
                                                         <Path Data="M4,13 L8,3 L12,8 L16,2 L14,14 Z" Fill="#F97316" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -700,7 +730,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1A0B2E" Margin="0,0,8,0">
                                                         <Path Data="M 13,2 L 5,14 L 12,14 L 11,22 L 19,10 L 12,10 Z" Fill="#00F2FF" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
@@ -726,7 +757,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A1B3D" Margin="0,0,8,0">
                                                         <Path Data="M 12,2 L 14.5,9.5 L 22,12 L 14.5,14.5 L 12,22 L 9.5,14.5 L 2,12 L 9.5,9.5 Z" Fill="#D97FFF" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
@@ -752,7 +784,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1F1B3E" Margin="0,0,8,0">
                                                         <Path Data="M 12,2 A 10,10 0 1 0 22,12 M 12,6 A 6,6 0 1 0 18,12" Stroke="#A78BFA" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -778,7 +811,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1A0F2E" BorderBrush="#4A2E75" BorderThickness="1" Margin="0,0,8,0">
                                                         <Ellipse Width="8" Height="8" Fill="#FAFAFA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -804,7 +838,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A1B3D" Margin="0,0,8,0">
                                                         <TextBlock Text="🧪" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -852,7 +887,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
                                                         <Path Data="M 12,6 A 6,6 0 1 0 12,18 A 6,6 0 1 0 12,6 M 12,2 L 12,4 M 12,20 L 12,22 M 2,12 L 4,12 M 20,12 L 22,12" Stroke="#FFA62E" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -878,7 +914,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
                                                         <Path Data="M 12,4 A 8,8 0 1 0 20,12 M 12,8 A 4,4 0 1 0 16,12" Stroke="#2FD4F5" StrokeThickness="2.2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -904,7 +941,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
                                                         <Ellipse Width="14" Height="14" Stroke="#2FD4F5" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -930,7 +968,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#063324" Margin="0,0,8,0">
                                                         <Path Data="M 12,2 L 12,22 M 2,12 L 22,12" Stroke="#10B981" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
@@ -956,7 +995,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
                                                         <Ellipse Width="14" Height="8" Stroke="#8B5CF6" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -982,7 +1022,8 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2E1212" Margin="0,0,8,0">
                                                         <Path Data="M 12,2 L 14,9 L 21,9 L 15,14 L 18,21 L 12,16 L 6,21 L 9,14 L 3,9 L 10,9 Z" Fill="#EF4444" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
@@ -1687,5 +1728,6 @@
                 </Grid>
             </Grid>
         </Grid>
-    </Border>
+        </Border>
+    </Grid>
 </Window>
