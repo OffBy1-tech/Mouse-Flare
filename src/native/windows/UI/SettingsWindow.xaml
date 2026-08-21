@@ -11,136 +11,13 @@
         RenderOptions.ClearTypeHint="Enabled">
 
     <Window.Resources>
-        <!-- Neon theme shared brushes (mirror UI/NeonTheme.cs) -->
-        <LinearGradientBrush x:Key="NeonPrimaryBrush" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#FFA62E" Offset="0"/>
-            <GradientStop Color="#FF5E62" Offset="0.55"/>
-            <GradientStop Color="#F043C8" Offset="1"/>
-        </LinearGradientBrush>
-        <LinearGradientBrush x:Key="NeonCheckFill" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#4F7CFF" Offset="0"/>
-            <GradientStop Color="#A855F7" Offset="1"/>
-        </LinearGradientBrush>
-        <LinearGradientBrush x:Key="NeonThumbFill" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#4F7CFF" Offset="0"/>
-            <GradientStop Color="#A855F7" Offset="1"/>
-        </LinearGradientBrush>
-
-        <!-- Sleek Dark ScrollBar Styles -->
-        <Style TargetType="{x:Type ScrollBar}">
-            <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="Width" Value="6"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ScrollBar}">
-                        <Grid Background="Transparent">
-                            <Track x:Name="PART_Track" IsDirectionReversed="true">
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Border Background="#4A2E75" CornerRadius="3" Opacity="0.75"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Modern Dark CheckBox Style -->
-        <Style TargetType="{x:Type CheckBox}">
-            <Setter Property="Foreground" Value="#FAFAFA"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type CheckBox}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border x:Name="chkBox" Width="20" Height="20" CornerRadius="5" Background="#1A0F2E" BorderBrush="#4A2E75" BorderThickness="1.5" VerticalAlignment="Center">
-                                <TextBlock x:Name="chkCheck" Text="✓" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
-                            </Border>
-                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="chkBox" Property="Background" Value="{StaticResource NeonCheckFill}"/>
-                                <Setter TargetName="chkBox" Property="BorderBrush" Value="#BEA0FF"/>
-                                <Setter TargetName="chkCheck" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="chkBox" Property="BorderBrush" Value="#A855F7"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Modern Dark Slider Style -->
-        <Style TargetType="{x:Type Slider}">
-            <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="Height" Value="24"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Slider}">
-                        <Grid VerticalAlignment="Center">
-                            <Border Height="4" Background="#2E1B4A" CornerRadius="2"/>
-                            <Track x:Name="PART_Track">
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Ellipse Width="14" Height="14" Fill="{StaticResource NeonThumbFill}" Stroke="#BEA0FF" StrokeThickness="1.5">
-                                                    <Ellipse.Effect>
-                                                        <DropShadowEffect Color="#A855F7" BlurRadius="6" ShadowDepth="0" Opacity="0.45"/>
-                                                    </Ellipse.Effect>
-                                                </Ellipse>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Cyan slider variant for the Fluid Dynamics section (matches web) -->
-        <Style x:Key="NeonCyanSlider" TargetType="{x:Type Slider}">
-            <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="Height" Value="24"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Slider}">
-                        <Grid VerticalAlignment="Center">
-                            <Border Height="4" Background="#1B3350" CornerRadius="2"/>
-                            <Track x:Name="PART_Track">
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Ellipse Width="14" Height="14" Fill="#2FD4F5" Stroke="#96E6FF" StrokeThickness="1.5">
-                                                    <Ellipse.Effect>
-                                                        <DropShadowEffect Color="#2FD4F5" BlurRadius="6" ShadowDepth="0" Opacity="0.45"/>
-                                                    </Ellipse.Effect>
-                                                </Ellipse>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <!-- Neon control templates + shared brushes; implicit styles here
+                 also reach the code-built FX Designer and Updates controls -->
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="NeonControls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Window.Resources>
 
     <!-- MAIN WINDOW CONTAINER: neon gradient frame with violet glow -->
@@ -231,20 +108,11 @@
                         <!-- Bottom Action Button -->
                         <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
                             <TextBlock x:Name="txtSidebarVersion" Text="Mouseflare v0.0.0" FontSize="10" Foreground="#FAFAFA" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                            <Button x:Name="btnTestFlareSidebar" Height="36" Background="{StaticResource NeonPrimaryBrush}" Foreground="#0A0512" FontWeight="Bold" FontSize="12" Cursor="Hand" BorderThickness="0" Click="OnTestFlare">
-                                <Button.Effect>
-                                    <DropShadowEffect Color="#FF8C3C" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
-                                </Button.Effect>
-                                <Button.Template>
-                                    <ControlTemplate TargetType="{x:Type Button}">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="7" Padding="8,0">
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <TextBlock Text="⚡" FontSize="12" Margin="0,0,6,0"/>
-                                                <TextBlock Text="Test Flare Now" FontWeight="Bold" FontSize="11" Foreground="#0A0512"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
+                            <Button x:Name="btnTestFlareSidebar" Height="36" Style="{StaticResource NeonPrimaryButton}" FontSize="11" Click="OnTestFlare">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚡" FontSize="12" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Test Flare Now" FontWeight="Bold" FontSize="11"/>
+                                </StackPanel>
                             </Button>
                         </StackPanel>
 
@@ -985,7 +853,7 @@
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
                                         <TextBlock Text="Custom Color:" FontSize="11" FontWeight="SemiBold" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <Border x:Name="brdCustomPreview" Width="16" Height="16" CornerRadius="8" Background="#FFA62E" BorderBrush="#6E5F8E" BorderThickness="1" Margin="0,0,8,0" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="OnEditCustomColor" ToolTip="Click to open the color picker"/>
-                                        <TextBox x:Name="txtCustomHex" Text="#FFA62E" Width="84" Height="26" Background="#1A0F2E" Foreground="#FAFAFA" BorderBrush="#4A2E75" BorderThickness="1" FontSize="11" Padding="6,3" VerticalContentAlignment="Center" TextChanged="OnCustomHexChanged" KeyDown="OnCustomHexKeyDown"/>
+                                        <TextBox x:Name="txtCustomHex" Text="#FFA62E" Width="84" Height="26" FontSize="11" TextChanged="OnCustomHexChanged" KeyDown="OnCustomHexKeyDown"/>
                                     </StackPanel>
 
                                     <!-- Quick Swatches -->
@@ -1188,10 +1056,10 @@
                                     </DockPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                                         <TextBlock Text="Presets:" FontSize="11" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <Button Content="Ctrl+Shift+F" Margin="0,0,6,0" Padding="8,3" Background="#2E1B4A" Foreground="#D4D4D8" FontSize="10" Cursor="Hand" Click="OnPresetHotkey"/>
-                                        <Button Content="Ctrl+Space" Margin="0,0,6,0" Padding="8,3" Background="#2E1B4A" Foreground="#D4D4D8" FontSize="10" Cursor="Hand" Click="OnPresetHotkey"/>
-                                        <Button Content="Alt+M" Margin="0,0,6,0" Padding="8,3" Background="#2E1B4A" Foreground="#D4D4D8" FontSize="10" Cursor="Hand" Click="OnPresetHotkey"/>
-                                        <Button Content="F1" Padding="8,3" Background="#2E1B4A" Foreground="#D4D4D8" FontSize="10" Cursor="Hand" Click="OnPresetHotkey"/>
+                                        <Button Content="Ctrl+Shift+F" Margin="0,0,6,0" Padding="8,3" FontSize="10" Click="OnPresetHotkey"/>
+                                        <Button Content="Ctrl+Space" Margin="0,0,6,0" Padding="8,3" FontSize="10" Click="OnPresetHotkey"/>
+                                        <Button Content="Alt+M" Margin="0,0,6,0" Padding="8,3" FontSize="10" Click="OnPresetHotkey"/>
+                                        <Button Content="F1" Padding="8,3" FontSize="10" Click="OnPresetHotkey"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -1290,52 +1158,15 @@
                                     <TextBlock x:Name="txtUpdateVersion" Text="Mouseflare v0.0.0" FontSize="12" FontWeight="SemiBold" Foreground="#FFA62E" Margin="0,4,0,0"/>
                                     <TextBlock x:Name="txtUpdateStatus" Text="Background checks run every 6 hours." FontSize="11" Foreground="#71717A" Margin="0,2,0,10" TextWrapping="Wrap"/>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button x:Name="btnCheckNow" Content="🔄 Check Now" Padding="12,6" Margin="0,0,8,0" Background="#2E1B4A" Foreground="#D4D4D8" BorderBrush="#4A2E75" BorderThickness="1" FontWeight="SemiBold" FontSize="11" Cursor="Hand" Click="OnCheckUpdatesNow">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Border x:Name="root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsEnabled" Value="False">
-                                                            <Setter TargetName="root" Property="Opacity" Value="0.5"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
-                                        <Button x:Name="btnReleaseNotes" Content="View Release Notes" Padding="12,6" Background="#2E1B4A" Foreground="#D4D4D8" BorderBrush="#4A2E75" BorderThickness="1" FontWeight="SemiBold" FontSize="11" Cursor="Hand" Click="OnViewReleaseNotes">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
+                                        <Button x:Name="btnCheckNow" Content="🔄 Check Now" Margin="0,0,8,0" FontWeight="SemiBold" FontSize="11" Click="OnCheckUpdatesNow"/>
+                                        <Button x:Name="btnReleaseNotes" Content="View Release Notes" FontWeight="SemiBold" FontSize="11" Click="OnViewReleaseNotes"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
 
                             <Border x:Name="cardUpdateAvailable" Background="#1A0F2E" BorderBrush="#FFA62E" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10" Visibility="Collapsed">
                                 <DockPanel LastChildFill="True">
-                                    <Button x:Name="btnInstallUpdate" DockPanel.Dock="Right" VerticalAlignment="Center" Height="34" Background="{StaticResource NeonPrimaryBrush}" Foreground="#0A0512" FontWeight="Bold" FontSize="11" BorderThickness="0" Cursor="Hand" Click="OnInstallUpdate">
-                                        <Button.Effect>
-                                            <DropShadowEffect Color="#FF8C3C" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
-                                        </Button.Effect>
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="{x:Type Button}">
-                                                <Border x:Name="root" Background="{TemplateBinding Background}" CornerRadius="7" Padding="14,0">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsEnabled" Value="False">
-                                                        <Setter TargetName="root" Property="Opacity" Value="0.5"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
+                                    <Button x:Name="btnInstallUpdate" DockPanel.Dock="Right" VerticalAlignment="Center" Height="34" FontSize="11" Style="{StaticResource NeonPrimaryButton}" Click="OnInstallUpdate"/>
                                     <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
                                         <TextBlock x:Name="txtUpdateAvailTitle" Text="Mouseflare v0.0.0 is available" FontWeight="Bold" FontSize="13" Foreground="#FFA62E"/>
                                         <TextBlock x:Name="txtUpdateAvailSub" Text="" FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,0" TextWrapping="Wrap"/>
@@ -1375,38 +1206,11 @@
 
                             <!-- Button Actions Line -->
                             <DockPanel Grid.Row="1" LastChildFill="False">
-                                <Button Content="Reset Defaults" Width="96" Height="32" Background="Transparent" Foreground="#A1A1AA" FontSize="11" DockPanel.Dock="Left" Cursor="Hand" Click="OnResetDefaults">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="{x:Type Button}">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
+                                <Button Content="Reset Defaults" Width="96" Height="32" Background="Transparent" BorderBrush="Transparent" Foreground="#A1A1AA" FontSize="11" DockPanel.Dock="Left" Click="OnResetDefaults"/>
 
-                                <Button Content="Close" Width="76" Height="32" Background="#2E1B4A" Foreground="#FAFAFA" DockPanel.Dock="Right" Cursor="Hand" Click="OnCloseWindow">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="{x:Type Button}">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
+                                <Button Content="Close" Width="76" Height="32" FontSize="11" Foreground="#FAFAFA" DockPanel.Dock="Right" Click="OnCloseWindow"/>
 
-                                <Button x:Name="btnSave" Content="Apply &amp; Save" Width="116" Height="32" Background="{StaticResource NeonPrimaryBrush}" Foreground="#22080F" FontWeight="Bold" DockPanel.Dock="Right" Margin="0,0,8,0" Cursor="Hand" Click="OnSaveAndApply">
-                                    <Button.Effect>
-                                        <DropShadowEffect Color="#FF8C3C" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
-                                    </Button.Effect>
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="{x:Type Button}">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
+                                <Button x:Name="btnSave" Content="Apply &amp; Save" Width="116" Height="32" FontSize="11" Style="{StaticResource NeonPrimaryButton}" DockPanel.Dock="Right" Margin="0,0,8,0" Click="OnSaveAndApply"/>
                             </DockPanel>
                         </Grid>
                     </Border>

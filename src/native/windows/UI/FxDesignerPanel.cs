@@ -112,7 +112,7 @@ namespace Mouseflare.UI
                 Apply();
                 _status($"Loaded archetype: {loaded.name} — previewing live on your cursor");
             };
-            _nameBox = new TextBox { Width = 150, FontSize = 11, Margin = new Thickness(8, 0, 0, 0), Background = Hex("#1A0F2E"), Foreground = Hex("#FAFAFA"), BorderBrush = Hex("#4A2E75") };
+            _nameBox = new TextBox { FontSize = 11, Margin = new Thickness(8, 0, 0, 0), MinWidth = 90 };
             _nameBox.LostFocus += (s, e) => ControlsChanged();
 
             var copy = SmallButton("Copy JSON", () =>
@@ -136,18 +136,25 @@ namespace Mouseflare.UI
                 _status($"Imported: {parsed.name}");
             });
 
+            // Fixed pieces dock left/right; the name box fills whatever is
+            // left so nothing clips at narrow widths
+            header.LastChildFill = true;
             var left = new StackPanel { Orientation = Orientation.Horizontal };
             left.Children.Add(Label("Archetype:"));
             left.Children.Add(archetypes);
-            left.Children.Add(Label("  Name:"));
-            left.Children.Add(_nameBox);
             DockPanel.SetDock(left, Dock.Left);
             var right = new StackPanel { Orientation = Orientation.Horizontal };
             right.Children.Add(copy);
             right.Children.Add(import);
             DockPanel.SetDock(right, Dock.Right);
+            var nameSection = new DockPanel { LastChildFill = true, Margin = new Thickness(8, 0, 8, 0) };
+            var nameLabel = Label("Name:");
+            DockPanel.SetDock(nameLabel, Dock.Left);
+            nameSection.Children.Add(nameLabel);
+            nameSection.Children.Add(_nameBox);
             header.Children.Add(left);
             header.Children.Add(right);
+            header.Children.Add(nameSection);
             root.Children.Add(header);
 
             root.Children.Add(new TextBlock
@@ -254,16 +261,13 @@ namespace Mouseflare.UI
 
         private Button SmallButton(string title, Action onClick)
         {
+            // Look comes from the window's implicit neon Button template
             var button = new Button
             {
                 Content = title,
                 FontSize = 10,
                 Padding = new Thickness(10, 4, 10, 4),
                 Margin = new Thickness(6, 0, 0, 0),
-                Background = Hex("#2E1B4A"),
-                Foreground = Hex("#FAFAFA"),
-                BorderBrush = Hex("#4A2E75"),
-                Cursor = Cursors.Hand,
             };
             button.Click += (s, e) => onClick();
             return button;
