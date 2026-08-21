@@ -1,0 +1,425 @@
+using System;
+using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+namespace Mouseflare.Core
+{
+    /// <summary>
+    /// Software pixel compositor for the custom-FX engine (issue #1).
+    ///
+    /// WPF's DrawingContext has no canvas-style blend modes or shadow blur, so
+    /// designs using blendMode "lighter" / "screen" / "color-dodge" or
+    /// glowBloom cannot be rendered with retained-mode drawing. This class
+    /// reproduces the web renderer's semantics (customFxRenderer.ts):
+    /// particles are rasterized once into cached sprites using the SAME vector
+    /// shape code as the plain path, then composited per-pixel into a
+    /// premultiplied-BGRA back buffer with the config's blend operator, and the
+    /// buffer is handed to WPF as one Pbgra32 WriteableBitmap per frame.
+    ///
+    /// Alpha representation: premultiplied throughout. RenderTargetBitmap
+    /// yields Pbgra32 sprites, the back buffer is premultiplied, and the
+    /// WriteableBitmap is Pbgra32, so the final hand-off to WPF (which
+    /// source-over-composites the bitmap onto the transparent overlay) is
+    /// exact. Blending starts from a transparent buffer, matching the web
+    /// canvas, where all four modes degenerate to plain painting against
+    /// emptiness and differ only where particles overlap.
+    /// </summary>
+    internal sealed class CustomFxCompositor
+    {
+        // ---- Sprite cache -------------------------------------------------
+
+        private sealed class Sprite
+        {
+            public int W, H;
+            public byte[] Px = Array.Empty<byte>(); // premultiplied BGRA at full particle alpha
+        }
+
+        // Key: shape(4b) | sizeBucket(8b) | rgb555(15b) | glow flag(1b) | glowBucket(8b)
+        private readonly Dictionary<long, Sprite> _cache = new();
+        private const int MaxCacheEntries = 512;
+
+        private static readonly string[] ShapeNames =
+        {
+            "circle", "glow-disc", "sparkle-star", "ring", "shard-crystal",
+            "plasma-orb", "smoke-puff", "lightning-bolt", "bubble",
+            "sakura-petal", "heart", "rune", "diamond",
+        };
+
+        private static int ShapeIndex(string shape)
+        {
+            for (int i = 0; i < ShapeNames.Length; i++)
+            {
+                if (ShapeNames[i] == shape) return i;
+            }
+            return 0; // circle
+        }
+
+        // Shapes whose rendering is rotationally symmetric can skip the
+        // inverse-rotation sampling and take the fast axis-aligned blit.
+        private static bool RotationInvariant(string shape) =>
+            shape is "circle" or "glow-disc" or "ring" or "smoke-puff";
+
+        private static long Key(int shapeIdx, int sizeBucket, Color c, bool glow, int glowBucket)
+        {
+            long key = shapeIdx & 0xF;
+            key |= (long)(sizeBucket & 0xFF) << 4;
+            key |= (long)(c.R >> 3) << 12;
+            key |= (long)(c.G >> 3) << 17;
+            key |= (long)(c.B >> 3) << 22;
+            if (glow) key |= 1L << 27;
+            key |= (long)(glowBucket & 0xFF) << 28;
+            return key;
+        }
+
+        private static Color QuantizeColor(Color c) => Color.FromRgb(
+            (byte)((c.R >> 3) << 3), (byte)((c.G >> 3) << 3), (byte)((c.B >> 3) << 3));
+
+        // ---- Frame state --------------------------------------------------
+
+        private struct Stamp
+        {
+            public Sprite Core;
+            public Sprite? Glow;
+            public double X, Y;       // device px, window-relative
+            public double Rotation;   // radians
+            public byte AlphaFactor;  // particle alpha 0..255
+            public bool Rotate;       // false => axis-aligned blit
+        }
+
+        private readonly List<Stamp> _stamps = new();
+        private double _minX, _minY, _maxX, _maxY;
+
+        // Back buffer: grow-only capacity, anchored each frame at the particle
+        // cloud's AABB origin so memory stays proportional to the cloud, not
+        // the (potentially multi-monitor) virtual screen.
+        private byte[] _buf = Array.Empty<byte>();
+        private int _capW, _capH;
+        private int _prevUsedW, _prevUsedH;
+        private WriteableBitmap? _bitmap;
+        private const int MaxDim = 4096;
+
+        /// <summary>True when this config needs per-pixel compositing.</summary>
+        public static bool Needed(CustomFxConfig config) =>
+            config.blendMode is "lighter" or "screen" or "color-dodge"
+            || (config.glowBloom && config.glowRadius > 0);
+
+        public void BeginFrame()
+        {
+            _stamps.Clear();
+            _minX = _minY = double.MaxValue;
+            _maxX = _maxY = double.MinValue;
+        }
+
+        public void Clear()
+        {
+            _stamps.Clear();
+            // Force a full clear on the next Present — the buffer may hold
+            // pixels from the previous config that would otherwise survive
+            // outside the next frame's smaller used region.
+            _prevUsedW = _capW;
+            _prevUsedH = _capH;
+        }
+
+        /// <summary>Queues one particle. Coordinates/size in DIPs; converted to device px here.</summary>
+        public void AddParticle(double x, double y, double size, double alpha, double rotation,
+                                Color color, CustomFxConfig config, double dpiScale)
+        {
+            var quant = QuantizeColor(color);
+            int sizeBucket = Math.Clamp((int)Math.Round(size * dpiScale), 1, 200);
+            int shapeIdx = ShapeIndex(config.shape);
+
+            var core = GetSprite(Key(shapeIdx, Math.Min(sizeBucket, 255), quant, glow: false, 0),
+                () => RasterizeCore(config.shape, sizeBucket, quant));
+
+            Sprite? glow = null;
+            if (config.glowBloom && config.glowRadius > 0)
+            {
+                // Canvas: shadowBlur = glowRadius * (size / 6); the glow sprite
+                // approximates the blurred silhouette with a radial falloff
+                // reaching shape extent + 1.5 * blur.
+                double blur = config.glowRadius * (size / 6.0) * dpiScale;
+                int glowRadius = Math.Clamp((int)Math.Round(sizeBucket * 1.2 + blur * 1.5), 2, 400);
+                int glowBucket = Math.Min(255, (glowRadius + 1) / 2); // 2px buckets
+                glow = GetSprite(Key(shapeIdx, 0, quant, glow: true, glowBucket),
+                    () => RasterizeGlow(glowBucket * 2, quant));
+            }
+
+            double dx = x * dpiScale, dy = y * dpiScale;
+            double half = Math.Max(core.W, glow?.W ?? 0) / 2.0;
+            // Rotated stamps sample within the sprite's own bounds, so the
+            // sprite half-diagonal bounds the footprint either way.
+            half = half * 1.4143 + 2;
+
+            _minX = Math.Min(_minX, dx - half);
+            _minY = Math.Min(_minY, dy - half);
+            _maxX = Math.Max(_maxX, dx + half);
+            _maxY = Math.Max(_maxY, dy + half);
+
+            _stamps.Add(new Stamp
+            {
+                Core = core,
+                Glow = glow,
+                X = dx,
+                Y = dy,
+                Rotation = rotation,
+                AlphaFactor = (byte)Math.Clamp((int)Math.Round(alpha * 255), 0, 255),
+                Rotate = rotation != 0 && !RotationInvariant(config.shape),
+            });
+        }
+
+        /// <summary>Composites all queued stamps and draws the result into the frame.</summary>
+        public void Present(DrawingContext dc, CustomFxConfig config, double dpiScale)
+        {
+            if (_stamps.Count == 0) return;
+
+            int anchorX = (int)Math.Floor(_minX);
+            int anchorY = (int)Math.Floor(_minY);
+            int usedW = Math.Clamp((int)Math.Ceiling(_maxX) - anchorX, 1, MaxDim);
+            int usedH = Math.Clamp((int)Math.Ceiling(_maxY) - anchorY, 1, MaxDim);
+
+            EnsureCapacity(usedW, usedH);
+
+            // Clear the union of last frame's and this frame's used regions so
+            // no stale pixels survive in the area the bitmap will present.
+            int clearW = Math.Min(_capW, Math.Max(_prevUsedW, usedW));
+            int clearH = Math.Min(_capH, Math.Max(_prevUsedH, usedH));
+            int stride = _capW * 4;
+            for (int row = 0; row < clearH; row++)
+            {
+                Array.Clear(_buf, row * stride, clearW * 4);
+            }
+
+            int blend = config.blendMode switch
+            {
+                "lighter" => 1,
+                "screen" => 2,
+                "color-dodge" => 3,
+                _ => 0,
+            };
+
+            foreach (var stamp in _stamps)
+            {
+                double sx = stamp.X - anchorX, sy = stamp.Y - anchorY;
+                if (stamp.Glow != null)
+                {
+                    BlitAxisAligned(stamp.Glow, sx, sy, stamp.AlphaFactor, blend, usedW, usedH);
+                }
+                if (stamp.Rotate)
+                {
+                    BlitRotated(stamp.Core, sx, sy, stamp.Rotation, stamp.AlphaFactor, blend, usedW, usedH);
+                }
+                else
+                {
+                    BlitAxisAligned(stamp.Core, sx, sy, stamp.AlphaFactor, blend, usedW, usedH);
+                }
+            }
+
+            _bitmap!.WritePixels(new Int32Rect(0, 0, clearW, clearH), _buf, stride, 0);
+            _prevUsedW = usedW;
+            _prevUsedH = usedH;
+
+            dc.DrawImage(_bitmap, new Rect(
+                anchorX / dpiScale, anchorY / dpiScale,
+                _capW / dpiScale, _capH / dpiScale));
+        }
+
+        private void EnsureCapacity(int w, int h)
+        {
+            if (w <= _capW && h <= _capH && _bitmap != null) return;
+            _capW = Math.Min(MaxDim, Math.Max(_capW, (w + 255) & ~255));
+            _capH = Math.Min(MaxDim, Math.Max(_capH, (h + 255) & ~255));
+            _buf = new byte[_capW * _capH * 4];
+            _bitmap = new WriteableBitmap(_capW, _capH, 96, 96, PixelFormats.Pbgra32, null);
+            _prevUsedW = _capW; // force a full clear on the next Present
+            _prevUsedH = _capH;
+        }
+
+        // ---- Rasterization (sprites reuse the vector shape code) ----------
+
+        private Sprite GetSprite(long key, Func<Sprite> create)
+        {
+            if (_cache.TryGetValue(key, out var sprite)) return sprite;
+            if (_cache.Count >= MaxCacheEntries) _cache.Clear();
+            sprite = create();
+            _cache[key] = sprite;
+            return sprite;
+        }
+
+        private static Sprite RasterizeCore(string shape, int sizeDevPx, Color color)
+        {
+            int side = Math.Max(4, (int)Math.Ceiling(sizeDevPx * 1.6 * 2) + 4);
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                dc.PushTransform(new TranslateTransform(side / 2.0, side / 2.0));
+                CustomFxEngine.DrawShapeGeometry(dc, shape, sizeDevPx, color, 255);
+                dc.Pop();
+            }
+            return Render(visual, side);
+        }
+
+        private static Sprite RasterizeGlow(int radiusDevPx, Color color)
+        {
+            int side = radiusDevPx * 2 + 2;
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                // Gaussian-ish falloff approximating canvas shadowBlur of the
+                // particle silhouette.
+                var gradient = new RadialGradientBrush();
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(217, color.R, color.G, color.B), 0));
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(115, color.R, color.G, color.B), 0.35));
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(38, color.R, color.G, color.B), 0.7));
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(0, color.R, color.G, color.B), 1));
+                gradient.Freeze();
+                dc.DrawEllipse(gradient, null, new Point(side / 2.0, side / 2.0), radiusDevPx, radiusDevPx);
+            }
+            return Render(visual, side);
+        }
+
+        private static Sprite Render(DrawingVisual visual, int side)
+        {
+            var target = new RenderTargetBitmap(side, side, 96, 96, PixelFormats.Pbgra32);
+            target.Render(visual);
+            var px = new byte[side * side * 4];
+            target.CopyPixels(px, side * 4, 0);
+            return new Sprite { W = side, H = side, Px = px };
+        }
+
+        // ---- Per-pixel blitting -------------------------------------------
+        //
+        // All pixels are premultiplied BGRA. `alphaFactor` scales the sprite
+        // (globalAlpha in the web renderer): premultiplied scaling is a plain
+        // multiply of all four channels.
+        //
+        // Blend operators (verified against W3C compositing-1 in premultiplied
+        // form; s = premultiplied source, d = premultiplied destination):
+        //   over (source-over):  d' = s + d * (1 - sa)
+        //   lighter (PD "plus"): d' = min(1, s + d)             (all channels)
+        //   screen:              d' = s + d - s * d              (all channels;
+        //       derives exactly from Co = cs(1-ab) + cb(1-as) + as*ab*B(Cb,Cs)
+        //       with B = Cb + Cs - Cb*Cs)
+        //   color-dodge: no premultiplied shortcut; computed un-premultiplied
+        //       with B(Cb,Cs) = Cb==0 ? 0 : Cs>=1 ? 1 : min(1, Cb/(1-Cs)),
+        //       ao = as + ab - as*ab.
+
+        private unsafe void BlitAxisAligned(Sprite sprite, double cx, double cy,
+                                            byte alphaFactor, int blend, int usedW, int usedH)
+        {
+            if (alphaFactor == 0) return;
+            int left = (int)Math.Round(cx - sprite.W / 2.0);
+            int top = (int)Math.Round(cy - sprite.H / 2.0);
+            int x0 = Math.Max(0, left), y0 = Math.Max(0, top);
+            int x1 = Math.Min(usedW, left + sprite.W), y1 = Math.Min(usedH, top + sprite.H);
+            if (x0 >= x1 || y0 >= y1) return;
+
+            int stride = _capW * 4, srcStride = sprite.W * 4;
+            fixed (byte* bufPtr = _buf, srcPtr = sprite.Px)
+            {
+                for (int y = y0; y < y1; y++)
+                {
+                    byte* dst = bufPtr + y * stride + x0 * 4;
+                    byte* src = srcPtr + (y - top) * srcStride + (x0 - left) * 4;
+                    for (int x = x0; x < x1; x++, dst += 4, src += 4)
+                    {
+                        BlendPixel(dst, src, alphaFactor, blend);
+                    }
+                }
+            }
+        }
+
+        private unsafe void BlitRotated(Sprite sprite, double cx, double cy, double rotation,
+                                        byte alphaFactor, int blend, int usedW, int usedH)
+        {
+            if (alphaFactor == 0) return;
+            double halfDiag = Math.Sqrt(sprite.W * sprite.W + sprite.H * sprite.H) / 2 + 1;
+            int x0 = Math.Max(0, (int)(cx - halfDiag)), y0 = Math.Max(0, (int)(cy - halfDiag));
+            int x1 = Math.Min(usedW, (int)Math.Ceiling(cx + halfDiag)), y1 = Math.Min(usedH, (int)Math.Ceiling(cy + halfDiag));
+            if (x0 >= x1 || y0 >= y1) return;
+
+            double cos = Math.Cos(-rotation), sin = Math.Sin(-rotation);
+            double halfW = sprite.W / 2.0, halfH = sprite.H / 2.0;
+            int stride = _capW * 4, srcStride = sprite.W * 4;
+
+            fixed (byte* bufPtr = _buf, srcPtr = sprite.Px)
+            {
+                for (int y = y0; y < y1; y++)
+                {
+                    byte* dst = bufPtr + y * stride + x0 * 4;
+                    double relY = y + 0.5 - cy;
+                    for (int x = x0; x < x1; x++, dst += 4)
+                    {
+                        double relX = x + 0.5 - cx;
+                        // Inverse-rotate the destination pixel into sprite space
+                        // (nearest-neighbor; sprites are small and the glow pass
+                        // is soft, so NN artifacts are invisible at cursor scale).
+                        int sx = (int)(relX * cos - relY * sin + halfW);
+                        int sy = (int)(relX * sin + relY * cos + halfH);
+                        if ((uint)sx >= (uint)sprite.W || (uint)sy >= (uint)sprite.H) continue;
+                        BlendPixel(dst, srcPtr + sy * srcStride + sx * 4, alphaFactor, blend);
+                    }
+                }
+            }
+        }
+
+        private static unsafe void BlendPixel(byte* dst, byte* srcPx, byte alphaFactor, int blend)
+        {
+            // Scale the premultiplied source by the particle alpha.
+            int sb = (srcPx[0] * alphaFactor + 127) / 255;
+            int sg = (srcPx[1] * alphaFactor + 127) / 255;
+            int sr = (srcPx[2] * alphaFactor + 127) / 255;
+            int sa = (srcPx[3] * alphaFactor + 127) / 255;
+            if (sa == 0 && sr == 0 && sg == 0 && sb == 0) return;
+
+            switch (blend)
+            {
+                case 1: // lighter — Porter-Duff "plus" with clamp
+                    dst[0] = (byte)Math.Min(255, dst[0] + sb);
+                    dst[1] = (byte)Math.Min(255, dst[1] + sg);
+                    dst[2] = (byte)Math.Min(255, dst[2] + sr);
+                    dst[3] = (byte)Math.Min(255, dst[3] + sa);
+                    break;
+
+                case 2: // screen — s + d - s*d, exact in premultiplied space
+                    dst[0] = (byte)(sb + dst[0] - (sb * dst[0] + 127) / 255);
+                    dst[1] = (byte)(sg + dst[1] - (sg * dst[1] + 127) / 255);
+                    dst[2] = (byte)(sr + dst[2] - (sr * dst[2] + 127) / 255);
+                    dst[3] = (byte)(sa + dst[3] - (sa * dst[3] + 127) / 255);
+                    break;
+
+                case 3: // color-dodge — un-premultiplied W3C blend, then recompose
+                {
+                    double asA = sa / 255.0, abA = dst[3] / 255.0;
+                    double ao = asA + abA - asA * abA;
+                    if (ao <= 0) { dst[0] = dst[1] = dst[2] = dst[3] = 0; break; }
+                    dst[0] = DodgeChannel(sb, sa, dst[0], dst[3], asA, abA);
+                    dst[1] = DodgeChannel(sg, sa, dst[1], dst[3], asA, abA);
+                    dst[2] = DodgeChannel(sr, sa, dst[2], dst[3], asA, abA);
+                    dst[3] = (byte)Math.Clamp((int)Math.Round(ao * 255), 0, 255);
+                    break;
+                }
+
+                default: // source-over
+                {
+                    int inv = 255 - sa;
+                    dst[0] = (byte)Math.Min(255, sb + (dst[0] * inv + 127) / 255);
+                    dst[1] = (byte)Math.Min(255, sg + (dst[1] * inv + 127) / 255);
+                    dst[2] = (byte)Math.Min(255, sr + (dst[2] * inv + 127) / 255);
+                    dst[3] = (byte)Math.Min(255, sa + (dst[3] * inv + 127) / 255);
+                    break;
+                }
+            }
+        }
+
+        private static byte DodgeChannel(int sPremul, int saByte, int dPremul, int daByte, double asA, double abA)
+        {
+            double cs = saByte == 0 ? 0 : Math.Min(1.0, sPremul / (double)saByte);
+            double cb = daByte == 0 ? 0 : Math.Min(1.0, dPremul / (double)daByte);
+            double b = cb <= 0 ? 0 : cs >= 1 ? 1 : Math.Min(1.0, cb / (1 - cs));
+            double co = cs * asA * (1 - abA) + cb * abA * (1 - asA) + asA * abA * b;
+            return (byte)Math.Clamp((int)Math.Round(co * 255), 0, 255);
+        }
+    }
+}
