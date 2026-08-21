@@ -2,6 +2,16 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.6.5 (2026-08-21)
+
+## Mouseflare 0.6.5 — True ClearType on Windows
+
+### 🐛 Fixed
+- **Windows**: text sharpness, definitively. The settings and color-picker windows moved from transparent layered windows (where Windows disables ClearType entirely) to opaque native-chrome windows, and dropdown lists open as opaque popups — so all text now renders with real subpixel ClearType instead of grayscale smoothing.
+
+### 🎨 Changed
+- The soft violet glow around the window and dropdown edges is replaced by the standard system drop shadow; the gradient borders and all interior styling are unchanged. Windows 11 rounds the corners natively; Windows 10 shows square corners.
+
 ## Mouseflare v0.6.4 (2026-08-21)
 
 ## Mouseflare 0.6.4 — Crisp Text on Windows
