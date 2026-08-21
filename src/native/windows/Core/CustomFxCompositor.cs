@@ -126,6 +126,15 @@ namespace Mouseflare.Core
         public void AddParticle(double x, double y, double size, double alpha, double rotation,
                                 Color color, CustomFxConfig config, double dpiScale)
         {
+            // Imported configs are unvalidated JSON and physics can run away
+            // (e.g. drag > 1 grows positions without bound): refuse non-finite
+            // or absurd inputs rather than letting them poison the frame AABB
+            // and flow into int casts.
+            if (!double.IsFinite(x) || !double.IsFinite(y) || Math.Abs(x) > 1e7 || Math.Abs(y) > 1e7) return;
+            if (!double.IsFinite(size) || !double.IsFinite(alpha) || !double.IsFinite(rotation)) return;
+            if (!double.IsFinite(dpiScale) || dpiScale <= 0) return;
+            size = Math.Clamp(size, 0.2, 300);
+
             var quant = QuantizeColor(color);
             int sizeBucket = Math.Clamp((int)Math.Round(size * dpiScale), 1, 200);
             int shapeIdx = ShapeIndex(config.shape);
@@ -138,8 +147,9 @@ namespace Mouseflare.Core
             {
                 // Canvas: shadowBlur = glowRadius * (size / 6); the glow sprite
                 // approximates the blurred silhouette with a radial falloff
-                // reaching shape extent + 1.5 * blur.
-                double blur = config.glowRadius * (size / 6.0) * dpiScale;
+                // reaching shape extent + 1.5 * blur. glowRadius comes straight
+                // from user JSON — clamp before it sizes a sprite.
+                double blur = Math.Clamp(config.glowRadius, 0.0, 100.0) * (size / 6.0) * dpiScale;
                 int glowRadius = Math.Clamp((int)Math.Round(sizeBucket * 1.2 + blur * 1.5), 2, 400);
                 int glowBucket = Math.Min(255, (glowRadius + 1) / 2); // 2px buckets
                 glow = GetSprite(Key(shapeIdx, 0, quant, glow: true, glowBucket),
@@ -174,10 +184,22 @@ namespace Mouseflare.Core
         {
             if (_stamps.Count == 0) return;
 
+            // AddParticle rejects non-finite/absurd inputs, so the AABB should
+            // always be sane — but a skipped frame beats undefined int casts if
+            // that invariant ever breaks. Clamp in double space first.
+            if (!double.IsFinite(_minX) || !double.IsFinite(_minY) ||
+                !double.IsFinite(_maxX) || !double.IsFinite(_maxY) ||
+                _maxX <= _minX || _maxY <= _minY ||
+                !double.IsFinite(dpiScale) || dpiScale <= 0)
+            {
+                _stamps.Clear();
+                return;
+            }
+
             int anchorX = (int)Math.Floor(_minX);
             int anchorY = (int)Math.Floor(_minY);
-            int usedW = Math.Clamp((int)Math.Ceiling(_maxX) - anchorX, 1, MaxDim);
-            int usedH = Math.Clamp((int)Math.Ceiling(_maxY) - anchorY, 1, MaxDim);
+            int usedW = (int)Math.Clamp(Math.Ceiling(_maxX) - anchorX, 1, MaxDim);
+            int usedH = (int)Math.Clamp(Math.Ceiling(_maxY) - anchorY, 1, MaxDim);
 
             EnsureCapacity(usedW, usedH);
 
