@@ -31,6 +31,8 @@ namespace Mouseflare.Core
             public string ZipUrl = "";
             public string SigUrl = "";
             public string PageUrl = "";
+            public DateTime? PublishedAt;  // GitHub published_at
+            public string[] Changelog = Array.Empty<string>(); // bullet lines from the release body
         }
 
         public static readonly Updater Shared = new();
@@ -46,13 +48,27 @@ namespace Mouseflare.Core
         /// <summary>Gate for background checks; wire to the persisted setting.</summary>
         public Func<bool> AutoCheckEnabled = () => true;
 
+        /// <summary>Background check cadence in hours (0 = manual only); wire to the persisted setting.</summary>
+        public Func<int> CheckIntervalHours = () => 6;
+
+        /// <summary>UTC time of the last completed feed fetch (survives restarts via settings.json).</summary>
+        public DateTime? LastCheckedUtc { get; private set; }
+
+        /// <summary>Newest stable release seen on the feed — populated even when up to date.</summary>
+        public ReleaseInfo? LatestSeenRelease { get; private set; }
+
+        /// <summary>Restores the persisted last-check time at startup (never overwrites a live one).</summary>
+        public void SeedLastChecked(DateTime? utc)
+        {
+            if (LastCheckedUtc == null) LastCheckedUtc = utc;
+        }
+
         public readonly string CurrentVersion;
         public bool IsDevBuild => CurrentVersion == "0.0.0";
 
         private readonly Uri _feedUrl;
         private readonly HttpClient _http;
         private Timer? _checkTimer;
-        private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(6);
 
         private Updater()
         {
@@ -75,11 +91,19 @@ namespace Mouseflare.Core
         public void StartBackgroundChecks()
         {
             if (IsDevBuild) return;
+            // A fast tick with an interval gate, so cadence changes apply
+            // without rescheduling the timer. 0 hours = manual checks only.
             _checkTimer = new Timer(
-                _ => { if (AutoCheckEnabled()) _ = CheckSilently(); },
+                _ =>
+                {
+                    int hours = CheckIntervalHours();
+                    if (hours <= 0 || !AutoCheckEnabled()) return;
+                    if (LastCheckedUtc is { } last && DateTime.UtcNow - last < TimeSpan.FromHours(hours)) return;
+                    _ = CheckSilently();
+                },
                 null,
                 TimeSpan.FromSeconds(30),
-                CheckInterval
+                TimeSpan.FromMinutes(30)
             );
         }
 
@@ -92,17 +116,21 @@ namespace Mouseflare.Core
 
         /// <summary>
         /// Fetches the feed. Returns the differing release, or null when up to
-        /// date. Updates Phase but never downgrades an in-flight/staged update.
+        /// date. Always records LastCheckedUtc and LatestSeenRelease; updates
+        /// Phase but never downgrades an in-flight/staged update.
         /// </summary>
         public async Task<ReleaseInfo?> CheckAsync()
         {
-            using var doc = JsonDocument.Parse(await _http.GetStringAsync(_feedUrl));
-            var root = doc.RootElement;
+            ReleaseInfo release;
+            using (var doc = JsonDocument.Parse(await _http.GetStringAsync(_feedUrl)))
+            {
+                release = ParseRelease(doc.RootElement);
+            }
 
-            string tag = root.GetProperty("tag_name").GetString() ?? "";
-            string version = tag.StartsWith("v") ? tag.Substring(1) : tag;
+            LatestSeenRelease = release;
+            LastCheckedUtc = DateTime.UtcNow;
 
-            if (IsDevBuild || version == CurrentVersion)
+            if (IsDevBuild || release.Version == CurrentVersion)
             {
                 if (Phase is UpdatePhase.Available or UpdatePhase.Error)
                 {
@@ -111,28 +139,10 @@ namespace Mouseflare.Core
                 return null;
             }
 
-            string? zipUrl = null, sigUrl = null;
-            foreach (var asset in root.GetProperty("assets").EnumerateArray())
-            {
-                string name = asset.GetProperty("name").GetString() ?? "";
-                string url = asset.GetProperty("browser_download_url").GetString() ?? "";
-                if (name == "Mouseflare-Windows.zip") zipUrl = url;
-                if (name == "Mouseflare-Windows.zip.minisig") sigUrl = url;
-            }
-            if (zipUrl == null || sigUrl == null)
+            if (release.ZipUrl.Length == 0 || release.SigUrl.Length == 0)
             {
                 throw new InvalidOperationException("The latest release has no Windows artifacts.");
             }
-
-            var release = new ReleaseInfo
-            {
-                Version = version,
-                Title = root.TryGetProperty("name", out var n) ? n.GetString() ?? $"Mouseflare v{version}" : $"Mouseflare v{version}",
-                Notes = root.TryGetProperty("body", out var b) ? b.GetString() ?? "" : "",
-                ZipUrl = zipUrl,
-                SigUrl = sigUrl,
-                PageUrl = root.GetProperty("html_url").GetString() ?? "",
-            };
 
             if (Phase is not (UpdatePhase.Downloading or UpdatePhase.Ready))
             {
@@ -140,6 +150,52 @@ namespace Mouseflare.Core
             }
             return release;
         }
+
+        private static ReleaseInfo ParseRelease(JsonElement root)
+        {
+            string tag = root.GetProperty("tag_name").GetString() ?? "";
+            string version = tag.StartsWith("v") ? tag.Substring(1) : tag;
+
+            string? zipUrl = null, sigUrl = null;
+            if (root.TryGetProperty("assets", out var assets))
+            {
+                foreach (var asset in assets.EnumerateArray())
+                {
+                    string name = asset.GetProperty("name").GetString() ?? "";
+                    string url = asset.GetProperty("browser_download_url").GetString() ?? "";
+                    if (name == "Mouseflare-Windows.zip") zipUrl = url;
+                    if (name == "Mouseflare-Windows.zip.minisig") sigUrl = url;
+                }
+            }
+
+            string notes = root.TryGetProperty("body", out var b) ? b.GetString() ?? "" : "";
+            DateTime? published = root.TryGetProperty("published_at", out var pub)
+                && pub.ValueKind == JsonValueKind.String
+                && DateTime.TryParse(pub.GetString(), null, System.Globalization.DateTimeStyles.AdjustToUniversal, out var when)
+                ? when : null;
+
+            return new ReleaseInfo
+            {
+                Version = version,
+                Title = root.TryGetProperty("name", out var n) ? n.GetString() ?? $"Mouseflare v{version}" : $"Mouseflare v{version}",
+                Notes = notes,
+                ZipUrl = zipUrl ?? "",
+                SigUrl = sigUrl ?? "",
+                PageUrl = root.GetProperty("html_url").GetString() ?? "",
+                PublishedAt = published,
+                Changelog = ParseChangelog(notes),
+            };
+        }
+
+        /// <summary>Bullet lines ("- ", "* ", "• ") from the release body, markers stripped.</summary>
+        private static string[] ParseChangelog(string body) =>
+            body.Split('\n')
+                .Select(line => line.Trim())
+                .Where(line => line.StartsWith("- ") || line.StartsWith("* ") || line.StartsWith("• "))
+                .Select(line => line.Substring(2).Trim().Trim('*').Trim())
+                .Where(line => line.Length > 0)
+                .Take(8)
+                .ToArray();
 
         // ---- Download, verify & stage ----
 

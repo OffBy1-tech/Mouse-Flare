@@ -214,60 +214,192 @@ namespace Mouseflare.UI
 
         private void OnUpdaterPhaseChanged() => Dispatcher.InvokeAsync(() => RefreshUpdatesTab());
 
+        private bool _syncingUpdatesUi;
+
+        private static SolidColorBrush Tinted(Color accent, byte alpha)
+        {
+            var brush = new SolidColorBrush(Color.FromArgb(alpha, accent.R, accent.G, accent.B));
+            brush.Freeze();
+            return brush;
+        }
+
+        private static readonly Color AccentEmerald = Color.FromRgb(0x10, 0xB9, 0x81);
+        private static readonly Color AccentAmber = Color.FromRgb(0xFF, 0xA6, 0x2E);
+        private static readonly Color AccentCyan = Color.FromRgb(0x2F, 0xD4, 0xF5);
+        private static readonly Color AccentRed = Color.FromRgb(0xEF, 0x44, 0x44);
+        private static readonly Color AccentViolet = Color.FromRgb(0xA8, 0x55, 0xF7);
+
+        private void TintHero(Color accent)
+        {
+            cardUpdateHero.BorderBrush = Tinted(accent, 0x80);
+            heroIconTile.Background = Tinted(accent, 0x22);
+            heroIconTile.BorderBrush = Tinted(accent, 0x55);
+            txtHeroIcon.Foreground = Tinted(accent, 0xFF);
+        }
+
+        private static string FormatTimeAgo(DateTime? utc)
+        {
+            if (utc == null) return "never";
+            var span = DateTime.UtcNow - utc.Value;
+            if (span < TimeSpan.FromMinutes(1)) return "just now";
+            if (span < TimeSpan.FromHours(1)) return $"{(int)span.TotalMinutes} min ago";
+            if (span < TimeSpan.FromHours(48)) return $"{(int)span.TotalHours} h ago";
+            return $"{(int)span.TotalDays} days ago";
+        }
+
         /// <summary>
-        /// Renders the Updates tab from the updater's phase. statusOverride
+        /// Renders the whole Updates tab from the updater state. statusOverride
         /// carries transient messages ("Checking…", "You're up to date") that
         /// the phase alone cannot express.
         /// </summary>
         private void RefreshUpdatesTab(string? statusOverride = null)
         {
             var updater = Core.Updater.Shared;
-            txtUpdateVersion.Text = updater.IsDevBuild
-                ? "Mouseflare dev build (unversioned)"
-                : $"Mouseflare v{updater.CurrentVersion}";
-            btnCheckNow.IsEnabled = !updater.IsDevBuild && !_updateCheckInFlight;
+            var available = updater.AvailableRelease;
+            var latest = available ?? updater.LatestSeenRelease;
+            int hours = _overlay?.CheckIntervalHours ?? 6;
 
-            bool showCard = updater.Phase is Core.Updater.UpdatePhase.Available
+            btnCheckNow.IsEnabled = !updater.IsDevBuild && !_updateCheckInFlight;
+            btnCheckNow.Content = _updateCheckInFlight ? "Validating Release Feed…" : "🔄 Check for Updates";
+
+            // Hero card
+            bool hasUpdate = available != null && updater.Phase is Core.Updater.UpdatePhase.Available
                 or Core.Updater.UpdatePhase.Downloading
                 or Core.Updater.UpdatePhase.Ready;
-            cardUpdateAvailable.Visibility = showCard ? Visibility.Visible : Visibility.Collapsed;
-            if (showCard && updater.AvailableRelease is { } release)
+            Color accent;
+            string icon, headline, titleLine;
+            if (updater.IsDevBuild)
             {
-                txtUpdateAvailTitle.Text = $"Mouseflare v{release.Version} is available";
-                txtUpdateAvailSub.Text = string.IsNullOrWhiteSpace(release.Title)
-                    ? "Verified update from GitHub Releases."
-                    : release.Title;
+                (accent, icon) = (AccentViolet, "🧪");
+                headline = "Mouseflare dev build (unversioned)";
+                titleLine = "Dev builds don't self-update — download stable builds from GitHub Releases.";
+            }
+            else if (updater.Phase == Core.Updater.UpdatePhase.Error)
+            {
+                (accent, icon) = (AccentRed, "⚠");
+                headline = "Update check failed";
+                titleLine = updater.ErrorMessage ?? "Unknown error.";
+            }
+            else if (hasUpdate)
+            {
+                bool downloading = updater.Phase == Core.Updater.UpdatePhase.Downloading;
+                accent = downloading ? AccentCyan : AccentAmber;
+                icon = downloading ? "⏬" : updater.Phase == Core.Updater.UpdatePhase.Ready ? "🔁" : "⬆";
+                headline = $"Update Available: v{available!.Version}";
+                titleLine = updater.Phase switch
+                {
+                    Core.Updater.UpdatePhase.Downloading => "Downloading and verifying the update…",
+                    Core.Updater.UpdatePhase.Ready => "Update verified and staged — restart Mouseflare to finish installing.",
+                    _ => string.IsNullOrWhiteSpace(available.Title) ? "Verified update from GitHub Releases." : available.Title,
+                };
+            }
+            else if (latest != null)
+            {
+                (accent, icon) = (AccentEmerald, "✓");
+                headline = $"Mouseflare is Up to Date (v{updater.CurrentVersion})";
+                titleLine = "You are running the latest verified stable build.";
+            }
+            else
+            {
+                (accent, icon) = (AccentEmerald, "✓");
+                headline = $"Mouseflare v{updater.CurrentVersion}";
+                titleLine = "No release check has run yet — use Check for Updates to query GitHub Releases.";
+            }
+            TintHero(accent);
+            txtHeroIcon.Text = icon;
+            txtHeroHeadline.Text = headline;
+            txtHeroTitleLine.Text = statusOverride ?? titleLine;
+
+            var meta = $"Checked: {FormatTimeAgo(updater.LastCheckedUtc)}  •  Installed: v{updater.CurrentVersion}";
+            if (latest != null)
+            {
+                meta += $"  •  Latest: v{latest.Version}";
+                if (latest.PublishedAt is { } published) meta += $" ({published:yyyy-MM-dd})";
+            }
+            txtHeroMeta.Text = meta;
+
+            pnlHeroActions.Visibility = hasUpdate ? Visibility.Visible : Visibility.Collapsed;
+            if (hasUpdate)
+            {
                 switch (updater.Phase)
                 {
                     case Core.Updater.UpdatePhase.Downloading:
-                        btnInstallUpdate.Content = $"Downloading v{release.Version}…";
+                        btnInstallUpdate.Content = $"Downloading v{available!.Version}…";
                         btnInstallUpdate.IsEnabled = false;
                         break;
                     case Core.Updater.UpdatePhase.Ready:
-                        btnInstallUpdate.Content = $"🔁 Restart to Update to v{release.Version}";
+                        btnInstallUpdate.Content = $"🔁 Restart to Update to v{available!.Version}";
                         btnInstallUpdate.IsEnabled = true;
                         break;
                     default:
-                        btnInstallUpdate.Content = $"⬇ Download & Install v{release.Version}";
+                        btnInstallUpdate.Content = $"⬇ Download & Install v{available!.Version}";
                         btnInstallUpdate.IsEnabled = true;
                         break;
                 }
             }
 
-            txtUpdateStatus.Text = statusOverride ?? updater.Phase switch
+            // Changelog card — real release-body bullets only
+            pnlChangelog.Children.Clear();
+            if (latest == null)
             {
-                Core.Updater.UpdatePhase.Error =>
-                    $"Update check failed: {updater.ErrorMessage ?? "unknown error"}",
-                Core.Updater.UpdatePhase.Available =>
-                    "A newer stable release is available — see below.",
-                Core.Updater.UpdatePhase.Downloading =>
-                    "Downloading and verifying the update…",
-                Core.Updater.UpdatePhase.Ready =>
-                    "Update verified and staged — restart Mouseflare to finish installing.",
-                _ => updater.IsDevBuild
-                    ? "Dev builds don't self-update — download stable builds from GitHub Releases."
-                    : "Background checks run every 6 hours. Use Check Now for an immediate check.",
-            };
+                pnlChangelog.Children.Add(new TextBlock
+                {
+                    Text = "Run a check to load the latest release notes from GitHub.",
+                    FontSize = 11,
+                    Foreground = Tinted(Color.FromRgb(0x71, 0x71, 0x7A), 0xFF),
+                    TextWrapping = TextWrapping.Wrap,
+                });
+            }
+            else if (latest.Changelog.Length == 0)
+            {
+                pnlChangelog.Children.Add(new TextBlock
+                {
+                    Text = string.IsNullOrWhiteSpace(latest.Title) ? "See release notes on GitHub." : latest.Title,
+                    FontSize = 11,
+                    Foreground = Tinted(Color.FromRgb(0xD4, 0xD4, 0xD8), 0xFF),
+                    TextWrapping = TextWrapping.Wrap,
+                });
+            }
+            else
+            {
+                foreach (string item in latest.Changelog)
+                {
+                    var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 0, 0, 5) };
+                    var bullet = new TextBlock
+                    {
+                        Text = "•",
+                        FontWeight = FontWeights.Bold,
+                        FontSize = 11,
+                        Foreground = Tinted(AccentAmber, 0xFF),
+                        Margin = new Thickness(0, 0, 7, 0),
+                    };
+                    DockPanel.SetDock(bullet, Dock.Left);
+                    row.Children.Add(bullet);
+                    row.Children.Add(new TextBlock
+                    {
+                        Text = item,
+                        FontSize = 11,
+                        Foreground = Tinted(Color.FromRgb(0xD4, 0xD4, 0xD8), 0xFF),
+                        TextWrapping = TextWrapping.Wrap,
+                    });
+                    pnlChangelog.Children.Add(row);
+                }
+            }
+            // Cadence card
+            txtFrequencyValue.Text = hours == 0 ? "Manual Only" : $"Every {hours} Hours";
+            txtAutoUpdatesSub.Text = hours == 0
+                ? "Manual checks only — background polling is off."
+                : $"Quietly check the release feed every {hours} hours in the background.";
+            _syncingUpdatesUi = true;
+            foreach (var entry in cmbCheckFrequency.Items)
+            {
+                if (entry is ComboBoxItem item && item.Tag is string tag && tag == hours.ToString())
+                {
+                    cmbCheckFrequency.SelectedItem = item;
+                    break;
+                }
+            }
+            _syncingUpdatesUi = false;
         }
 
         private async void OnCheckUpdatesNow(object sender, RoutedEventArgs e)
@@ -280,6 +412,7 @@ namespace Mouseflare.UI
             {
                 var release = await updater.CheckAsync();
                 _updateCheckInFlight = false;
+                PersistInstantSettings(); // keep the persisted last-checked time current
                 RefreshUpdatesTab(release == null
                     ? $"You're up to date — v{updater.CurrentVersion} is the latest stable release."
                     : null);
@@ -291,11 +424,25 @@ namespace Mouseflare.UI
             }
         }
 
+        private void OnCheckFrequencyChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (_overlay == null || _loading || _syncingUpdatesUi) return;
+            if (cmbCheckFrequency.SelectedItem is ComboBoxItem item && item.Tag is string tag && int.TryParse(tag, out int hours))
+            {
+                _overlay.CheckIntervalHours = hours;
+                PersistInstantSettings();
+                RefreshUpdatesTab();
+            }
+        }
+
         private void OnViewReleaseNotes(object sender, RoutedEventArgs e)
         {
-            string url = Core.Updater.Shared.AvailableRelease?.PageUrl is { Length: > 0 } page
-                ? page
-                : "https://github.com/OffBy1-tech/Mouse-Flare/releases";
+            var latest = Core.Updater.Shared.AvailableRelease ?? Core.Updater.Shared.LatestSeenRelease;
+            OpenUrl(latest?.PageUrl is { Length: > 0 } page ? page : "https://github.com/OffBy1-tech/Mouse-Flare/releases");
+        }
+
+        private static void OpenUrl(string url)
+        {
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo

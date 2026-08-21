@@ -93,7 +93,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
   const [lastCheckTime, setLastCheckTime] = useState<number>(() => settings.lastCheckedTimestamp || Date.now() - 1000 * 60 * 60 * 4);
-  const [selectedReleaseChannel, setSelectedReleaseChannel] = useState<'stable' | 'beta'>(settings.updateChannel || 'stable');
 
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
@@ -107,22 +106,21 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   // Initial check on mount if autoCheckUpdates is enabled and haven't checked recently
   useEffect(() => {
     if (settings.autoCheckUpdates && !updateResult) {
-      checkNativeBuildUpdates(CURRENT_BUILD_INFO.version, settings.updateChannel || 'stable').then((res) => {
+      checkNativeBuildUpdates(CURRENT_BUILD_INFO.version).then((res) => {
         setUpdateResult(res);
       });
     }
   }, []);
 
-  const handlePerformUpdateCheck = async (channelOverride?: 'stable' | 'beta') => {
-    const channel = channelOverride || settings.updateChannel || selectedReleaseChannel;
+  const handlePerformUpdateCheck = async () => {
     setIsCheckingUpdates(true);
     soundEngine.playClick();
     try {
-      const result = await checkNativeBuildUpdates(CURRENT_BUILD_INFO.version, channel);
+      const result = await checkNativeBuildUpdates(CURRENT_BUILD_INFO.version);
       setUpdateResult(result);
       const now = Date.now();
       setLastCheckTime(now);
-      updateInstant({ lastCheckedTimestamp: now, updateChannel: channel });
+      updateInstant({ lastCheckedTimestamp: now });
       if (result.hasUpdate) {
         soundEngine.playToggle(true);
       }
@@ -554,7 +552,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         </div>
                         <div className="text-[11px] text-neutral-400 mt-0.5">
                           {updateResult?.hasUpdate
-                            ? `Latest ${settings.updateChannel} build (v${updateResult.latestVersion}) is ready to download from GitHub Releases.`
+                            ? `Latest build (v${updateResult.latestVersion}) is ready to download from GitHub Releases.`
                             : `Current installed version is validated against release feed (checked ${formatTimeAgo(lastCheckTime)}).`}
                         </div>
                       </div>
@@ -1302,16 +1300,11 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                               <span className="text-base font-bold text-neutral-100">
                                 {hasUpdate ? `Update Available: v${targetRelease.version}` : `Mouseflare is Up to Date (v${CURRENT_BUILD_INFO.version})`}
                               </span>
-                              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
-                                hasUpdate ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                              }`}>
-                                {targetRelease.channel}
-                              </span>
                             </div>
                             <p className="text-xs text-neutral-300 mt-1 max-w-xl leading-relaxed">
                               {hasUpdate 
                                 ? targetRelease.title 
-                                : `You are currently running the latest verified ${selectedReleaseChannel} build. All physics and stability patches are applied.`}
+                                : `You are currently running the latest verified stable build. All physics and stability patches are applied.`}
                             </p>
 
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-[11px] text-neutral-400">
@@ -1361,42 +1354,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   );
                 })()}
 
-                {/* Live Release Feed header + channel selector */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Release Feed — live from GitHub Releases</span>
-                  </h3>
-                  <div className="flex items-center gap-1 text-xs">
-                    <button
-                      onClick={() => {
-                        setSelectedReleaseChannel('stable');
-                        handlePerformUpdateCheck('stable');
-                      }}
-                      className={`px-2.5 py-0.5 rounded-lg font-medium text-xs transition-all ${
-                        selectedReleaseChannel === 'stable'
-                          ? 'bg-white/10 text-violet-300 border border-white/10 font-bold'
-                          : 'text-neutral-400 hover:text-neutral-200'
-                      }`}
-                    >
-                      Stable
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedReleaseChannel('beta');
-                        handlePerformUpdateCheck('beta');
-                      }}
-                      className={`px-2.5 py-0.5 rounded-lg font-medium text-xs transition-all ${
-                        selectedReleaseChannel === 'beta'
-                          ? 'bg-white/10 text-fuchsia-300 border border-white/10 font-bold'
-                          : 'text-neutral-400 hover:text-neutral-200'
-                      }`}
-                    >
-                      Beta (rolling dev)
-                    </button>
-                  </div>
-                </div>
-
                 {/* Itemized Changelog & Requirements */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   {/* Changelog */}
@@ -1416,8 +1373,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       </ul>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-neutral-400">
-                      <span>Channel: <strong className="text-neutral-200 capitalize">{selectedReleaseChannel}</strong></span>
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-end text-[11px] text-neutral-400">
                       <span>Target: <strong className="text-neutral-200">Apple Silicon / Intel / x64</strong></span>
                     </div>
                   </div>

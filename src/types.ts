@@ -71,7 +71,6 @@ export interface AppSettings {
   // Updates & Release Validation
   autoCheckUpdates: boolean;
   checkIntervalHours: number; // 6, 24, 72, or 0 for manual
-  updateChannel: 'stable' | 'beta';
   notifyOnUpdate: boolean;
   lastCheckedTimestamp?: number;
   // Custom Particle FX Designer

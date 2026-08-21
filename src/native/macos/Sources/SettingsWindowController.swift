@@ -229,6 +229,15 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var checkNowButton: CardButton!
     private var checkNowLabel: NSTextField!
     private var isCheckingForUpdates = false
+    private var updatesHeroCard: CardButton!
+    private var updatesHeroIconTile: NSView!
+    private var updatesHeroIconLabel: NSTextField!
+    private var updatesHeadlineLabel: NSTextField!
+    private var updatesMetaLabel: NSTextField!
+    private var changelogStack: NSStackView!
+    private var changelogFooterLabel: NSTextField!
+    private var updateIntervalPopup: NeonPopUp!
+    private static let updateIntervalChoices = [6, 24, 72, 0]
 
     private var sliderIntensity: NeonSlider!
     private var sliderDensity: NeonSlider!
@@ -856,26 +865,19 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     // MARK: Tab: Updates
 
     private func buildUpdatesTab(into stack: NSStackView) {
-        stack.addArrangedSubview(makeLabel("Software Updates", size: 17, weight: .bold, color: Theme.textPrimary))
-        let sub = makeLabel("Check GitHub Releases, review release notes, and install verified builds.", size: 11, weight: .regular, color: Theme.textSecondary)
-        stack.addArrangedSubview(sub)
-        stack.setCustomSpacing(16, after: sub)
-
-        // Build status card: installed version, phase-driven status, actions
-        let card = makeCard()
-        let installedText = Updater.shared.isDevBuild
-            ? "Development build (unversioned)"
-            : "Installed: Mouseflare v\(Updater.shared.currentVersion)"
-        let versionLabel = makeLabel(installedText, size: 13, weight: .bold, color: Theme.textPrimary)
-
-        updatesStatusLabel = makeLabel("", size: 11, weight: .regular, color: Theme.textMuted)
-        updatesStatusLabel.lineBreakMode = .byWordWrapping
-        updatesStatusLabel.maximumNumberOfLines = 3
+        // ---- Header row: title/subtitle + primary Check button ----
+        let titleStack = NSStackView(views: [
+            makeLabel("Software Updates & Release Feeds", size: 17, weight: .bold, color: Theme.textPrimary),
+            makeLabel("Validate the installed build against verified GitHub Release metadata and install upgrades.", size: 11, weight: .regular, color: Theme.textSecondary)
+        ])
+        titleStack.orientation = .vertical
+        titleStack.alignment = .leading
+        titleStack.spacing = 2
 
         checkNowButton = CardButton()
         checkNowButton.layer?.cornerRadius = 7
-        checkNowButton.setStyle(background: Theme.controlBg, border: Theme.cardBorder, borderWidth: 1)
-        checkNowLabel = makeLabel("🔄  Check Now", size: 12, weight: .bold, color: Theme.textPrimary)
+        applyPrimaryGradient(to: checkNowButton)
+        checkNowLabel = makeLabel("🔄  Check for Updates", size: 12, weight: .bold, color: NSColor(hexString: "#22080F"))
         checkNowLabel.translatesAutoresizingMaskIntoConstraints = false
         checkNowButton.addSubview(checkNowLabel)
         NSLayoutConstraint.activate([
@@ -885,6 +887,48 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             checkNowButton.heightAnchor.constraint(equalToConstant: 32)
         ])
         checkNowButton.onClick = { [weak self] in self?.runManualUpdateCheck() }
+
+        let headerRow = NSStackView(views: [titleStack, NSView(), checkNowButton])
+        headerRow.orientation = .horizontal
+        headerRow.alignment = .centerY
+        stack.addArrangedSubview(headerRow)
+        headerRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(16, after: headerRow)
+
+        // ---- Status hero card (tint follows the updater phase) ----
+        updatesHeroCard = makeCard(background: Theme.insetBg)
+        updatesHeroIconTile = NSView()
+        updatesHeroIconTile.wantsLayer = true
+        updatesHeroIconTile.layer?.cornerRadius = 12
+        updatesHeroIconTile.translatesAutoresizingMaskIntoConstraints = false
+        updatesHeroIconTile.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        updatesHeroIconTile.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        updatesHeroIconLabel = makeLabel("🛰️", size: 22, weight: .regular, color: .white)
+        updatesHeroIconLabel.translatesAutoresizingMaskIntoConstraints = false
+        updatesHeroIconTile.addSubview(updatesHeroIconLabel)
+        NSLayoutConstraint.activate([
+            updatesHeroIconLabel.centerXAnchor.constraint(equalTo: updatesHeroIconTile.centerXAnchor),
+            updatesHeroIconLabel.centerYAnchor.constraint(equalTo: updatesHeroIconTile.centerYAnchor)
+        ])
+
+        updatesHeadlineLabel = makeLabel("", size: 14, weight: .bold, color: Theme.textPrimary)
+
+        updatesStatusLabel = makeLabel("", size: 11, weight: .regular, color: Theme.textMuted)
+        updatesStatusLabel.lineBreakMode = .byWordWrapping
+        updatesStatusLabel.maximumNumberOfLines = 3
+
+        updatesMetaLabel = makeLabel("", size: 10.5, weight: .regular, color: Theme.textMuted)
+        updatesMetaLabel.lineBreakMode = .byTruncatingTail
+
+        let heroText = NSStackView(views: [updatesHeadlineLabel, updatesStatusLabel, updatesMetaLabel])
+        heroText.orientation = .vertical
+        heroText.alignment = .leading
+        heroText.spacing = 4
+
+        let heroTop = NSStackView(views: [updatesHeroIconTile, heroText])
+        heroTop.orientation = .horizontal
+        heroTop.spacing = 12
+        heroTop.alignment = .top
 
         updatesActionButton = CardButton()
         updatesActionButton.layer?.cornerRadius = 7
@@ -901,90 +945,211 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         updatesActionButton.isHidden = true
         updatesActionButton.onClick = { [weak self] in self?.performUpdateAction() }
 
-        let notesButton = makeFilledButton(title: "View Release Notes", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 12, height: 32)
+        let notesButton = makeFilledButton(title: "View on GitHub", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 12, height: 32)
         notesButton.onClick = { [weak self] in self?.openReleaseNotes() }
-
-        let topRow = NSStackView(views: [versionLabel, NSView(), checkNowButton])
-        topRow.orientation = .horizontal
-        topRow.alignment = .centerY
 
         let actionsRow = NSStackView(views: [updatesActionButton, notesButton, NSView()])
         actionsRow.orientation = .horizontal
         actionsRow.spacing = 8
         actionsRow.alignment = .centerY
 
-        let cardStack = NSStackView(views: [topRow, updatesStatusLabel, actionsRow])
-        cardStack.orientation = .vertical
-        cardStack.alignment = .leading
-        cardStack.spacing = 10
-        embed(cardStack, in: card, padding: 14)
-        topRow.widthAnchor.constraint(equalTo: cardStack.widthAnchor).isActive = true
-        updatesStatusLabel.widthAnchor.constraint(equalTo: cardStack.widthAnchor).isActive = true
-        stack.addArrangedSubview(card)
-        card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        let heroStack = NSStackView(views: [heroTop, actionsRow])
+        heroStack.orientation = .vertical
+        heroStack.alignment = .leading
+        heroStack.spacing = 12
+        embed(heroStack, in: updatesHeroCard, padding: 16)
+        heroTop.widthAnchor.constraint(equalTo: heroStack.widthAnchor).isActive = true
+        updatesStatusLabel.widthAnchor.constraint(lessThanOrEqualTo: heroStack.widthAnchor, constant: -56).isActive = true
+        stack.addArrangedSubview(updatesHeroCard)
+        updatesHeroCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        // ---- Release feed header ----
+        let feedLabel = makeLabel("✨ RELEASE FEED — LIVE FROM GITHUB RELEASES", size: 10, weight: .bold, color: Theme.textFaint)
+        stack.addArrangedSubview(feedLabel)
+
+        // ---- Two-column row: changelog + cadence preferences ----
+        let changelogCard = makeCard()
+        let changelogHeader = makeLabel("📋 ITEMIZED CHANGELOG", size: 10.5, weight: .bold, color: Theme.textSecondary)
+        changelogStack = NSStackView()
+        changelogStack.orientation = .vertical
+        changelogStack.alignment = .leading
+        changelogStack.spacing = 6
+        changelogFooterLabel = makeLabel("", size: 10.5, weight: .regular, color: Theme.textMuted)
+        let changelogDivider = makeDivider()
+        changelogDivider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        let changelogContent = NSStackView(views: [changelogHeader, changelogStack, NSView(), changelogDivider, changelogFooterLabel])
+        changelogContent.orientation = .vertical
+        changelogContent.alignment = .leading
+        changelogContent.spacing = 10
+        embed(changelogContent, in: changelogCard, padding: 14)
+        changelogStack.widthAnchor.constraint(equalTo: changelogContent.widthAnchor).isActive = true
+        changelogDivider.widthAnchor.constraint(equalTo: changelogContent.widthAnchor).isActive = true
+
+        let cadenceCard = makeCard()
+        let cadenceHeader = makeLabel("⚙️ UPDATE CADENCE & PREFERENCES", size: 10.5, weight: .bold, color: Theme.textSecondary)
 
         switchAutoUpdate = NeonSwitch()
         switchAutoUpdate.target = self
         switchAutoUpdate.action = #selector(togglesChanged)
-        addToggleCard(
-            to: stack,
-            title: "Automatic Update Checks",
-            subtitle: "Quietly check GitHub Releases every 6 hours. Manual checks are always available here or from the menu bar.",
-            control: switchAutoUpdate
-        )
+        let autoTitle = makeLabel("Automatic Background Checks", size: 12, weight: .semibold, color: Theme.textPrimary)
+        let autoSub = makeLabel("Periodically query the release feed silently.", size: 10.5, weight: .regular, color: Theme.textMuted)
+        let autoText = NSStackView(views: [autoTitle, autoSub])
+        autoText.orientation = .vertical
+        autoText.alignment = .leading
+        autoText.spacing = 1
+        let autoRow = NSStackView(views: [autoText, NSView(), switchAutoUpdate])
+        autoRow.orientation = .horizontal
+        autoRow.alignment = .centerY
 
-        let infoCard = makeCard(background: Theme.insetBg)
-        let infoLines = NSStackView(views: [
-            makeLabel("🔐 Signed & Verified Updates", size: 12, weight: .bold, color: Theme.textPrimary),
-            {
-                let line = makeLabel(
-                    "Updates download from GitHub Releases and are verified against the project's embedded minisign public key before anything is installed. Dev builds never self-update.",
-                    size: 11, weight: .regular, color: Theme.textMuted
-                )
-                line.lineBreakMode = .byWordWrapping
-                line.maximumNumberOfLines = 3
-                return line
-            }()
+        let freqLabel = makeLabel("Check Frequency", size: 11, weight: .medium, color: Theme.textSecondary)
+        updateIntervalPopup = NeonPopUp()
+        updateIntervalPopup.addItems(withTitles: [
+            "Every 6 Hours (High Frequency)",
+            "Every 24 Hours (Daily)",
+            "Every 72 Hours (Weekly)",
+            "Manual Checks Only"
         ])
-        infoLines.orientation = .vertical
-        infoLines.alignment = .leading
-        infoLines.spacing = 4
-        embed(infoLines, in: infoCard, padding: 14)
-        stack.addArrangedSubview(infoCard)
-        infoCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        updateIntervalPopup.target = self
+        updateIntervalPopup.action = #selector(updateIntervalChanged)
+
+        let reqHeader = makeLabel("🛡️ Minimum System Requirements", size: 10.5, weight: .semibold, color: Theme.textSecondary)
+        let reqLine = makeLabel("• macOS 13 (Ventura) or later — Apple Silicon & Intel", size: 10.5, weight: .regular, color: Theme.textMuted)
+
+        let cadenceDivider1 = makeDivider()
+        cadenceDivider1.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        let cadenceDivider2 = makeDivider()
+        cadenceDivider2.heightAnchor.constraint(equalToConstant: 1).isActive = true
+
+        let cadenceContent = NSStackView(views: [cadenceHeader, autoRow, cadenceDivider1, freqLabel, updateIntervalPopup, cadenceDivider2, reqHeader, reqLine])
+        cadenceContent.orientation = .vertical
+        cadenceContent.alignment = .leading
+        cadenceContent.spacing = 9
+        embed(cadenceContent, in: cadenceCard, padding: 14)
+        autoRow.widthAnchor.constraint(equalTo: cadenceContent.widthAnchor).isActive = true
+        updateIntervalPopup.widthAnchor.constraint(equalTo: cadenceContent.widthAnchor).isActive = true
+        cadenceDivider1.widthAnchor.constraint(equalTo: cadenceContent.widthAnchor).isActive = true
+        cadenceDivider2.widthAnchor.constraint(equalTo: cadenceContent.widthAnchor).isActive = true
+
+        let columnsRow = NSStackView(views: [changelogCard, cadenceCard])
+        columnsRow.orientation = .horizontal
+        columnsRow.spacing = 12
+        columnsRow.distribution = .fillEqually
+        columnsRow.alignment = .top
+        stack.addArrangedSubview(columnsRow)
+        columnsRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        changelogCard.heightAnchor.constraint(equalTo: cadenceCard.heightAnchor).isActive = true
 
         refreshUpdatesUI()
     }
 
-    /// Mirrors Updater.shared.phase into the Updates tab. Runs on the main
-    /// thread (phase changes arrive via updaterPhaseChanged).
+    /// Mirrors Updater.shared.phase (and latestInfo) into the Updates tab.
+    /// Runs on the main thread (phase changes arrive via updaterPhaseChanged).
     private func refreshUpdatesUI() {
         guard updatesStatusLabel != nil else { return }
+        let cfg = SettingsManager.shared.settings
+        let info = Updater.shared.latestInfo
+        let installed = Updater.shared.currentVersion
+
         var actionTitle: String?
+        var tint = Theme.neonViolet
+        var emoji = "🛰️"
+        var headline = "Mouseflare v\(installed)"
+
         switch Updater.shared.phase {
         case .idle:
             if Updater.shared.isDevBuild {
+                emoji = "🧪"
+                headline = "Development Build"
                 updatesStatusLabel.stringValue = "Dev builds don't self-update — download stable builds from GitHub Releases."
                 updatesStatusLabel.textColor = Theme.textMuted
+            } else if info != nil {
+                tint = Theme.emerald
+                emoji = "✅"
+                headline = "Mouseflare is Up to Date (v\(installed))"
+                if !isCheckingForUpdates {
+                    updatesStatusLabel.stringValue = "You are running the latest verified stable build. All physics and stability patches are applied."
+                    updatesStatusLabel.textColor = Theme.textMuted
+                }
             } else if !isCheckingForUpdates {
-                updatesStatusLabel.stringValue = "No update available. Background checks run every 6 hours while enabled."
+                updatesStatusLabel.stringValue = "Run a check to compare this build against the latest verified GitHub release."
                 updatesStatusLabel.textColor = Theme.textMuted
             }
         case .available(let release):
-            updatesStatusLabel.stringValue = "Mouseflare v\(release.version) is available — it is verified against the project's signing key before installing."
+            tint = Theme.amber
+            emoji = "⬆️"
+            headline = "Update Available: v\(release.version)"
+            updatesStatusLabel.stringValue = release.title
             updatesStatusLabel.textColor = Theme.amberBright
             actionTitle = "⬆️ Install v\(release.version)"
         case .downloading(let release):
-            updatesStatusLabel.stringValue = "Downloading and verifying v\(release.version)…"
+            tint = Theme.cyan
+            emoji = "⏳"
+            headline = "Downloading v\(release.version)…"
+            updatesStatusLabel.stringValue = "Downloading and verifying the signed package…"
             updatesStatusLabel.textColor = Theme.cyan
         case .ready(let release, _):
-            updatesStatusLabel.stringValue = "v\(release.version) is verified and staged. Restart Mouseflare to finish installing."
+            tint = Theme.emerald
+            emoji = "🔁"
+            headline = "v\(release.version) Ready to Install"
+            updatesStatusLabel.stringValue = "The update is verified and staged. Restart Mouseflare to finish installing."
             updatesStatusLabel.textColor = Theme.emerald
             actionTitle = "🔁 Restart to Update"
         case .error(let message):
+            tint = NSColor(hexString: "#F87171")
+            emoji = "⚠️"
+            headline = "Update Check Failed"
             updatesStatusLabel.stringValue = message
             updatesStatusLabel.textColor = NSColor(hexString: "#F87171")
         }
+
+        // Hero chrome follows the state tint
+        updatesHeroCard.setStyle(
+            background: Theme.insetBg.blended(withFraction: 0.08, of: tint) ?? Theme.insetBg,
+            border: tint.withAlphaComponent(0.4),
+            borderWidth: 1
+        )
+        updatesHeroIconTile.layer?.backgroundColor = tint.withAlphaComponent(0.18).cgColor
+        updatesHeroIconLabel.stringValue = emoji
+        updatesHeadlineLabel.stringValue = headline
+
+        // Meta row: Checked / Installed / Latest — real data only
+        var meta = "Checked: \(Self.formatTimeAgo(cfg.lastUpdateCheck))  •  Installed: v\(installed)"
+        if let info {
+            meta += "  •  Latest: v\(info.version)"
+            if let date = info.publishedAt {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                meta += " (\(formatter.string(from: date)))"
+            }
+        }
+        updatesMetaLabel.stringValue = meta
+
+        // Changelog card mirrors the latest fetched release
+        changelogStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        let bullets = info?.changelogBullets ?? []
+        if bullets.isEmpty {
+            let placeholder = makeLabel(
+                info == nil ? "Run a check to fetch the latest release notes." : "No itemized changes — open the release on GitHub for details.",
+                size: 11, weight: .regular, color: Theme.textMuted
+            )
+            changelogStack.addArrangedSubview(placeholder)
+        } else {
+            for bullet in bullets.prefix(6) {
+                let dot = makeLabel("•", size: 11, weight: .bold, color: Theme.amber)
+                let text = makeLabel(bullet, size: 11, weight: .regular, color: Theme.textSecondary)
+                text.lineBreakMode = .byWordWrapping
+                text.maximumNumberOfLines = 2
+                let row = NSStackView(views: [dot, text])
+                row.orientation = .horizontal
+                row.spacing = 6
+                row.alignment = .top
+                changelogStack.addArrangedSubview(row)
+                row.widthAnchor.constraint(equalTo: changelogStack.widthAnchor).isActive = true
+                text.widthAnchor.constraint(lessThanOrEqualTo: row.widthAnchor, constant: -14).isActive = true
+            }
+        }
+        changelogFooterLabel.stringValue = "Feed: GitHub Releases (stable)  •  Target: Apple Silicon / Intel"
+
         if let actionTitle {
             updatesActionLabel.stringValue = actionTitle
             updatesActionButton.isHidden = false
@@ -992,6 +1157,27 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             updatesActionButton.isHidden = true
         }
     }
+
+    private static func formatTimeAgo(_ date: Date?) -> String {
+        guard let date else { return "never" }
+        let seconds = Int(-date.timeIntervalSinceNow)
+        switch seconds {
+        case ..<60: return "just now"
+        case ..<3600: return "\(seconds / 60)m ago"
+        case ..<86400: return "\(seconds / 3600)h ago"
+        default:
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            return formatter.string(from: date)
+        }
+    }
+
+    @objc private func updateIntervalChanged() {
+        let index = updateIntervalPopup.indexOfSelectedItem
+        guard Self.updateIntervalChoices.indices.contains(index) else { return }
+        SettingsManager.shared.settings.updateCheckIntervalHours = Self.updateIntervalChoices[index]
+    }
+
 
     @objc private func updaterPhaseChanged() {
         DispatchQueue.main.async { [weak self] in self?.refreshUpdatesUI() }
@@ -1011,16 +1197,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         Task { @MainActor in
             defer {
                 self.isCheckingForUpdates = false
-                self.checkNowLabel.stringValue = "🔄  Check Now"
+                self.checkNowLabel.stringValue = "🔄  Check for Updates"
             }
             do {
                 // A found release flips the phase to .available and the
-                // notification repaints; only the up-to-date case needs text.
-                if try await Updater.shared.check() == nil {
-                    self.updatesStatusLabel.stringValue = "You're up to date — v\(Updater.shared.currentVersion) is the latest stable release."
-                    self.updatesStatusLabel.textColor = Theme.emerald
-                }
+                // notification repaints; the up-to-date case repaints here so
+                // the hero card, meta row, and changelog pick up latestInfo.
+                _ = try await Updater.shared.check()
+                self.refreshUpdatesUI()
             } catch {
+                self.refreshUpdatesUI()
                 self.updatesStatusLabel.stringValue = "Update check failed: \(error.localizedDescription)"
                 self.updatesStatusLabel.textColor = NSColor(hexString: "#F87171")
             }
@@ -1124,6 +1310,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         sliderVorticity.doubleValue = cfg.fluidVorticity
         sliderDissipation.doubleValue = cfg.fluidDissipation
         updateSliderLabels()
+
+        let intervalIndex = Self.updateIntervalChoices.firstIndex(of: cfg.updateCheckIntervalHours) ?? 0
+        updateIntervalPopup.selectItem(at: intervalIndex)
 
         hotkeyLabel.stringValue = cfg.hotkey
         customHexField.stringValue = cfg.customColorHex

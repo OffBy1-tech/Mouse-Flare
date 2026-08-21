@@ -5,15 +5,44 @@ import Cocoa
 /// Follows GitHub's `releases/latest` (published stable releases only),
 /// downloads the macOS zip + its minisign signature, verifies against the
 /// embedded public key, stages the new .app, and swaps it on user-approved
-/// relaunch. Background checks are silent; manual checks always answer.
+/// relaunch. Background checks are silent and respect the persisted cadence;
+/// manual checks always answer.
 final class Updater {
-    struct Release {
+    /// Metadata every fetched release carries, even when it matches the
+    /// installed version (so the Updates tab can render "Latest: vX (date)"
+    /// and a changelog while up to date).
+    struct ReleaseInfo {
         let version: String
         let title: String
         let notes: String
+        let pageURL: URL
+        let publishedAt: Date?
+
+        /// Bullet lines ("- " / "* " / "• ") from the GitHub release body,
+        /// lightly de-markdowned. Empty when the body has no list items.
+        var changelogBullets: [String] {
+            notes.split(whereSeparator: \.isNewline).compactMap { line in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                for prefix in ["- ", "* ", "• "] where trimmed.hasPrefix(prefix) {
+                    return String(trimmed.dropFirst(prefix.count))
+                        .replacingOccurrences(of: "**", with: "")
+                        .replacingOccurrences(of: "`", with: "")
+                        .trimmingCharacters(in: .whitespaces)
+                }
+                return nil
+            }
+        }
+    }
+
+    struct Release {
+        let info: ReleaseInfo
         let zipURL: URL
         let sigURL: URL
-        let pageURL: URL
+
+        var version: String { info.version }
+        var title: String { info.title }
+        var notes: String { info.notes }
+        var pageURL: URL { info.pageURL }
     }
 
     enum Phase {
@@ -33,7 +62,13 @@ final class Updater {
 
     private let feedURL: URL
     private var checkTimer: Timer?
-    private let checkInterval: TimeInterval = 6 * 60 * 60
+    private var scheduledIntervalHours = -1
+    private var settingsObserver: NSObjectProtocol?
+
+    /// The newest release the feed reported on the last successful check —
+    /// kept even when it matches the installed version, so the Updates tab
+    /// can show "Latest: vX (date)" and a changelog while up to date.
+    private(set) var latestInfo: ReleaseInfo?
 
     /// The running build's version. CI stamps stable tags (e.g. "0.1.0");
     /// dev builds carry "0.0.0" and never self-update.
@@ -51,11 +86,29 @@ final class Updater {
 
     func startBackgroundChecks() {
         guard !isDevBuild else { return }
-        // First quiet check shortly after launch, then every 6h
+        // First quiet check shortly after launch, then per the cadence setting
         DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
             self?.backgroundCheck()
         }
-        let timer = Timer(timeInterval: checkInterval, repeats: true) { [weak self] _ in
+        scheduleTimer()
+        // Re-arm when the user changes the check-frequency setting
+        settingsObserver = NotificationCenter.default.addObserver(
+            forName: SettingsManager.didChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.scheduleTimer()
+        }
+    }
+
+    /// (Re)creates the polling timer to match the persisted cadence.
+    /// Interval 0 means manual checks only.
+    private func scheduleTimer() {
+        let hours = SettingsManager.shared.settings.updateCheckIntervalHours
+        guard hours != scheduledIntervalHours else { return }
+        scheduledIntervalHours = hours
+        checkTimer?.invalidate()
+        checkTimer = nil
+        guard hours > 0 else { return }
+        let timer = Timer(timeInterval: TimeInterval(hours) * 3600, repeats: true) { [weak self] _ in
             self?.backgroundCheck()
         }
         RunLoop.main.add(timer, forMode: .common)
@@ -63,11 +116,25 @@ final class Updater {
     }
 
     private func backgroundCheck() {
-        guard SettingsManager.shared.settings.autoCheckUpdates else { return }
+        let cfg = SettingsManager.shared.settings
+        guard cfg.autoCheckUpdates, cfg.updateCheckIntervalHours > 0 else { return }
         Task { _ = try? await self.check() } // silent on every outcome
     }
 
     // MARK: Check
+
+    private struct Asset: Decodable {
+        let name: String
+        let browser_download_url: String
+    }
+    private struct Feed: Decodable {
+        let tag_name: String
+        let name: String?
+        let body: String?
+        let html_url: String
+        let assets: [Asset]
+        let published_at: String?
+    }
 
     /// Fetches the feed. Returns the newer release, or nil when up to date.
     /// Updates `phase` but never downgrades an in-flight or staged update.
@@ -80,20 +147,22 @@ final class Updater {
             throw UpdaterError.feedUnavailable
         }
 
-        struct Asset: Decodable {
-            let name: String
-            let browser_download_url: String
-        }
-        struct Feed: Decodable {
-            let tag_name: String
-            let name: String?
-            let body: String?
-            let html_url: String
-            let assets: [Asset]
-        }
         let feed = try JSONDecoder().decode(Feed.self, from: data)
 
         let version = feed.tag_name.hasPrefix("v") ? String(feed.tag_name.dropFirst()) : feed.tag_name
+        guard let pageURL = URL(string: feed.html_url) else { throw UpdaterError.feedUnavailable }
+        let info = ReleaseInfo(
+            version: version,
+            title: feed.name ?? "Mouseflare v\(version)",
+            notes: feed.body ?? "",
+            pageURL: pageURL,
+            publishedAt: feed.published_at.flatMap { ISO8601DateFormatter().date(from: $0) }
+        )
+        await MainActor.run {
+            self.latestInfo = info
+            SettingsManager.shared.settings.lastUpdateCheck = Date()
+        }
+
         guard version != currentVersion, !isDevBuild else {
             await MainActor.run {
                 if case .available = self.phase { self.phase = .idle }
@@ -106,20 +175,12 @@ final class Updater {
             let zip = feed.assets.first(where: { $0.name == "Mouseflare-macOS.zip" }),
             let sig = feed.assets.first(where: { $0.name == "Mouseflare-macOS.zip.minisig" }),
             let zipURL = URL(string: zip.browser_download_url),
-            let sigURL = URL(string: sig.browser_download_url),
-            let pageURL = URL(string: feed.html_url)
+            let sigURL = URL(string: sig.browser_download_url)
         else {
             throw UpdaterError.assetsMissing
         }
 
-        let release = Release(
-            version: version,
-            title: feed.name ?? "Mouseflare v\(version)",
-            notes: feed.body ?? "",
-            zipURL: zipURL,
-            sigURL: sigURL,
-            pageURL: pageURL
-        )
+        let release = Release(info: info, zipURL: zipURL, sigURL: sigURL)
         await MainActor.run {
             switch self.phase {
             case .downloading, .ready:
