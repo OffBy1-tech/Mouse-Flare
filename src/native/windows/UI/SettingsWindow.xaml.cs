@@ -50,6 +50,8 @@ namespace Mouseflare.UI
             _currentHotkey = currentHotkey;
             _committedFx = overlay != null ? SnapshotCurrentSettings() : new Core.MouseflareSettings();
             _loading = true;
+            // Opaque WindowChrome window (for ClearType); DWM rounds the corners on Win11
+            SourceInitialized += (_, _) => DwmChrome.RoundWindow(this);
             InitializeComponent();
             LoadCurrentSettings();
             _loading = false;

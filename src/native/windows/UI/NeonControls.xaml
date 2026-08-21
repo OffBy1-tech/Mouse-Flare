@@ -1,4 +1,5 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary x:Class="Mouseflare.UI.NeonControls"
+                    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- =============================================================== -->
@@ -533,35 +534,29 @@
                                IsOpen="{TemplateBinding IsDropDownOpen}"
                                Placement="Bottom"
                                VerticalOffset="4"
-                               HorizontalOffset="-8"
-                               AllowsTransparency="True"
-                               PopupAnimation="Fade"
+                               AllowsTransparency="False"
+                               PopupAnimation="None"
+                               Opened="NeonPopup_Opened"
                                Focusable="False">
-                            <!-- Explicit Display mode: TextOptions doesn't
-                                 reliably inherit across the popup boundary.
-                                 The glow sits on a childless carrier so the
-                                 item text never gets rasterized by it. -->
-                            <Grid Margin="8" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
-                                  TextOptions.TextFormattingMode="Display"
-                                  UseLayoutRounding="True">
-                                <Border Background="#120A20"
-                                        BorderBrush="#8CA855F7"
-                                        BorderThickness="1"
-                                        CornerRadius="10"
-                                        Effect="{StaticResource NeonPopupGlow}"
-                                        SnapsToDevicePixels="True"/>
-                                <!-- Opaque background repeated on the content
-                                     layer so ClearTypeHint can restore crisp
-                                     subpixel text inside the transparent
-                                     popup window. -->
-                                <Border Background="#120A20" BorderThickness="1" BorderBrush="Transparent" CornerRadius="10"
-                                        RenderOptions.ClearTypeHint="Enabled"
-                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                    <ScrollViewer Margin="0,4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
-                                    </ScrollViewer>
-                                </Border>
-                            </Grid>
+                            <!-- Opaque popup window: ClearType is guaranteed
+                                 for the list text. DWM rounds its corners on
+                                 Windows 11 (NeonPopup_Opened); the outer glow
+                                 had to go — effects cannot extend past an
+                                 opaque popup. Explicit Display mode because
+                                 TextOptions doesn't reliably inherit across
+                                 the popup boundary. -->
+                            <Border Background="#120A20"
+                                    BorderBrush="#8CA855F7"
+                                    BorderThickness="1"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    TextOptions.TextFormattingMode="Display"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True">
+                                <ScrollViewer Margin="0,4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                </ScrollViewer>
+                            </Border>
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
