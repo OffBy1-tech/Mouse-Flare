@@ -435,7 +435,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func startUpdateDownload() {
+    // Internal (not private): the Settings window's Updates tab drives the
+    // same download/stage/install flow as these menu-bar actions.
+    @objc func startUpdateDownload() {
         guard case .available(let release) = Updater.shared.phase else {
             // Manual path can arrive here right after check(); re-read phase safely
             if case .ready = Updater.shared.phase { installStagedUpdate() }
@@ -454,7 +456,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func installStagedUpdate() {
+    @objc func installStagedUpdate() {
         guard case .ready(_, let stagedApp) = Updater.shared.phase else { return }
         do {
             try Updater.shared.installAndRelaunch(stagedApp: stagedApp)

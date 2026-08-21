@@ -326,6 +326,21 @@
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
+
+                            <Button x:Name="btnNavUpdates" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavUpdates">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
+                                                    <TextBlock Text="🔄" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
                         </StackPanel>
                     </DockPanel>
                 </Border>
@@ -1207,15 +1222,6 @@
                                 </Border>
                             </Grid>
 
-                            <Border Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
-                                <DockPanel LastChildFill="True">
-                                    <CheckBox x:Name="chkAutoUpdates" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnAutoUpdatesChanged" Unchecked="OnAutoUpdatesChanged"/>
-                                    <StackPanel>
-                                        <TextBlock Text="Automatic Update Checks" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
-                                        <TextBlock x:Name="txtAutoUpdatesSub" Text="Quietly check GitHub Releases every 6 hours. Use the tray menu for a manual check." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </DockPanel>
-                            </Border>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -1266,6 +1272,85 @@
                                     <TextBlock Text="Virtual Desktop Span: Multi-Monitor Ready" FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,0"/>
                                     <TextBlock Text="Input Interception: Low-level WH_MOUSE_LL Windows Hook (Zero Click Lag)" FontSize="11" Foreground="#FFA62E" Margin="0,2,0,0"/>
                                 </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ============================================== -->
+                    <!-- TAB 5: SOFTWARE UPDATES                        -->
+                    <!-- ============================================== -->
+                    <ScrollViewer x:Name="tabUpdates" Grid.Row="0" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Text="Software Updates" FontSize="17" FontWeight="Bold" Foreground="#FAFAFA"/>
+                            <TextBlock Text="Updates come from GitHub Releases and are verified with the project's signing key before installing." FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,16"/>
+
+                            <Border Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="Installed Build" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                    <TextBlock x:Name="txtUpdateVersion" Text="Mouseflare v0.0.0" FontSize="12" FontWeight="SemiBold" Foreground="#FFA62E" Margin="0,4,0,0"/>
+                                    <TextBlock x:Name="txtUpdateStatus" Text="Background checks run every 6 hours." FontSize="11" Foreground="#71717A" Margin="0,2,0,10" TextWrapping="Wrap"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button x:Name="btnCheckNow" Content="🔄 Check Now" Padding="12,6" Margin="0,0,8,0" Background="#2E1B4A" Foreground="#D4D4D8" BorderBrush="#4A2E75" BorderThickness="1" FontWeight="SemiBold" FontSize="11" Cursor="Hand" Click="OnCheckUpdatesNow">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border x:Name="root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsEnabled" Value="False">
+                                                            <Setter TargetName="root" Property="Opacity" Value="0.5"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button x:Name="btnReleaseNotes" Content="View Release Notes" Padding="12,6" Background="#2E1B4A" Foreground="#D4D4D8" BorderBrush="#4A2E75" BorderThickness="1" FontWeight="SemiBold" FontSize="11" Cursor="Hand" Click="OnViewReleaseNotes">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border x:Name="cardUpdateAvailable" Background="#1A0F2E" BorderBrush="#FFA62E" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10" Visibility="Collapsed">
+                                <DockPanel LastChildFill="True">
+                                    <Button x:Name="btnInstallUpdate" DockPanel.Dock="Right" VerticalAlignment="Center" Height="34" Background="{StaticResource NeonPrimaryBrush}" Foreground="#0A0512" FontWeight="Bold" FontSize="11" BorderThickness="0" Cursor="Hand" Click="OnInstallUpdate">
+                                        <Button.Effect>
+                                            <DropShadowEffect Color="#FF8C3C" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
+                                        </Button.Effect>
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="{x:Type Button}">
+                                                <Border x:Name="root" Background="{TemplateBinding Background}" CornerRadius="7" Padding="14,0">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter TargetName="root" Property="Opacity" Value="0.5"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                    <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
+                                        <TextBlock x:Name="txtUpdateAvailTitle" Text="Mouseflare v0.0.0 is available" FontWeight="Bold" FontSize="13" Foreground="#FFA62E"/>
+                                        <TextBlock x:Name="txtUpdateAvailSub" Text="" FontSize="11" Foreground="#A1A1AA" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <Border Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkAutoUpdates" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnAutoUpdatesChanged" Unchecked="OnAutoUpdatesChanged"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Automatic Update Checks" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                        <TextBlock Text="Quietly check GitHub Releases every 6 hours in the background." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
                             </Border>
                         </StackPanel>
                     </ScrollViewer>

@@ -222,6 +222,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var switchIdleBurst: NSSwitch!
     private var switchMonitorCrossing: NSSwitch!
 
+    // Updates tab: labels/buttons that mirror Updater.shared.phase
+    private var updatesStatusLabel: NSTextField!
+    private var updatesActionButton: CardButton!
+    private var updatesActionLabel: NSTextField!
+    private var checkNowButton: CardButton!
+    private var checkNowLabel: NSTextField!
+    private var isCheckingForUpdates = false
+
     private var sliderIntensity: NSSlider!
     private var sliderDensity: NSSlider!
     private var sliderSpeed: NSSlider!
@@ -254,6 +262,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         win.delegate = self
         setupUI()
         syncUIToSettings()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(updaterPhaseChanged),
+            name: Updater.phaseChangedNotification,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -360,7 +378,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             ("fx-studio", "✨", "FX Studio"),
             ("fx-designer", "🧪", "FX Designer"),
             ("behavior", "🎛️", "Behavior & Monitors"),
-            ("diagnostics", "📊", "Diagnostics")
+            ("diagnostics", "📊", "Diagnostics"),
+            ("updates", "🔄", "Check for Updates")
         ]
         for item in navItems {
             let (card, titleField) = makeNavButton(icon: item.icon, title: item.title)
@@ -434,7 +453,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         ])
 
         // ---- Tabs ----
-        let tabIds = ["general", "fx-studio", "fx-designer", "behavior", "diagnostics"]
+        let tabIds = ["general", "fx-studio", "fx-designer", "behavior", "diagnostics", "updates"]
         for id in tabIds {
             let (scroll, stack) = makeScrollTab()
             switch id {
@@ -442,6 +461,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             case "fx-studio": buildFxStudioTab(into: stack)
             case "fx-designer": buildFxDesignerTab(into: stack)
             case "behavior": buildBehaviorTab(into: stack)
+            case "updates": buildUpdatesTab(into: stack)
             default: buildDiagnosticsTab(into: stack)
             }
             scroll.translatesAutoresizingMaskIntoConstraints = false
@@ -592,16 +612,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         pair.distribution = .fillEqually
         stack.addArrangedSubview(pair)
         pair.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-
-        switchAutoUpdate = NSSwitch()
-        switchAutoUpdate.target = self
-        switchAutoUpdate.action = #selector(togglesChanged)
-        addToggleCard(
-            to: stack,
-            title: "Automatic Update Checks",
-            subtitle: "Quietly check GitHub Releases every 6 hours (installed: v\(Updater.shared.currentVersion)). Use the menu bar for a manual check.",
-            control: switchAutoUpdate
-        )
     }
 
     // MARK: Tab: FX Studio
@@ -841,6 +851,201 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         embed(lines, in: card, padding: 16)
         stack.addArrangedSubview(card)
         card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    }
+
+    // MARK: Tab: Updates
+
+    private func buildUpdatesTab(into stack: NSStackView) {
+        stack.addArrangedSubview(makeLabel("Software Updates", size: 17, weight: .bold, color: Theme.textPrimary))
+        let sub = makeLabel("Check GitHub Releases, review release notes, and install verified builds.", size: 11, weight: .regular, color: Theme.textSecondary)
+        stack.addArrangedSubview(sub)
+        stack.setCustomSpacing(16, after: sub)
+
+        // Build status card: installed version, phase-driven status, actions
+        let card = makeCard()
+        let installedText = Updater.shared.isDevBuild
+            ? "Development build (unversioned)"
+            : "Installed: Mouseflare v\(Updater.shared.currentVersion)"
+        let versionLabel = makeLabel(installedText, size: 13, weight: .bold, color: Theme.textPrimary)
+
+        updatesStatusLabel = makeLabel("", size: 11, weight: .regular, color: Theme.textMuted)
+        updatesStatusLabel.lineBreakMode = .byWordWrapping
+        updatesStatusLabel.maximumNumberOfLines = 3
+
+        checkNowButton = CardButton()
+        checkNowButton.layer?.cornerRadius = 7
+        checkNowButton.setStyle(background: Theme.controlBg, border: Theme.cardBorder, borderWidth: 1)
+        checkNowLabel = makeLabel("🔄  Check Now", size: 12, weight: .bold, color: Theme.textPrimary)
+        checkNowLabel.translatesAutoresizingMaskIntoConstraints = false
+        checkNowButton.addSubview(checkNowLabel)
+        NSLayoutConstraint.activate([
+            checkNowLabel.centerXAnchor.constraint(equalTo: checkNowButton.centerXAnchor),
+            checkNowLabel.centerYAnchor.constraint(equalTo: checkNowButton.centerYAnchor),
+            checkNowButton.widthAnchor.constraint(greaterThanOrEqualTo: checkNowLabel.widthAnchor, constant: 24),
+            checkNowButton.heightAnchor.constraint(equalToConstant: 32)
+        ])
+        checkNowButton.onClick = { [weak self] in self?.runManualUpdateCheck() }
+
+        updatesActionButton = CardButton()
+        updatesActionButton.layer?.cornerRadius = 7
+        updatesActionLabel = makeLabel("", size: 12, weight: .bold, color: NSColor(hexString: "#22080F"))
+        updatesActionLabel.translatesAutoresizingMaskIntoConstraints = false
+        updatesActionButton.addSubview(updatesActionLabel)
+        NSLayoutConstraint.activate([
+            updatesActionLabel.centerXAnchor.constraint(equalTo: updatesActionButton.centerXAnchor),
+            updatesActionLabel.centerYAnchor.constraint(equalTo: updatesActionButton.centerYAnchor),
+            updatesActionButton.widthAnchor.constraint(greaterThanOrEqualTo: updatesActionLabel.widthAnchor, constant: 24),
+            updatesActionButton.heightAnchor.constraint(equalToConstant: 32)
+        ])
+        applyPrimaryGradient(to: updatesActionButton)
+        updatesActionButton.isHidden = true
+        updatesActionButton.onClick = { [weak self] in self?.performUpdateAction() }
+
+        let notesButton = makeFilledButton(title: "View Release Notes", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 12, height: 32)
+        notesButton.onClick = { [weak self] in self?.openReleaseNotes() }
+
+        let topRow = NSStackView(views: [versionLabel, NSView(), checkNowButton])
+        topRow.orientation = .horizontal
+        topRow.alignment = .centerY
+
+        let actionsRow = NSStackView(views: [updatesActionButton, notesButton, NSView()])
+        actionsRow.orientation = .horizontal
+        actionsRow.spacing = 8
+        actionsRow.alignment = .centerY
+
+        let cardStack = NSStackView(views: [topRow, updatesStatusLabel, actionsRow])
+        cardStack.orientation = .vertical
+        cardStack.alignment = .leading
+        cardStack.spacing = 10
+        embed(cardStack, in: card, padding: 14)
+        topRow.widthAnchor.constraint(equalTo: cardStack.widthAnchor).isActive = true
+        updatesStatusLabel.widthAnchor.constraint(equalTo: cardStack.widthAnchor).isActive = true
+        stack.addArrangedSubview(card)
+        card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        switchAutoUpdate = NSSwitch()
+        switchAutoUpdate.target = self
+        switchAutoUpdate.action = #selector(togglesChanged)
+        addToggleCard(
+            to: stack,
+            title: "Automatic Update Checks",
+            subtitle: "Quietly check GitHub Releases every 6 hours. Manual checks are always available here or from the menu bar.",
+            control: switchAutoUpdate
+        )
+
+        let infoCard = makeCard(background: Theme.insetBg)
+        let infoLines = NSStackView(views: [
+            makeLabel("🔐 Signed & Verified Updates", size: 12, weight: .bold, color: Theme.textPrimary),
+            {
+                let line = makeLabel(
+                    "Updates download from GitHub Releases and are verified against the project's embedded minisign public key before anything is installed. Dev builds never self-update.",
+                    size: 11, weight: .regular, color: Theme.textMuted
+                )
+                line.lineBreakMode = .byWordWrapping
+                line.maximumNumberOfLines = 3
+                return line
+            }()
+        ])
+        infoLines.orientation = .vertical
+        infoLines.alignment = .leading
+        infoLines.spacing = 4
+        embed(infoLines, in: infoCard, padding: 14)
+        stack.addArrangedSubview(infoCard)
+        infoCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        refreshUpdatesUI()
+    }
+
+    /// Mirrors Updater.shared.phase into the Updates tab. Runs on the main
+    /// thread (phase changes arrive via updaterPhaseChanged).
+    private func refreshUpdatesUI() {
+        guard updatesStatusLabel != nil else { return }
+        var actionTitle: String?
+        switch Updater.shared.phase {
+        case .idle:
+            if Updater.shared.isDevBuild {
+                updatesStatusLabel.stringValue = "Dev builds don't self-update — download stable builds from GitHub Releases."
+                updatesStatusLabel.textColor = Theme.textMuted
+            } else if !isCheckingForUpdates {
+                updatesStatusLabel.stringValue = "No update available. Background checks run every 6 hours while enabled."
+                updatesStatusLabel.textColor = Theme.textMuted
+            }
+        case .available(let release):
+            updatesStatusLabel.stringValue = "Mouseflare v\(release.version) is available — it is verified against the project's signing key before installing."
+            updatesStatusLabel.textColor = Theme.amberBright
+            actionTitle = "⬆️ Install v\(release.version)"
+        case .downloading(let release):
+            updatesStatusLabel.stringValue = "Downloading and verifying v\(release.version)…"
+            updatesStatusLabel.textColor = Theme.cyan
+        case .ready(let release, _):
+            updatesStatusLabel.stringValue = "v\(release.version) is verified and staged. Restart Mouseflare to finish installing."
+            updatesStatusLabel.textColor = Theme.emerald
+            actionTitle = "🔁 Restart to Update"
+        case .error(let message):
+            updatesStatusLabel.stringValue = message
+            updatesStatusLabel.textColor = NSColor(hexString: "#F87171")
+        }
+        if let actionTitle {
+            updatesActionLabel.stringValue = actionTitle
+            updatesActionButton.isHidden = false
+        } else {
+            updatesActionButton.isHidden = true
+        }
+    }
+
+    @objc private func updaterPhaseChanged() {
+        DispatchQueue.main.async { [weak self] in self?.refreshUpdatesUI() }
+    }
+
+    private func runManualUpdateCheck() {
+        if Updater.shared.isDevBuild {
+            updatesStatusLabel.stringValue = "Dev builds don't self-update — download stable builds from GitHub Releases."
+            updatesStatusLabel.textColor = Theme.textMuted
+            return
+        }
+        guard !isCheckingForUpdates else { return }
+        isCheckingForUpdates = true
+        checkNowLabel.stringValue = "Checking…"
+        updatesStatusLabel.stringValue = "Checking GitHub Releases…"
+        updatesStatusLabel.textColor = Theme.textSecondary
+        Task { @MainActor in
+            defer {
+                self.isCheckingForUpdates = false
+                self.checkNowLabel.stringValue = "🔄  Check Now"
+            }
+            do {
+                // A found release flips the phase to .available and the
+                // notification repaints; only the up-to-date case needs text.
+                if try await Updater.shared.check() == nil {
+                    self.updatesStatusLabel.stringValue = "You're up to date — v\(Updater.shared.currentVersion) is the latest stable release."
+                    self.updatesStatusLabel.textColor = Theme.emerald
+                }
+            } catch {
+                self.updatesStatusLabel.stringValue = "Update check failed: \(error.localizedDescription)"
+                self.updatesStatusLabel.textColor = NSColor(hexString: "#F87171")
+            }
+        }
+    }
+
+    /// Runs the same download/stage/install flow as the menu bar items.
+    private func performUpdateAction() {
+        guard let delegate = NSApp.delegate as? AppDelegate else { return }
+        switch Updater.shared.phase {
+        case .available: delegate.startUpdateDownload()
+        case .ready: delegate.installStagedUpdate()
+        default: break
+        }
+    }
+
+    private func openReleaseNotes() {
+        switch Updater.shared.phase {
+        case .available(let release), .downloading(let release):
+            NSWorkspace.shared.open(release.pageURL)
+        case .ready(let release, _):
+            NSWorkspace.shared.open(release.pageURL)
+        default:
+            NSWorkspace.shared.open(URL(string: "https://github.com/OffBy1-tech/Mouse-Flare/releases")!)
+        }
     }
 
     // MARK: Footer

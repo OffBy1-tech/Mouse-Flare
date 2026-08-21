@@ -33,6 +33,7 @@ namespace Mouseflare.UI
         private bool _isRecordingHotkey = false;
         private string _currentHotkey;
         private bool _loading;
+        private bool _updateCheckInFlight;
 
         // FX Studio / FX Designer changes preview live on the overlay but are a
         // draft until Apply & Save; this holds the last committed FX state so
@@ -52,6 +53,9 @@ namespace Mouseflare.UI
             InitializeComponent();
             LoadCurrentSettings();
             _loading = false;
+            // The updater raises PhaseChanged from a thread-pool thread; keep
+            // the Updates tab current while the window is open
+            Core.Updater.Shared.PhaseChanged += OnUpdaterPhaseChanged;
         }
 
         private void LoadCurrentSettings()
@@ -64,7 +68,7 @@ namespace Mouseflare.UI
             chkMonitorCrossing.IsChecked = _overlay.MonitorCrossingFxEnabled;
             chkSoundFx.IsChecked = _overlay.SoundFxEnabled;
             chkAutoUpdates.IsChecked = _overlay.AutoCheckUpdates;
-            txtAutoUpdatesSub.Text = $"Quietly check GitHub Releases every 6 hours (installed: v{Core.Updater.Shared.CurrentVersion}). Use the tray menu for a manual check.";
+            RefreshUpdatesTab();
 
             sliderIntensity.Value = _overlay.IntensityMultiplier;
             sliderDensity.Value = _overlay.SparkDensityMultiplier * 5.0;
@@ -125,6 +129,7 @@ namespace Mouseflare.UI
         private void OnNavFxDesigner(object sender, RoutedEventArgs e) => UpdateTabSelection("fx-designer");
         private void OnNavBehavior(object sender, RoutedEventArgs e) => UpdateTabSelection("behavior");
         private void OnNavDiagnostics(object sender, RoutedEventArgs e) => UpdateTabSelection("diagnostics");
+        private void OnNavUpdates(object sender, RoutedEventArgs e) => UpdateTabSelection("updates");
 
         private void UpdateTabSelection(string tab)
         {
@@ -140,6 +145,7 @@ namespace Mouseflare.UI
             }
             tabBehavior.Visibility = tab == "behavior" ? Visibility.Visible : Visibility.Collapsed;
             tabDiagnostics.Visibility = tab == "diagnostics" ? Visibility.Visible : Visibility.Collapsed;
+            tabUpdates.Visibility = tab == "updates" ? Visibility.Visible : Visibility.Collapsed;
 
             // Only FX Studio / FX Designer changes are a draft needing Apply & Save;
             // every other tab saves instantly, so hide the button there
@@ -152,6 +158,7 @@ namespace Mouseflare.UI
             SetNavButtonState(btnNavFxDesigner, tab == "fx-designer");
             SetNavButtonState(btnNavBehavior, tab == "behavior");
             SetNavButtonState(btnNavDiagnostics, tab == "diagnostics");
+            SetNavButtonState(btnNavUpdates, tab == "updates");
         }
 
         private void SetNavButtonState(Button btn, bool isActive)
@@ -201,6 +208,109 @@ namespace Mouseflare.UI
         {
             if (_overlay != null) _overlay.AutoCheckUpdates = chkAutoUpdates.IsChecked == true;
             PersistInstantSettings();
+        }
+
+        // ---- Updates tab ----
+
+        private void OnUpdaterPhaseChanged() => Dispatcher.InvokeAsync(() => RefreshUpdatesTab());
+
+        /// <summary>
+        /// Renders the Updates tab from the updater's phase. statusOverride
+        /// carries transient messages ("Checking…", "You're up to date") that
+        /// the phase alone cannot express.
+        /// </summary>
+        private void RefreshUpdatesTab(string? statusOverride = null)
+        {
+            var updater = Core.Updater.Shared;
+            txtUpdateVersion.Text = updater.IsDevBuild
+                ? "Mouseflare dev build (unversioned)"
+                : $"Mouseflare v{updater.CurrentVersion}";
+            btnCheckNow.IsEnabled = !updater.IsDevBuild && !_updateCheckInFlight;
+
+            bool showCard = updater.Phase is Core.Updater.UpdatePhase.Available
+                or Core.Updater.UpdatePhase.Downloading
+                or Core.Updater.UpdatePhase.Ready;
+            cardUpdateAvailable.Visibility = showCard ? Visibility.Visible : Visibility.Collapsed;
+            if (showCard && updater.AvailableRelease is { } release)
+            {
+                txtUpdateAvailTitle.Text = $"Mouseflare v{release.Version} is available";
+                txtUpdateAvailSub.Text = string.IsNullOrWhiteSpace(release.Title)
+                    ? "Verified update from GitHub Releases."
+                    : release.Title;
+                switch (updater.Phase)
+                {
+                    case Core.Updater.UpdatePhase.Downloading:
+                        btnInstallUpdate.Content = $"Downloading v{release.Version}…";
+                        btnInstallUpdate.IsEnabled = false;
+                        break;
+                    case Core.Updater.UpdatePhase.Ready:
+                        btnInstallUpdate.Content = $"🔁 Restart to Update to v{release.Version}";
+                        btnInstallUpdate.IsEnabled = true;
+                        break;
+                    default:
+                        btnInstallUpdate.Content = $"⬇ Download & Install v{release.Version}";
+                        btnInstallUpdate.IsEnabled = true;
+                        break;
+                }
+            }
+
+            txtUpdateStatus.Text = statusOverride ?? updater.Phase switch
+            {
+                Core.Updater.UpdatePhase.Error =>
+                    $"Update check failed: {updater.ErrorMessage ?? "unknown error"}",
+                Core.Updater.UpdatePhase.Available =>
+                    "A newer stable release is available — see below.",
+                Core.Updater.UpdatePhase.Downloading =>
+                    "Downloading and verifying the update…",
+                Core.Updater.UpdatePhase.Ready =>
+                    "Update verified and staged — restart Mouseflare to finish installing.",
+                _ => updater.IsDevBuild
+                    ? "Dev builds don't self-update — download stable builds from GitHub Releases."
+                    : "Background checks run every 6 hours. Use Check Now for an immediate check.",
+            };
+        }
+
+        private async void OnCheckUpdatesNow(object sender, RoutedEventArgs e)
+        {
+            var updater = Core.Updater.Shared;
+            if (updater.IsDevBuild || _updateCheckInFlight) return;
+            _updateCheckInFlight = true;
+            RefreshUpdatesTab("Checking GitHub Releases…");
+            try
+            {
+                var release = await updater.CheckAsync();
+                _updateCheckInFlight = false;
+                RefreshUpdatesTab(release == null
+                    ? $"You're up to date — v{updater.CurrentVersion} is the latest stable release."
+                    : null);
+            }
+            catch (Exception ex)
+            {
+                _updateCheckInFlight = false;
+                RefreshUpdatesTab($"Update check failed: {ex.Message}");
+            }
+        }
+
+        private void OnViewReleaseNotes(object sender, RoutedEventArgs e)
+        {
+            string url = Core.Updater.Shared.AvailableRelease?.PageUrl is { Length: > 0 } page
+                ? page
+                : "https://github.com/OffBy1-tech/Mouse-Flare/releases";
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true,
+                });
+            }
+            catch { /* no browser is not worth a crash */ }
+        }
+
+        private void OnInstallUpdate(object sender, RoutedEventArgs e)
+        {
+            // Same download → verify → stage → restart path the tray menu uses
+            (Application.Current as App)?.RequestUpdateInstall();
         }
 
         // Passive Presets (9 Styles)
@@ -872,6 +982,14 @@ namespace Mouseflare.UI
             // Closing without Apply & Save discards the FX preview
             RevertUnappliedFx();
             base.OnClosing(e);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            // Updater.Shared outlives this window — unhook or the closed
+            // window is kept alive by the static event
+            Core.Updater.Shared.PhaseChanged -= OnUpdaterPhaseChanged;
+            base.OnClosed(e);
         }
 
         private void OnTestFlare(object sender, RoutedEventArgs e)

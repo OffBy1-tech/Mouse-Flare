@@ -192,6 +192,13 @@ namespace Mouseflare
             }
         }
 
+        /// <summary>
+        /// Settings-window entry into the tray's download → verify → stage →
+        /// restart path. StartUpdateDownload already forwards to
+        /// InstallStagedUpdate when a staged update is waiting.
+        /// </summary>
+        internal void RequestUpdateInstall() => Dispatcher.InvokeAsync(StartUpdateDownload);
+
         private void InstallStagedUpdate()
         {
             var updater = Updater.Shared;
