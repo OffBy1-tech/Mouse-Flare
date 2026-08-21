@@ -2,6 +2,13 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.6.1 (2026-08-21)
+
+## Mouseflare 0.6.1 — macOS Layout Hotfix
+
+### 🐛 Fixed
+- **macOS**: checking for updates could blow the settings window up far wider than the screen. Release-note text was allowed to dictate the window's width through Auto Layout; runtime text labels in the Updates tab can no longer push the window's size, changelog bullets now wrap fully (matching the web), and the window is hard-clamped to its designed 940×680.
+
 ## Mouseflare v0.6.0 (2026-08-21)
 
 ## Mouseflare 0.6.0 — Hover Polish & True Additive FX on Windows
