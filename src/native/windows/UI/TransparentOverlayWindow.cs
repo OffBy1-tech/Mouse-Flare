@@ -30,6 +30,7 @@ namespace Mouseflare.UI
         public bool MonitorCrossingFxEnabled { get; set; } = true;
         public bool SoundFxEnabled { get; set; } = true;
         public bool AutoCheckUpdates { get; set; } = true;
+        public int CheckIntervalHours { get; set; } = 6;
         public static readonly string[] DefaultQuickSwatches =
             { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7", "#EF4444", "#FACC15", "#22C55E" };
         public string[] QuickSwatches { get; set; } = (string[])DefaultQuickSwatches.Clone();
@@ -69,6 +70,8 @@ namespace Mouseflare.UI
             MonitorCrossingFxEnabled = MonitorCrossingFxEnabled,
             SoundFxEnabled = SoundFxEnabled,
             AutoCheckUpdates = AutoCheckUpdates,
+            CheckIntervalHours = CheckIntervalHours,
+            LastCheckedUtc = Core.Updater.Shared.LastCheckedUtc,
             QuickSwatches = QuickSwatches,
             CustomFxJson = CustomFxJson,
             FluidVorticity = FluidVorticity,

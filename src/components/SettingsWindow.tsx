@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, ColorPreset, FlarePreset, FxPreset } from '../types';
 import { NATIVE_SOURCE_FILES } from '../data/nativeSource';
 import { ParticleFxEditor } from './ParticleFxEditor';
+import { NeonSelect } from './NeonSelect';
 import { downloadWindowsNativeZip, downloadMacNativeZip, downloadCrossPlatformZip } from '../utils/nativeDownloader';
 import {
   CURRENT_BUILD_INFO,
@@ -86,13 +87,32 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedChecksum, setCopiedChecksum] = useState<string | null>(null);
   const [isRecordingHotkey, setIsRecordingHotkey] = useState(false);
+
+  // Diagnostics is a hidden section: click the sidebar version text 5 times
+  // to reveal it (session-only — the window unmounts on close, re-hiding it).
+  const [diagnosticsUnlocked, setDiagnosticsUnlocked] = useState(false);
+  const versionClicksRef = useRef(0);
+  const handleVersionClick = () => {
+    if (diagnosticsUnlocked) return;
+    versionClicksRef.current += 1;
+    const remaining = 5 - versionClicksRef.current;
+    if (remaining <= 0) {
+      setDiagnosticsUnlocked(true);
+      setActiveTab('diagnostics');
+      soundEngine.playToggle(true);
+      setSaveStatus('Diagnostics unlocked');
+      setTimeout(() => setSaveStatus(null), 2500);
+    } else if (versionClicksRef.current >= 3) {
+      setSaveStatus(`${remaining} more ${remaining === 1 ? 'click' : 'clicks'} to unlock Diagnostics`);
+      setTimeout(() => setSaveStatus(null), 2000);
+    }
+  };
   const [downloadingType, setDownloadingType] = useState<'windows' | 'macos' | 'universal' | null>(null);
 
   // Update check states
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
   const [lastCheckTime, setLastCheckTime] = useState<number>(() => settings.lastCheckedTimestamp || Date.now() - 1000 * 60 * 60 * 4);
-  const [selectedReleaseChannel, setSelectedReleaseChannel] = useState<'stable' | 'beta'>(settings.updateChannel || 'stable');
 
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
@@ -106,22 +126,21 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   // Initial check on mount if autoCheckUpdates is enabled and haven't checked recently
   useEffect(() => {
     if (settings.autoCheckUpdates && !updateResult) {
-      checkNativeBuildUpdates(CURRENT_BUILD_INFO.version, settings.updateChannel || 'stable').then((res) => {
+      checkNativeBuildUpdates(CURRENT_BUILD_INFO.version).then((res) => {
         setUpdateResult(res);
       });
     }
   }, []);
 
-  const handlePerformUpdateCheck = async (channelOverride?: 'stable' | 'beta') => {
-    const channel = channelOverride || settings.updateChannel || selectedReleaseChannel;
+  const handlePerformUpdateCheck = async () => {
     setIsCheckingUpdates(true);
     soundEngine.playClick();
     try {
-      const result = await checkNativeBuildUpdates(CURRENT_BUILD_INFO.version, channel);
+      const result = await checkNativeBuildUpdates(CURRENT_BUILD_INFO.version);
       setUpdateResult(result);
       const now = Date.now();
       setLastCheckTime(now);
-      updateInstant({ lastCheckedTimestamp: now, updateChannel: channel });
+      updateInstant({ lastCheckedTimestamp: now });
       if (result.hasUpdate) {
         soundEngine.playToggle(true);
       }
@@ -240,12 +259,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
       <div 
-        className="w-full max-w-4xl h-[660px] bg-neutral-900/95 border border-neutral-700/90 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.65)] backdrop-blur-2xl flex flex-col overflow-hidden pointer-events-auto text-neutral-100 select-none animate-in zoom-in-95 duration-150"
+        className="neon-frame w-full max-w-4xl h-[660px] flex flex-col overflow-hidden pointer-events-auto text-neutral-100 select-none animate-in zoom-in-95 duration-150"
         onKeyDown={handleKeyDownHotkey}
         tabIndex={0}
       >
         {/* Title Bar */}
-        <div className="h-11 bg-neutral-950/80 border-b border-neutral-800 flex items-center justify-between px-4">
+        <div className="h-11 bg-[#0a0512]/80 border-b border-violet-500/25 flex items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
             <img src="/app-logo.png" alt="Mouseflare logo" className="w-5 h-5 rounded-md shadow" />
             <span className="text-xs font-semibold tracking-wide text-neutral-200">
@@ -263,7 +282,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             {isFxTab && (
               <button
                 onClick={handleSaveAndApply}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow transition-all active:scale-95 mr-2"
+                className="neon-btn-primary flex items-center gap-1.5 px-3 py-1 rounded-lg font-bold text-xs transition-all active:scale-95 mr-2"
                 title="Save and persist the previewed FX selections"
               >
                 <Save className="w-3.5 h-3.5" />
@@ -283,9 +302,9 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
         {/* Body (Sidebar + Content) */}
         <div className="flex-1 flex overflow-hidden">
           {/* Navigation Sidebar */}
-          <div className="w-56 bg-neutral-950/60 border-r border-neutral-800/80 p-3 flex flex-col justify-between">
+          <div className="w-56 bg-[#0d0618]/70 border-r border-violet-500/20 p-3 flex flex-col justify-between">
             <div className="space-y-1">
-              <div className="text-[10px] uppercase font-bold tracking-wider text-neutral-400 px-3 py-1">
+              <div className="text-[10px] uppercase font-bold tracking-wider text-violet-300/60 px-3 py-1">
                 Navigation
               </div>
 
@@ -293,8 +312,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 onClick={() => setActiveTab('general')}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'general'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                    : 'text-neutral-300 hover:bg-white/5'
+                    ? 'neon-nav-active font-semibold'
+                    : 'text-violet-100/70 hover:bg-violet-400/10'
                 }`}
               >
                 <Flame className="w-4 h-4 text-amber-400" />
@@ -305,8 +324,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 onClick={() => setActiveTab('fx-studio')}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'fx-studio'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                    : 'text-neutral-300 hover:bg-white/5'
+                    ? 'neon-nav-active font-semibold'
+                    : 'text-violet-100/70 hover:bg-violet-400/10'
                 }`}
               >
                 <Sparkles className="w-4 h-4 text-cyan-400" />
@@ -317,15 +336,15 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 onClick={() => setActiveTab('fx-designer')}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'fx-designer'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold shadow'
-                    : 'text-neutral-300 hover:bg-white/5'
+                    ? 'neon-nav-active font-semibold'
+                    : 'text-violet-100/70 hover:bg-violet-400/10'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
                   <Sliders className="w-4 h-4 text-amber-400" />
                   <span>FX Designer</span>
                 </div>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 font-bold border border-fuchsia-500/40">
                   NEW
                 </span>
               </button>
@@ -334,32 +353,34 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 onClick={() => setActiveTab('behavior')}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'behavior'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                    : 'text-neutral-300 hover:bg-white/5'
+                    ? 'neon-nav-active font-semibold'
+                    : 'text-violet-100/70 hover:bg-violet-400/10'
                 }`}
               >
                 <Sliders className="w-4 h-4 text-emerald-400" />
                 <span>Behavior &amp; Monitors</span>
               </button>
 
-              <button
-                onClick={() => setActiveTab('diagnostics')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                  activeTab === 'diagnostics'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                    : 'text-neutral-300 hover:bg-white/5'
-                }`}
-              >
-                <Activity className="w-4 h-4 text-violet-400" />
-                <span>Diagnostics</span>
-              </button>
+              {diagnosticsUnlocked && (
+                <button
+                  onClick={() => setActiveTab('diagnostics')}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                    activeTab === 'diagnostics'
+                      ? 'neon-nav-active font-semibold'
+                      : 'text-violet-100/70 hover:bg-violet-400/10'
+                  }`}
+                >
+                  <Activity className="w-4 h-4 text-violet-400" />
+                  <span>Diagnostics</span>
+                </button>
+              )}
 
               <button
                 onClick={() => setActiveTab('native-code')}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'native-code'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                    : 'text-neutral-300 hover:bg-white/5'
+                    ? 'neon-nav-active font-semibold'
+                    : 'text-violet-100/70 hover:bg-violet-400/10'
                 }`}
               >
                 <Code2 className="w-4 h-4 text-blue-400" />
@@ -370,8 +391,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 onClick={() => setActiveTab('updates')}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'updates'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                    : 'text-neutral-300 hover:bg-white/5'
+                    ? 'neon-nav-active font-semibold'
+                    : 'text-violet-100/70 hover:bg-violet-400/10'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -391,10 +412,16 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             </div>
 
             {/* Quick Actions in Sidebar */}
-            <div className="pt-3 border-t border-neutral-800 space-y-2">
+            <div className="pt-3 border-t border-violet-500/20 space-y-2">
+              <div
+                onClick={handleVersionClick}
+                className="text-center text-[10px] text-neutral-500 select-none"
+              >
+                Mouseflare v{CURRENT_BUILD_INFO.version}
+              </div>
               <button
                 onClick={onTriggerFlare}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-neutral-950 font-bold text-xs shadow-lg transition-all active:scale-95"
+                className="neon-btn-primary w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl font-bold text-xs transition-all active:scale-95"
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
                 <span>Test Flare Now</span>
@@ -402,7 +429,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
               <button
                 onClick={handleResetDefaults}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-neutral-800/60 hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 text-[11px] transition-all"
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-violet-200/60 hover:text-violet-100 text-[11px] transition-all"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Reset Defaults</span>
@@ -411,7 +438,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 p-6 overflow-y-auto bg-neutral-900/60">
+          <div className="flex-1 p-6 overflow-y-auto bg-[#120a20]/60">
             {/* TAB 1: GENERAL */}
             {activeTab === 'general' && (
               <div className="space-y-6">
@@ -424,7 +451,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
                 <div className="grid gap-3">
                   {/* Master Switch */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                     <div>
                       <div className="font-semibold text-sm text-neutral-200">Enable Mouseflare</div>
                       <div className="text-xs text-neutral-400 mt-0.5">
@@ -441,12 +468,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         }}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
                     </label>
                   </div>
 
                   {/* Passive FX Toggle */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                     <div>
                       <div className="font-semibold text-sm text-neutral-200">Enable Passive Trail FX</div>
                       <div className="text-xs text-neutral-400 mt-0.5">
@@ -460,12 +487,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         onChange={(e) => updateInstant({ enablePassiveFx: e.target.checked })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
                     </label>
                   </div>
 
                   {/* Global Hotkey Configuration */}
-                  <div className="p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60 space-y-3">
+                  <div className="p-4 rounded-xl neon-card space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-semibold text-sm text-neutral-200">Find Mouse Global Hotkey</div>
@@ -478,7 +505,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium border transition-all ${
                           isRecordingHotkey
                             ? 'bg-red-500/20 text-red-300 border-red-500/50 animate-pulse'
-                            : 'bg-neutral-800 text-neutral-200 border-neutral-700 hover:border-amber-500/50'
+                            : 'bg-white/5 text-neutral-200 border-white/10 hover:border-violet-400/60'
                         }`}
                       >
                         {isRecordingHotkey ? 'Press keys now...' : settings.hotkey}
@@ -486,7 +513,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     </div>
 
                     {/* Quick Presets */}
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-800 text-xs">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10 text-xs">
                       <span className="text-neutral-400">Presets:</span>
                       {['Ctrl+Shift+F', 'Ctrl+Space', 'Alt+M', 'F1'].map((preset) => (
                         <button
@@ -494,8 +521,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           onClick={() => updateInstant({ hotkey: preset })}
                           className={`px-2 py-0.5 rounded text-[11px] font-mono border transition-colors ${
                             settings.hotkey === preset
-                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
-                              : 'bg-neutral-800/80 text-neutral-400 border-neutral-700 hover:text-neutral-200'
+                              ? 'bg-violet-500/20 text-violet-200 border-violet-400/50 font-bold'
+                              : 'bg-white/5 text-neutral-400 border-white/10 hover:text-neutral-200'
                           }`}
                         >
                           {preset}
@@ -506,7 +533,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
                   {/* Sound FX & Startup */}
                   <div className="grid sm:grid-cols-2 gap-3">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                    <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                       <div>
                         <div className="font-semibold text-xs text-neutral-200">Start with OS</div>
                         <div className="text-[11px] text-neutral-400">Launch in tray upon system login.</div>
@@ -515,11 +542,11 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         type="checkbox"
                         checked={settings.startWithWindows}
                         onChange={(e) => updateInstant({ startWithWindows: e.target.checked })}
-                        className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
+                        className="neon-check rounded h-4 w-4"
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                    <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                       <div>
                         <div className="font-semibold text-xs text-neutral-200">Acoustic Beacon Chime</div>
                         <div className="text-[11px] text-neutral-400">Subtle synth chime on flare trigger.</div>
@@ -528,13 +555,13 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         type="checkbox"
                         checked={settings.soundFx}
                         onChange={(e) => updateInstant({ soundFx: e.target.checked })}
-                        className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
+                        className="neon-check rounded h-4 w-4"
                       />
                     </div>
                   </div>
 
                   {/* Quick Software Updates Card in General Tab */}
-                  <div className="p-4 rounded-xl bg-gradient-to-r from-neutral-800/60 to-neutral-900 border border-neutral-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="neon-card p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
                         <RefreshCw className={`w-4 h-4 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
@@ -542,7 +569,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-xs text-neutral-200">Software Updates &amp; Build Status</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/5 text-neutral-300 border border-white/10">
                             v{CURRENT_BUILD_INFO.version}
                           </span>
                           {updateResult?.hasUpdate && (
@@ -553,7 +580,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         </div>
                         <div className="text-[11px] text-neutral-400 mt-0.5">
                           {updateResult?.hasUpdate
-                            ? `Latest ${settings.updateChannel} build (v${updateResult.latestVersion}) is ready to download from GitHub Releases.`
+                            ? `Latest build (v${updateResult.latestVersion}) is ready to download from GitHub Releases.`
                             : `Current installed version is validated against release feed (checked ${formatTimeAgo(lastCheckTime)}).`}
                         </div>
                       </div>
@@ -563,7 +590,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <button
                         onClick={() => handlePerformUpdateCheck()}
                         disabled={isCheckingUpdates}
-                        className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium border border-neutral-700 shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-200 text-xs font-medium border border-white/10 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? 'animate-spin text-amber-400' : ''}`} />
                         <span>{isCheckingUpdates ? 'Checking...' : 'Check Now'}</span>
@@ -571,7 +598,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
                       <button
                         onClick={() => setActiveTab('updates')}
-                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-bold shadow flex items-center gap-1.5 cursor-pointer"
+                        className="neon-btn-primary px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                       >
                         <span>View Release Notes</span>
                       </button>
@@ -597,7 +624,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     <label className="text-xs font-semibold text-neutral-200">
                       Passive Movement FX (Movement Trail)
                     </label>
-                    <span className="text-[11px] text-amber-400 font-mono">
+                    <span className="text-[11px] text-violet-300 font-mono">
                       Selected: <strong className="capitalize">{settings.passiveFx.replace('-', ' ')}</strong>
                     </span>
                   </div>
@@ -634,21 +661,21 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           onClick={() => updateFxDraft({ passiveFx: item.id })}
                           className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between min-h-[76px] cursor-pointer ${
                             isSelected
-                              ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-500/50 shadow-[0_0_18px_rgba(245,158,11,0.25)]'
-                              : 'bg-neutral-800/40 border-neutral-700/60 hover:bg-neutral-800/80 hover:border-neutral-500'
+                              ? 'neon-selected'
+                              : 'neon-card neon-card-hover'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-1 w-full">
-                            <div className={`font-bold text-xs ${isSelected ? 'text-amber-300' : 'text-neutral-200'}`}>
+                            <div className={`font-bold text-xs ${isSelected ? 'text-white' : 'text-neutral-200'}`}>
                               {item.label}
                             </div>
                             {isSelected && (
-                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500 text-neutral-950 font-bold text-[9px] uppercase tracking-wider shrink-0 shadow">
+                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 border border-white/50 text-white font-bold text-[9px] uppercase tracking-wider shrink-0 shadow">
                                 <Check className="w-2.5 h-2.5 stroke-[3]" /> Active
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-neutral-400 mt-1 leading-tight">{item.desc}</div>
+                          <div className={`text-[10px] mt-1 leading-tight ${isSelected ? 'text-indigo-100/85' : 'text-neutral-400'}`}>{item.desc}</div>
                         </button>
                       );
                     })}
@@ -687,21 +714,21 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           }}
                           className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between min-h-[76px] cursor-pointer ${
                             isSelected
-                              ? 'bg-cyan-500/20 border-cyan-400 ring-2 ring-cyan-500/50 shadow-[0_0_18px_rgba(6,182,212,0.25)]'
-                              : 'bg-neutral-800/40 border-neutral-700/60 hover:bg-neutral-800/80 hover:border-neutral-500'
+                              ? 'neon-selected-cyan'
+                              : 'neon-card neon-card-hover'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-1 w-full">
-                            <div className={`font-bold text-xs ${isSelected ? 'text-cyan-300' : 'text-neutral-200'}`}>
+                            <div className={`font-bold text-xs ${isSelected ? 'text-white' : 'text-neutral-200'}`}>
                               {item.label}
                             </div>
                             {isSelected && (
-                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-500 text-neutral-950 font-bold text-[9px] uppercase tracking-wider shrink-0 shadow">
+                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 border border-white/50 text-white font-bold text-[9px] uppercase tracking-wider shrink-0 shadow">
                                 <Check className="w-2.5 h-2.5 stroke-[3]" /> Active
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-neutral-400 mt-1 leading-tight">{item.desc}</div>
+                          <div className={`text-[10px] mt-1 leading-tight ${isSelected ? 'text-indigo-100/85' : 'text-neutral-400'}`}>{item.desc}</div>
                         </button>
                       );
                     })}
@@ -715,7 +742,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       Color Palette &amp; Signature Glow
                     </label>
                     <span className="text-[11px] text-neutral-400 font-mono">
-                      Selected: <strong className="text-amber-400 capitalize">{settings.colorPreset}</strong>
+                      Selected: <strong className="text-violet-300 capitalize">{settings.colorPreset}</strong>
                     </span>
                   </div>
 
@@ -738,8 +765,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           onClick={() => updateFxDraft({ colorPreset: pal.id })}
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-neutral-800 border-white text-white shadow-lg ring-2 ring-white/30 font-bold'
-                              : 'bg-neutral-800/40 border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:border-neutral-500'
+                              ? 'neon-selected text-white font-bold'
+                              : 'neon-card neon-card-hover text-neutral-300'
                           }`}
                         >
                           <span
@@ -747,7 +774,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                             style={{ backgroundColor: pal.color }}
                           />
                           <span>{pal.label}</span>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-amber-400 stroke-[3]" />}
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
                         </button>
                       );
                     })}
@@ -755,11 +782,11 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 </div>
 
                 {/* Fine-Tuning Sliders */}
-                <div className="grid sm:grid-cols-2 gap-4 p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                <div className="grid sm:grid-cols-2 gap-4 p-4 rounded-xl neon-card">
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
                       <span className="text-neutral-300 font-medium">FX Intensity:</span>
-                      <span className="text-amber-400 font-mono font-bold">{settings.intensity}x</span>
+                      <span className="text-violet-300 font-mono font-bold">{settings.intensity}x</span>
                     </div>
                     <input
                       type="range"
@@ -768,14 +795,14 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       step="0.1"
                       value={settings.intensity}
                       onChange={(e) => updateFxDraft({ intensity: parseFloat(e.target.value) })}
-                      className="w-full accent-amber-500 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      className="w-full neon-range bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
                       <span className="text-neutral-300 font-medium">Particle Density:</span>
-                      <span className="text-amber-400 font-mono font-bold">{settings.particleDensity} / 10</span>
+                      <span className="text-violet-300 font-mono font-bold">{settings.particleDensity} / 10</span>
                     </div>
                     <input
                       type="range"
@@ -784,14 +811,14 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       step="1"
                       value={settings.particleDensity}
                       onChange={(e) => updateFxDraft({ particleDensity: parseInt(e.target.value) })}
-                      className="w-full accent-amber-500 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      className="w-full neon-range bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
                       <span className="text-neutral-300 font-medium">Animation Speed:</span>
-                      <span className="text-amber-400 font-mono font-bold">{settings.animationSpeed}x</span>
+                      <span className="text-violet-300 font-mono font-bold">{settings.animationSpeed}x</span>
                     </div>
                     <input
                       type="range"
@@ -800,14 +827,14 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       step="0.1"
                       value={settings.animationSpeed}
                       onChange={(e) => updateFxDraft({ animationSpeed: parseFloat(e.target.value) })}
-                      className="w-full accent-amber-500 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      className="w-full neon-range bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
                       <span className="text-neutral-300 font-medium">Min Movement Threshold:</span>
-                      <span className="text-amber-400 font-mono font-bold">{settings.minMovementThreshold} px</span>
+                      <span className="text-violet-300 font-mono font-bold">{settings.minMovementThreshold} px</span>
                     </div>
                     <input
                       type="range"
@@ -816,13 +843,13 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       step="1"
                       value={settings.minMovementThreshold}
                       onChange={(e) => updateFxDraft({ minMovementThreshold: parseInt(e.target.value) })}
-                      className="w-full accent-amber-500 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      className="w-full neon-range bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
                 </div>
 
                 {/* Fluid Simulation Controls (Pavel DoGreat Inspired) */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-neutral-850 to-neutral-900 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.08)] space-y-4">
+                <div className="neon-card-cyan p-4 rounded-xl space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow">
@@ -875,7 +902,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         step="0.1"
                         value={settings.fluidVorticity ?? 1.5}
                         onChange={(e) => updateFxDraft({ fluidVorticity: parseFloat(e.target.value) })}
-                        className="w-full accent-cyan-400 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
+                        className="w-full neon-range-cyan bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                       />
                     </div>
 
@@ -892,13 +919,13 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         step="0.01"
                         value={settings.fluidDissipation ?? 0.96}
                         onChange={(e) => updateFxDraft({ fluidDissipation: parseFloat(e.target.value) })}
-                        className="w-full accent-cyan-400 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
+                        className="w-full neon-range-cyan bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                       />
                     </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-3 pt-1 border-t border-neutral-800">
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-neutral-800/60 border border-neutral-700/60">
+                  <div className="grid sm:grid-cols-2 gap-3 pt-1 border-t border-white/10">
+                    <div className="flex items-center justify-between p-2.5 rounded-lg neon-card">
                       <div>
                         <div className="font-semibold text-xs text-neutral-200">Luminescent Glowing Bloom</div>
                         <div className="text-[10px] text-neutral-400">Additive blend mode for intense neon glow</div>
@@ -907,11 +934,11 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         type="checkbox"
                         checked={settings.fluidBloom !== false}
                         onChange={(e) => updateFxDraft({ fluidBloom: e.target.checked })}
-                        className="rounded bg-neutral-700 border-neutral-600 text-cyan-500 focus:ring-cyan-500 h-4 w-4"
+                        className="neon-check-cyan rounded h-4 w-4"
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-neutral-800/60 border border-neutral-700/60">
+                    <div className="flex items-center justify-between p-2.5 rounded-lg neon-card">
                       <div>
                         <div className="font-semibold text-xs text-neutral-200">Chromatic Rainbow Dye Cycle</div>
                         <div className="text-[10px] text-neutral-400">Cycles vivid spectrum hues as mouse moves</div>
@@ -920,7 +947,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         type="checkbox"
                         checked={settings.fluidRainbowDye === true}
                         onChange={(e) => updateFxDraft({ fluidRainbowDye: e.target.checked })}
-                        className="rounded bg-neutral-700 border-neutral-600 text-cyan-500 focus:ring-cyan-500 h-4 w-4"
+                        className="neon-check-cyan rounded h-4 w-4"
                       />
                     </div>
                   </div>
@@ -931,19 +958,16 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             {/* TAB 3: BEHAVIOR & MONITORS */}
             {/* TAB: PARTICLE FX DESIGNER */}
             {activeTab === 'fx-designer' && (
-              <div className="h-full flex flex-col -m-6">
-                <ParticleFxEditor
-                  currentActiveConfigId={settings.customFxConfig?.id}
-                  onApplyToCursor={(customConfig) => {
-                    updateFxDraft({
-                      passiveFx: 'custom-fx',
-                      customFxConfig: customConfig,
-                      enablePassiveFx: true,
-                    });
-                    onTriggerFlare();
-                  }}
-                />
-              </div>
+              <ParticleFxEditor
+                currentConfig={settings.customFxConfig}
+                onApplyToCursor={(customConfig) => {
+                  updateFxDraft({
+                    passiveFx: 'custom-fx',
+                    customFxConfig: customConfig,
+                    enablePassiveFx: true,
+                  });
+                }}
+              />
             )}
 
             {activeTab === 'behavior' && (
@@ -957,7 +981,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
                 <div className="space-y-3">
                   {/* Wake from idle burst */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                     <div>
                       <div className="font-semibold text-sm text-neutral-200">Wake-From-Idle Burst</div>
                       <div className="text-xs text-neutral-400 mt-0.5">
@@ -971,12 +995,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         onChange={(e) => updateInstant({ idleBurst: e.target.checked })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
                     </label>
                   </div>
 
                   {/* Multi-Monitor Crossing Shockwave */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                     <div>
                       <div className="font-semibold text-sm text-neutral-200">Monitor-Crossing Transition FX</div>
                       <div className="text-xs text-neutral-400 mt-0.5">
@@ -990,12 +1014,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         onChange={(e) => updateInstant({ monitorCrossingFx: e.target.checked })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
                     </label>
                   </div>
 
                   {/* Multi-Monitor Simulation Mode */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                     <div>
                       <div className="font-semibold text-sm text-neutral-200">Multi-Monitor Display Arena</div>
                       <div className="text-xs text-neutral-400 mt-0.5">
@@ -1009,12 +1033,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         onChange={(e) => updateInstant({ multiMonitorMode: e.target.checked })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
                     </label>
                   </div>
 
                   {/* Reduced Motion Mode */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                     <div>
                       <div className="font-semibold text-sm text-neutral-200">Accessibility: Reduced Motion</div>
                       <div className="text-xs text-neutral-400 mt-0.5">
@@ -1028,7 +1052,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         onChange={(e) => updateInstant({ reducedMotion: e.target.checked })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
                     </label>
                   </div>
                 </div>
@@ -1051,7 +1075,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     <label className="text-xs font-semibold text-neutral-200">
                       Test Environment Scenario
                     </label>
-                    <span className="text-[11px] text-amber-400 font-mono">
+                    <span className="text-[11px] text-violet-300 font-mono">
                       Selected: <strong className="capitalize">{settings.desktopBackground}</strong>
                     </span>
                   </div>
@@ -1072,21 +1096,21 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           onClick={() => updateInstant({ desktopBackground: scenario.id })}
                           className={`p-3 rounded-xl border text-left transition-all cursor-pointer relative ${
                             isSelected
-                              ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-500/50 shadow-lg text-white font-semibold'
-                              : 'bg-neutral-800/40 border-neutral-700/60 text-neutral-300 hover:bg-neutral-800 hover:border-neutral-500'
+                              ? 'neon-selected text-white font-semibold'
+                              : 'neon-card neon-card-hover text-neutral-300'
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <div className={`font-semibold text-xs ${isSelected ? 'text-amber-300' : 'text-neutral-200'}`}>
+                            <div className={`font-semibold text-xs ${isSelected ? 'text-white' : 'text-neutral-200'}`}>
                               {scenario.label}
                             </div>
                             {isSelected && (
-                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500 text-neutral-950 font-bold text-[9px] uppercase">
+                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 border border-white/50 text-white font-bold text-[9px] uppercase">
                                 <Check className="w-2.5 h-2.5 stroke-[3]" /> Active
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-neutral-400 mt-1">{scenario.desc}</div>
+                          <div className={`text-[10px] mt-1 ${isSelected ? 'text-indigo-100/85' : 'text-neutral-400'}`}>{scenario.desc}</div>
                         </button>
                       );
                     })}
@@ -1094,7 +1118,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 </div>
 
                 {/* Live Diagnostic HUD Toggle */}
-                <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-800/40 border border-neutral-700/60">
+                <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                   <div>
                     <div className="font-semibold text-sm text-neutral-200">Show On-Screen Diagnostic HUD</div>
                     <div className="text-xs text-neutral-400 mt-0.5">
@@ -1108,7 +1132,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       onChange={(e) => updateInstant({ showDiagnostics: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                    <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
                   </label>
                 </div>
               </div>
@@ -1120,7 +1144,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 {/* Platform Download Cards */}
                 <div className="grid sm:grid-cols-2 gap-3">
                   {/* Windows Native Card */}
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-blue-950/40 to-neutral-900 border border-blue-500/30 shadow-lg flex flex-col justify-between">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-blue-950/40 to-[#120a20] border border-blue-500/30 shadow-lg flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40">
@@ -1145,7 +1169,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   </div>
 
                   {/* macOS Native Card */}
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-purple-950/40 to-neutral-900 border border-purple-500/30 shadow-lg flex flex-col justify-between">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-purple-950/40 to-[#120a20] border border-purple-500/30 shadow-lg flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
@@ -1171,7 +1195,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 </div>
 
                 {/* Filter and Copy Header */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-800">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-neutral-400 mr-1">Platform:</span>
                     {(
@@ -1189,8 +1213,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         }}
                         className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                           platformFilter === p.id
-                            ? 'bg-neutral-800 text-amber-300 border border-neutral-700 font-semibold'
-                            : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
+                            ? 'bg-violet-500/15 text-violet-300 border border-violet-400/40 font-semibold'
+                            : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
                         }`}
                       >
                         {p.label}
@@ -1202,7 +1226,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     <button
                       onClick={() => handleDownload('universal')}
                       disabled={downloadingType !== null}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 border border-amber-500/30 text-xs font-medium transition-all shadow cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-violet-300 border border-violet-400/40 text-xs font-medium transition-all cursor-pointer"
                       title="Download cross-platform package containing both Windows and macOS source code"
                     >
                       <FolderArchive className="w-3.5 h-3.5" />
@@ -1211,7 +1235,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
                     <button
                       onClick={() => handleCopyCode(activeFile.code)}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-neutral-800 text-neutral-200 border border-neutral-700 hover:bg-neutral-700 text-xs font-medium transition-all shadow cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 text-neutral-200 border border-white/10 hover:bg-white/10 text-xs font-medium transition-all cursor-pointer"
                     >
                       {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedCode ? 'Copied File!' : 'Copy Code'}</span>
@@ -1220,15 +1244,15 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 </div>
 
                 {/* File Tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-neutral-800">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-white/10">
                   {filteredFiles.map((file, idx) => (
                     <button
                       key={file.name}
                       onClick={() => setSelectedCodeIndex(idx)}
                       className={`px-3 py-1 rounded-lg text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
                         activeFile.name === file.name
-                          ? 'bg-neutral-800 text-amber-300 border border-neutral-700 font-semibold'
-                          : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
+                          ? 'bg-violet-500/15 text-violet-300 border border-violet-400/40 font-semibold'
+                          : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
                       }`}
                     >
                       {file.name}
@@ -1237,13 +1261,13 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 </div>
 
                 {/* File description */}
-                <div className="text-xs text-neutral-400 font-mono bg-neutral-950/60 p-2.5 rounded-lg border border-neutral-800">
+                <div className="text-xs text-neutral-400 font-mono bg-[#0a0512]/70 p-2.5 rounded-lg border border-white/10">
                   <span className="text-neutral-200 font-semibold">Path: </span>
                   {activeFile.path} — {activeFile.description}
                 </div>
 
                 {/* Code Viewer */}
-                <div className="bg-neutral-950 rounded-xl p-4 border border-neutral-800 font-mono text-xs text-neutral-300 overflow-x-auto max-h-[220px] leading-relaxed">
+                <div className="bg-[#0a0512] rounded-xl p-4 border border-white/10 font-mono text-xs text-neutral-300 overflow-x-auto max-h-[220px] leading-relaxed">
                   <pre>{activeFile.code}</pre>
                 </div>
               </div>
@@ -1269,7 +1293,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     <button
                       onClick={() => handlePerformUpdateCheck()}
                       disabled={isCheckingUpdates}
-                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-neutral-950 font-bold text-xs shadow-lg transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                      className="neon-btn-primary flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
                       <span>{isCheckingUpdates ? 'Validating Release Hash...' : 'Check for Updates'}</span>
@@ -1285,8 +1309,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   return (
                     <div className={`p-5 rounded-2xl border shadow-xl transition-all ${
                       hasUpdate 
-                        ? 'bg-gradient-to-br from-amber-950/40 via-neutral-900 to-neutral-950 border-amber-500/40 shadow-amber-500/5' 
-                        : 'bg-gradient-to-br from-emerald-950/30 via-neutral-900 to-neutral-950 border-emerald-500/40 shadow-emerald-500/5'
+                        ? 'bg-gradient-to-br from-amber-950/40 via-[#120a20] to-[#0a0512] border-amber-500/40 shadow-amber-500/5'
+                        : 'bg-gradient-to-br from-emerald-950/30 via-[#120a20] to-[#0a0512] border-emerald-500/40 shadow-emerald-500/5'
                     }`}>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-start gap-3.5">
@@ -1304,16 +1328,11 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                               <span className="text-base font-bold text-neutral-100">
                                 {hasUpdate ? `Update Available: v${targetRelease.version}` : `Mouseflare is Up to Date (v${CURRENT_BUILD_INFO.version})`}
                               </span>
-                              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
-                                hasUpdate ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                              }`}>
-                                {targetRelease.channel}
-                              </span>
                             </div>
                             <p className="text-xs text-neutral-300 mt-1 max-w-xl leading-relaxed">
                               {hasUpdate 
                                 ? targetRelease.title 
-                                : `You are currently running the latest verified ${selectedReleaseChannel} build. All physics and stability patches are applied.`}
+                                : `You are currently running the latest verified stable build. All physics and stability patches are applied.`}
                             </p>
 
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-[11px] text-neutral-400">
@@ -1336,7 +1355,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                               href={targetRelease.downloadUrls.releasePage}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                              className="neon-btn-primary flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
                             >
                               <Download className="w-4 h-4" />
                               <span>View v{targetRelease.version} on GitHub</span>
@@ -1345,13 +1364,13 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                             <div className="flex gap-1.5">
                               <a
                                 href={targetRelease.downloadUrls.windows}
-                                className="flex-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-blue-300 border border-neutral-700 text-[11px] font-medium transition-all text-center"
+                                className="flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-blue-300 border border-white/10 text-[11px] font-medium transition-all text-center"
                               >
                                 Win ({targetRelease.fileSizes.windowsZip})
                               </a>
                               <a
                                 href={targetRelease.downloadUrls.macOS}
-                                className="flex-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-purple-300 border border-neutral-700 text-[11px] font-medium transition-all text-center"
+                                className="flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-purple-300 border border-white/10 text-[11px] font-medium transition-all text-center"
                               >
                                 Mac ({targetRelease.fileSizes.macOSZip})
                               </a>
@@ -1363,46 +1382,10 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   );
                 })()}
 
-                {/* Live Release Feed header + channel selector */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Release Feed — live from GitHub Releases</span>
-                  </h3>
-                  <div className="flex items-center gap-1 text-xs">
-                    <button
-                      onClick={() => {
-                        setSelectedReleaseChannel('stable');
-                        handlePerformUpdateCheck('stable');
-                      }}
-                      className={`px-2.5 py-0.5 rounded-lg font-medium text-xs transition-all ${
-                        selectedReleaseChannel === 'stable'
-                          ? 'bg-neutral-800 text-amber-300 border border-neutral-700 font-bold'
-                          : 'text-neutral-400 hover:text-neutral-200'
-                      }`}
-                    >
-                      Stable
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedReleaseChannel('beta');
-                        handlePerformUpdateCheck('beta');
-                      }}
-                      className={`px-2.5 py-0.5 rounded-lg font-medium text-xs transition-all ${
-                        selectedReleaseChannel === 'beta'
-                          ? 'bg-neutral-800 text-purple-300 border border-neutral-700 font-bold'
-                          : 'text-neutral-400 hover:text-neutral-200'
-                      }`}
-                    >
-                      Beta (rolling dev)
-                    </button>
-                  </div>
-                </div>
-
                 {/* Itemized Changelog & Requirements */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   {/* Changelog */}
-                  <div className="p-4 rounded-xl bg-neutral-800/30 border border-neutral-700/60 flex flex-col justify-between">
+                  <div className="p-4 rounded-xl neon-card flex flex-col justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-neutral-200 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                         <FileCheck2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -1418,14 +1401,13 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       </ul>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-400">
-                      <span>Channel: <strong className="text-neutral-200 capitalize">{selectedReleaseChannel}</strong></span>
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-end text-[11px] text-neutral-400">
                       <span>Target: <strong className="text-neutral-200">Apple Silicon / Intel / x64</strong></span>
                     </div>
                   </div>
 
                   {/* Automated Update Cadence Configuration */}
-                  <div className="p-4 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3.5">
+                  <div className="p-4 rounded-xl neon-card space-y-3.5">
                     <h4 className="text-xs font-bold text-neutral-200 uppercase tracking-wider flex items-center gap-1.5">
                       <Sliders className="w-3.5 h-3.5 text-blue-400" />
                       <span>Update Cadence &amp; Preferences</span>
@@ -1441,32 +1423,34 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         type="checkbox"
                         checked={settings.autoCheckUpdates}
                         onChange={(e) => updateInstant({ autoCheckUpdates: e.target.checked })}
-                        className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
+                        className="neon-check rounded h-4 w-4"
                       />
                     </div>
 
                     {/* Frequency */}
-                    <div className="space-y-1 pt-2 border-t border-neutral-800">
+                    <div className="space-y-1 pt-2 border-t border-white/10">
                       <label className="text-xs text-neutral-300 font-medium flex items-center justify-between">
                         <span>Check Frequency</span>
-                        <span className="text-[11px] text-amber-400 font-mono">
+                        <span className="text-[11px] text-violet-300 font-mono">
                           {settings.checkIntervalHours === 0 ? 'Manual Only' : `Every ${settings.checkIntervalHours} Hours`}
                         </span>
                       </label>
-                      <select
-                        value={settings.checkIntervalHours}
-                        onChange={(e) => updateInstant({ checkIntervalHours: Number(e.target.value) })}
-                        className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-1.5 text-xs text-neutral-200 focus:outline-none focus:border-amber-500"
-                      >
-                        <option value={6}>Every 6 Hours (High Frequency)</option>
-                        <option value={24}>Every 24 Hours (Daily - Recommended)</option>
-                        <option value={72}>Every 72 Hours (Weekly)</option>
-                        <option value={0}>Manual Checks Only</option>
-                      </select>
+                      <NeonSelect
+                        value={String(settings.checkIntervalHours)}
+                        onChange={(v) => updateInstant({ checkIntervalHours: Number(v) })}
+                        options={[
+                          { value: '6', label: 'Every 6 Hours (High Frequency)' },
+                          { value: '24', label: 'Every 24 Hours (Daily - Recommended)' },
+                          { value: '72', label: 'Every 72 Hours (Weekly)' },
+                          { value: '0', label: 'Manual Checks Only' },
+                        ]}
+                        className="w-full px-3 py-1.5 text-xs"
+                        ariaLabel="Check Frequency"
+                      />
                     </div>
 
                     {/* Notification Alert Toggle */}
-                    <div className="flex items-center justify-between pt-2 border-t border-neutral-800">
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
                       <div>
                         <div className="font-semibold text-xs text-neutral-200">In-App Upgrade Notifications</div>
                         <div className="text-[11px] text-neutral-400">Show notification bar when an update is available.</div>
@@ -1475,12 +1459,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         type="checkbox"
                         checked={settings.notifyOnUpdate}
                         onChange={(e) => updateInstant({ notifyOnUpdate: e.target.checked })}
-                        className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
+                        className="neon-check rounded h-4 w-4"
                       />
                     </div>
 
                     {/* Minimum OS Requirements */}
-                    <div className="pt-2 border-t border-neutral-800 text-[11px] text-neutral-400 space-y-1">
+                    <div className="pt-2 border-t border-white/10 text-[11px] text-neutral-400 space-y-1">
                       <div className="font-semibold text-neutral-300 flex items-center gap-1">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Minimum System Requirements:</span>
@@ -1496,7 +1480,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   const release = updateResult?.release ?? FALLBACK_RELEASE;
                   const minisignCmd = `minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw`;
                   return (
-                    <div className="p-4 rounded-xl bg-neutral-950/60 border border-neutral-800 space-y-2">
+                    <div className="p-4 rounded-xl bg-[#0a0512]/70 border border-white/10 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -1504,7 +1488,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         </span>
                         <a
                           href={release.downloadUrls.checksums}
-                          className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 border border-neutral-700"
+                          className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-violet-300 border border-white/10"
                         >
                           Download SHA256SUMS.txt
                         </a>
@@ -1515,11 +1499,11 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         minisign-signed. Verify a download against the project's public key:
                       </p>
 
-                      <div className="flex items-center justify-between p-2 rounded bg-neutral-900 border border-neutral-800 text-xs font-mono">
+                      <div className="flex items-center justify-between p-2 rounded bg-[#0d0618] border border-white/10 text-xs font-mono">
                         <span className="text-neutral-300 text-[10px] truncate">{minisignCmd}</span>
                         <button
                           onClick={() => handleCopyChecksum(minisignCmd, 'minisign')}
-                          className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 shrink-0 ml-2"
+                          className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-violet-300 shrink-0 ml-2"
                         >
                           {copiedChecksum === 'minisign' ? '✓ Copied' : 'Copy'}
                         </button>
@@ -1533,7 +1517,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="h-14 bg-neutral-950/90 border-t border-neutral-800/80 flex items-center justify-between px-6 text-xs text-neutral-400">
+        <div className="h-14 bg-[#0a0512]/85 border-t border-violet-500/20 flex items-center justify-between px-6 text-xs text-neutral-400">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -1545,7 +1529,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             {isFxTab && (
               <button
                 onClick={handleSaveAndApply}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                className="neon-btn-primary flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Apply &amp; Save</span>
@@ -1554,7 +1538,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
             <button
               onClick={handleClose}
-              className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium transition-colors cursor-pointer text-xs"
+              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-violet-100 font-medium transition-colors cursor-pointer text-xs"
             >
               Done / Close
             </button>

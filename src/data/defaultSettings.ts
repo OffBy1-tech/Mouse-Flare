@@ -30,7 +30,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   fluidRainbowDye: false,
   autoCheckUpdates: true,
   checkIntervalHours: 24,
-  updateChannel: 'stable',
   notifyOnUpdate: true,
   lastCheckedTimestamp: Date.now() - 1000 * 60 * 60 * 12, // 12 hours ago
 };

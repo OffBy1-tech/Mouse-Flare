@@ -1,22 +1,29 @@
 import Cocoa
 
-// MARK: - Shared dark theme (hex values match the Windows build's XAML palette)
+// MARK: - Shared neon theme (hex values mirror the web build's index.css neon layer)
 
 enum Theme {
-    static let windowBg = NSColor(hexString: "#09090B")
-    static let panelBg = NSColor(hexString: "#0C0C0E")
-    static let cardBg = NSColor(hexString: "#18181B")
-    static let cardBorder = NSColor(hexString: "#27272A")
-    static let insetBg = NSColor(hexString: "#141417")
-    static let controlBg = NSColor(hexString: "#27272A")
+    // Deep-space grounds (--neon-ground-0/1/2 on the web)
+    static let windowBg = NSColor(hexString: "#0A0512")
+    static let panelBg = NSColor(hexString: "#0D0719")
+    static let cardBg = NSColor(hexString: "#1A0F2E")
+    static let cardBorder = NSColor(hexString: "#A855F7").withAlphaComponent(0.25)
+    static let insetBg = NSColor(hexString: "#120A20")
+    static let controlBg = NSColor(hexString: "#2A1A45")
     static let textPrimary = NSColor(hexString: "#FAFAFA")
     static let textSecondary = NSColor(hexString: "#A1A1AA")
     static let textMuted = NSColor(hexString: "#71717A")
     static let textFaint = NSColor(hexString: "#52525B")
-    static let amber = NSColor(hexString: "#F59E0B")
-    static let amberBright = NSColor(hexString: "#FBBF24")
-    static let cyan = NSColor(hexString: "#06B6D4")
+    static let amber = NSColor(hexString: "#FFA62E")
+    static let amberBright = NSColor(hexString: "#FFC46B")
+    static let cyan = NSColor(hexString: "#2FD4F5")
     static let emerald = NSColor(hexString: "#10B981")
+    // Neon accents (--neon-violet/blue/magenta on the web)
+    static let neonViolet = NSColor(hexString: "#A855F7")
+    static let neonBlue = NSColor(hexString: "#4F7CFF")
+    static let neonMagenta = NSColor(hexString: "#F043C8")
+    static let neonTextBright = NSColor(hexString: "#E9D5FF")
+    static let neonValue = NSColor(hexString: "#C8A8FF")
 }
 
 // MARK: - Small custom controls
@@ -42,6 +49,44 @@ final class CardButton: NSView {
         layer?.borderWidth = borderWidth
     }
 
+    private var gradientLayer: CAGradientLayer?
+
+    /// Fills the card with a diagonal gradient (pass nil to remove it). The
+    /// gradient sits under the label subviews, so text stays readable.
+    func setGradient(_ colors: [NSColor]?) {
+        guard let colors else {
+            gradientLayer?.removeFromSuperlayer()
+            gradientLayer = nil
+            return
+        }
+        let gradient = gradientLayer ?? {
+            let created = CAGradientLayer()
+            created.masksToBounds = true
+            layer?.insertSublayer(created, at: 0)
+            gradientLayer = created
+            return created
+        }()
+        gradient.colors = colors.map { $0.cgColor }
+        gradient.startPoint = CGPoint(x: 0, y: 0.25)
+        gradient.endPoint = CGPoint(x: 1, y: 0.75)
+        gradient.cornerRadius = layer?.cornerRadius ?? 8
+        gradient.frame = bounds
+    }
+
+    /// Soft outer glow in the given color (pass nil to remove it).
+    func setGlow(_ color: NSColor?, radius: CGFloat = 9, opacity: Float = 0.5) {
+        layer?.masksToBounds = false
+        layer?.shadowColor = color?.cgColor
+        layer?.shadowOpacity = color == nil ? 0 : opacity
+        layer?.shadowRadius = radius
+        layer?.shadowOffset = .zero
+    }
+
+    override func layout() {
+        super.layout()
+        gradientLayer?.frame = bounds
+    }
+
     override func mouseDown(with event: NSEvent) {
         if event.clickCount == 2, let onDoubleClick {
             onDoubleClick()
@@ -58,6 +103,39 @@ final class CardButton: NSView {
 /// NSStackView pinned to the top of a scroll view (AppKit views are bottom-up by default).
 final class FlippedView: NSView {
     override var isFlipped: Bool { true }
+}
+
+/// Click-through overlay that traces the window edge with a 2px
+/// violet→blue→magenta gradient ring — the AppKit translation of the web
+/// build's `.neon-frame` border (the window's own shadow stays system-drawn).
+final class NeonFrameOverlay: NSView {
+    private let gradient = CAGradientLayer()
+    private let ring = CAShapeLayer()
+
+    init() {
+        super.init(frame: .zero)
+        wantsLayer = true
+        gradient.colors = [Theme.neonViolet.cgColor, Theme.neonBlue.cgColor, Theme.neonMagenta.cgColor]
+        gradient.startPoint = CGPoint(x: 0, y: 1)
+        gradient.endPoint = CGPoint(x: 1, y: 0)
+        ring.fillColor = NSColor.clear.cgColor
+        ring.strokeColor = NSColor.black.cgColor
+        ring.lineWidth = 2
+        gradient.mask = ring
+        layer?.addSublayer(gradient)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override func layout() {
+        super.layout()
+        gradient.frame = bounds
+        ring.frame = gradient.bounds
+        // Inset by half the stroke so the ring hugs the window's rounded edge
+        ring.path = CGPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), cornerWidth: 10, cornerHeight: 10, transform: nil)
+    }
 }
 
 // MARK: - Settings window
@@ -119,6 +197,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var statusLabel: NSTextField!
     private var hotkeyButton: CardButton!
     private var hotkeyLabel: NSTextField!
+    private var isRecordingHotkey = false
+    private var hotkeyRecordMonitor: Any?
+
+    // Diagnostics is a hidden section: click the sidebar version label 5
+    // times to reveal it. Session-only — re-hidden on each window open.
+    private var diagnosticsUnlocked = false
+    private var versionClickCount = 0
     private var customHexField: NSTextField!
     private var customHexPreview: NSView!
     private var quickSwatchButtons: [CardButton] = []
@@ -136,20 +221,37 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         case swatch(Int)
     }
 
-    private var switchEnabled: NSSwitch!
-    private var switchPassive: NSSwitch!
-    private var switchStartAtLogin: NSSwitch!
-    private var switchSound: NSSwitch!
-    private var switchAutoUpdate: NSSwitch!
-    private var switchIdleBurst: NSSwitch!
-    private var switchMonitorCrossing: NSSwitch!
+    private var switchEnabled: NeonSwitch!
+    private var switchPassive: NeonSwitch!
+    private var switchStartAtLogin: NeonSwitch!
+    private var switchSound: NeonSwitch!
+    private var switchAutoUpdate: NeonSwitch!
+    private var switchIdleBurst: NeonSwitch!
+    private var switchMonitorCrossing: NeonSwitch!
 
-    private var sliderIntensity: NSSlider!
-    private var sliderDensity: NSSlider!
-    private var sliderSpeed: NSSlider!
-    private var sliderThreshold: NSSlider!
-    private var sliderVorticity: NSSlider!
-    private var sliderDissipation: NSSlider!
+    // Updates tab: labels/buttons that mirror Updater.shared.phase
+    private var updatesStatusLabel: NSTextField!
+    private var updatesActionButton: CardButton!
+    private var updatesActionLabel: NSTextField!
+    private var checkNowButton: CardButton!
+    private var checkNowLabel: NSTextField!
+    private var isCheckingForUpdates = false
+    private var updatesHeroCard: CardButton!
+    private var updatesHeroIconTile: NSView!
+    private var updatesHeroIconLabel: NSTextField!
+    private var updatesHeadlineLabel: NSTextField!
+    private var updatesMetaLabel: NSTextField!
+    private var changelogStack: NSStackView!
+    private var changelogFooterLabel: NSTextField!
+    private var updateIntervalPopup: NeonPopUp!
+    private static let updateIntervalChoices = [6, 24, 72, 0]
+
+    private var sliderIntensity: NeonSlider!
+    private var sliderDensity: NeonSlider!
+    private var sliderSpeed: NeonSlider!
+    private var sliderThreshold: NeonSlider!
+    private var sliderVorticity: NeonSlider!
+    private var sliderDissipation: NeonSlider!
     private var valueIntensity: NSTextField!
     private var valueDensity: NSTextField!
     private var valueSpeed: NSTextField!
@@ -176,6 +278,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         win.delegate = self
         setupUI()
         syncUIToSettings()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(updaterPhaseChanged),
+            name: Updater.phaseChangedNotification,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -187,6 +299,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             // that closing without Apply & Save falls back to.
             fxBaseline = SettingsManager.shared.settings
             fxDesigner?.reloadFromSettings()
+            rehideDiagnostics()
         }
         win.makeKeyAndOrderFront(nil)
         win.orderFrontRegardless()
@@ -202,8 +315,74 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     /// The single close funnel: both the title-bar close button (via
     /// windowShouldClose) and the footer Close button land here.
     private func dismiss() {
+        stopHotkeyRecording(revertLabel: true)
         revertUnappliedFx()
         window?.orderOut(nil)
+    }
+
+    // MARK: Hidden Diagnostics unlock
+
+    @objc private func versionLabelClicked() {
+        guard !diagnosticsUnlocked else { return }
+        versionClickCount += 1
+        let remaining = 5 - versionClickCount
+        if remaining <= 0 {
+            diagnosticsUnlocked = true
+            navButtons["diagnostics"]?.card.isHidden = false
+            selectTab("diagnostics")
+            setStatus("📊 Diagnostics unlocked")
+        } else if versionClickCount >= 3 {
+            setStatus("\(remaining) more click\(remaining == 1 ? "" : "s") to unlock Diagnostics")
+        }
+    }
+
+    private func rehideDiagnostics() {
+        diagnosticsUnlocked = false
+        versionClickCount = 0
+        navButtons["diagnostics"]?.card.isHidden = true
+        if activeTab == "diagnostics" { selectTab("fx-studio") }
+    }
+
+    // MARK: Custom hotkey recording
+
+    private func toggleHotkeyRecording() {
+        isRecordingHotkey ? stopHotkeyRecording(revertLabel: true) : startHotkeyRecording()
+    }
+
+    private func startHotkeyRecording() {
+        isRecordingHotkey = true
+        hotkeyLabel.stringValue = "Press keys…"
+        hotkeyButton.setStyle(background: Theme.controlBg, border: Theme.neonViolet, borderWidth: 1)
+        setStatus("Recording: press the new Find Mouse combination (Esc cancels)")
+        hotkeyRecordMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, self.isRecordingHotkey else { return event }
+            if event.keyCode == 53 { // Escape cancels
+                self.stopHotkeyRecording(revertLabel: true)
+                self.setStatus("Hotkey recording cancelled")
+                return nil
+            }
+            guard let combo = HotkeyCombo(event: event) else {
+                self.setStatus("Add a modifier (⌘ ⌥ ⌃ ⇧) — a bare key would hijack normal typing")
+                return nil
+            }
+            let display = combo.displayString
+            SettingsManager.shared.settings.hotkey = display
+            self.stopHotkeyRecording(revertLabel: false)
+            self.hotkeyLabel.stringValue = display
+            self.setStatus("Hotkey set to \(display)")
+            return nil
+        }
+    }
+
+    private func stopHotkeyRecording(revertLabel: Bool) {
+        if let monitor = hotkeyRecordMonitor {
+            NSEvent.removeMonitor(monitor)
+            hotkeyRecordMonitor = nil
+        }
+        guard isRecordingHotkey else { return }
+        isRecordingHotkey = false
+        if revertLabel { hotkeyLabel.stringValue = SettingsManager.shared.settings.hotkey }
+        hotkeyButton.setStyle(background: Theme.controlBg, border: Theme.amber, borderWidth: 1)
     }
 
     /// Discards FX Studio / FX Designer changes never committed with Apply &
@@ -282,7 +461,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             ("fx-studio", "✨", "FX Studio"),
             ("fx-designer", "🧪", "FX Designer"),
             ("behavior", "🎛️", "Behavior & Monitors"),
-            ("diagnostics", "📊", "Diagnostics")
+            ("diagnostics", "📊", "Diagnostics"),
+            ("updates", "🔄", "Check for Updates")
         ]
         for item in navItems {
             let (card, titleField) = makeNavButton(icon: item.icon, title: item.title)
@@ -291,15 +471,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             navStack.addArrangedSubview(card)
             card.widthAnchor.constraint(equalTo: navStack.widthAnchor).isActive = true
         }
+        navButtons["diagnostics"]?.card.isHidden = true
 
         let versionLabel = makeLabel(
             Updater.shared.isDevBuild ? "Mouseflare dev build" : "Mouseflare v\(Updater.shared.currentVersion)",
             size: 10, weight: .regular, color: Theme.textPrimary
         )
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
+        versionLabel.addGestureRecognizer(NSClickGestureRecognizer(target: self, action: #selector(versionLabelClicked)))
         sidebar.addSubview(versionLabel)
 
-        let testFlareButton = makeFilledButton(title: "⚡  Test Flare Now", background: Theme.amber, foreground: Theme.windowBg)
+        let testFlareButton = makeFilledButton(title: "⚡  Test Flare Now", background: .clear, foreground: NSColor(hexString: "#22080F"))
+        applyPrimaryGradient(to: testFlareButton)
         testFlareButton.onClick = { [weak self] in
             (NSApp.delegate as? AppDelegate)?.triggerFindMouse()
             self?.setStatus("⚡ Triggered Find Mouse Flare Shockwave!")
@@ -355,7 +538,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         ])
 
         // ---- Tabs ----
-        let tabIds = ["general", "fx-studio", "fx-designer", "behavior", "diagnostics"]
+        let tabIds = ["general", "fx-studio", "fx-designer", "behavior", "diagnostics", "updates"]
         for id in tabIds {
             let (scroll, stack) = makeScrollTab()
             switch id {
@@ -363,6 +546,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             case "fx-studio": buildFxStudioTab(into: stack)
             case "fx-designer": buildFxDesignerTab(into: stack)
             case "behavior": buildBehaviorTab(into: stack)
+            case "updates": buildUpdatesTab(into: stack)
             default: buildDiagnosticsTab(into: stack)
             }
             scroll.translatesAutoresizingMaskIntoConstraints = false
@@ -375,6 +559,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             ])
             tabs[id] = scroll
         }
+
+        // Neon edge ring above all content; hitTest returns nil so it never
+        // intercepts clicks.
+        let frameOverlay = NeonFrameOverlay()
+        frameOverlay.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(frameOverlay)
+        NSLayoutConstraint.activate([
+            frameOverlay.topAnchor.constraint(equalTo: contentView.topAnchor),
+            frameOverlay.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            frameOverlay.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            frameOverlay.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
 
         selectTab("fx-studio")
     }
@@ -389,12 +585,21 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         for (navId, nav) in navButtons {
             let isActive = navId == id
-            nav.card.setStyle(
-                background: isActive ? Theme.amber.withAlphaComponent(0.14) : .clear,
-                border: isActive ? Theme.amber.withAlphaComponent(0.31) : .clear,
-                borderWidth: isActive ? 1 : 0
-            )
-            nav.label.textColor = isActive ? Theme.amber : Theme.textPrimary
+            if isActive {
+                // Gradient pill with soft glow — the web build's .neon-nav-active
+                nav.card.setStyle(background: .clear, border: Theme.neonViolet.withAlphaComponent(0.9), borderWidth: 1)
+                nav.card.setGradient([
+                    Theme.neonViolet.withAlphaComponent(0.32),
+                    Theme.neonMagenta.withAlphaComponent(0.26)
+                ])
+                nav.card.setGlow(Theme.neonViolet, radius: 8, opacity: 0.45)
+                nav.label.textColor = Theme.neonTextBright
+            } else {
+                nav.card.setGradient(nil)
+                nav.card.setGlow(nil)
+                nav.card.setStyle(background: .clear, border: .clear, borderWidth: 0)
+                nav.label.textColor = Theme.textPrimary
+            }
         }
     }
 
@@ -406,7 +611,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         stack.addArrangedSubview(sub)
         stack.setCustomSpacing(16, after: sub)
 
-        switchEnabled = NSSwitch()
+        switchEnabled = NeonSwitch()
         switchEnabled.target = self
         switchEnabled.action = #selector(togglesChanged)
         addToggleCard(
@@ -416,7 +621,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             control: switchEnabled
         )
 
-        switchPassive = NSSwitch()
+        switchPassive = NeonSwitch()
         switchPassive.target = self
         switchPassive.action = #selector(togglesChanged)
         addToggleCard(
@@ -429,7 +634,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // Hotkey card
         let hotkeyCard = makeCard()
         let hotkeyTitle = makeLabel("Find Mouse Global Hotkey", size: 13, weight: .bold, color: Theme.textPrimary)
-        let hotkeySub = makeLabel("Press this shortcut anywhere in macOS to blast a beacon flare.", size: 11, weight: .regular, color: Theme.textMuted)
+        let hotkeySub = makeLabel("Press this shortcut anywhere in macOS to blast a beacon flare. Click the combo to record your own.", size: 11, weight: .regular, color: Theme.textMuted)
 
         hotkeyButton = CardButton()
         hotkeyButton.setStyle(background: Theme.controlBg, border: Theme.amber, borderWidth: 1)
@@ -442,6 +647,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             hotkeyButton.widthAnchor.constraint(greaterThanOrEqualTo: hotkeyLabel.widthAnchor, constant: 26),
             hotkeyButton.heightAnchor.constraint(equalToConstant: 32)
         ])
+        hotkeyButton.onClick = { [weak self] in self?.toggleHotkeyRecording() }
 
         let titleStack = NSStackView(views: [hotkeyTitle, hotkeySub])
         titleStack.orientation = .vertical
@@ -476,12 +682,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         hotkeyCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
         // Half-width toggle pair
-        switchStartAtLogin = NSSwitch()
+        switchStartAtLogin = NeonSwitch()
         switchStartAtLogin.target = self
         switchStartAtLogin.action = #selector(togglesChanged)
         let startCard = makeToggleCard(title: "Start with macOS", subtitle: "Launch upon login.", control: switchStartAtLogin)
 
-        switchSound = NSSwitch()
+        switchSound = NeonSwitch()
         switchSound.target = self
         switchSound.action = #selector(togglesChanged)
         let soundCard = makeToggleCard(title: "Beacon Chime", subtitle: "Audio beacon cue.", control: switchSound)
@@ -492,16 +698,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         pair.distribution = .fillEqually
         stack.addArrangedSubview(pair)
         pair.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-
-        switchAutoUpdate = NSSwitch()
-        switchAutoUpdate.target = self
-        switchAutoUpdate.action = #selector(togglesChanged)
-        addToggleCard(
-            to: stack,
-            title: "Automatic Update Checks",
-            subtitle: "Quietly check GitHub Releases every 6 hours (installed: v\(Updater.shared.currentVersion)). Use the menu bar for a manual check.",
-            control: switchAutoUpdate
-        )
     }
 
     // MARK: Tab: FX Studio
@@ -579,9 +775,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
         customHexField = NSTextField(string: SettingsManager.shared.settings.customColorHex)
         customHexField.font = .systemFont(ofSize: 11)
-        customHexField.backgroundColor = Theme.cardBg
+        customHexField.drawsBackground = false
         customHexField.textColor = Theme.textPrimary
-        customHexField.isBordered = true
+        customHexField.isBordered = false
+        customHexField.wantsLayer = true
+        customHexField.layer?.backgroundColor = Theme.windowBg.cgColor
+        customHexField.layer?.borderColor = Theme.neonViolet.withAlphaComponent(0.35).cgColor
+        customHexField.layer?.borderWidth = 1
+        customHexField.layer?.cornerRadius = 5
         customHexField.translatesAutoresizingMaskIntoConstraints = false
         customHexField.widthAnchor.constraint(equalToConstant: 84).isActive = true
         customHexField.target = self
@@ -596,7 +797,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         for (index, hex) in SettingsManager.shared.settings.quickSwatches.enumerated() {
             let swatch = CardButton()
             swatch.layer?.cornerRadius = 9
-            swatch.setStyle(background: NSColor(hexString: hex), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
+            swatch.setStyle(background: NSColor(hexString: hex), border: Theme.neonViolet.withAlphaComponent(0.3), borderWidth: 1)
             swatch.translatesAutoresizingMaskIntoConstraints = false
             swatch.widthAnchor.constraint(equalToConstant: 18).isActive = true
             swatch.heightAnchor.constraint(equalToConstant: 18).isActive = true
@@ -645,12 +846,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // Fluid dynamics card (cyan accent, mirrors the web build's fluid engine panel)
         let fluidCard = makeCard()
         fluidCard.layer?.borderColor = Theme.cyan.withAlphaComponent(0.45).cgColor
+        fluidCard.setGlow(Theme.cyan, radius: 10, opacity: 0.12)
         let fluidTitle = makeLabel("Fluid Dynamics & Vorticity Engine", size: 13, weight: .bold, color: Theme.textPrimary)
         let fluidSub = makeLabel("Vorticity curl, turbulent smoke diffusion & glowing dye for the fluid presets.", size: 11, weight: .regular, color: Theme.textMuted)
 
-        sliderVorticity = makeSlider(min: 0.1, max: 2.0)
+        sliderVorticity = makeSlider(min: 0.1, max: 2.0, accent: .cyan)
         valueVorticity = makeValueLabel(color: Theme.cyan)
-        sliderDissipation = makeSlider(min: 0.90, max: 0.99)
+        sliderDissipation = makeSlider(min: 0.90, max: 0.99, accent: .cyan)
         valueDissipation = makeValueLabel(color: Theme.cyan)
 
         let fluidGrid = makeSliderPairRow(
@@ -692,7 +894,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         stack.addArrangedSubview(sub)
         stack.setCustomSpacing(16, after: sub)
 
-        switchIdleBurst = NSSwitch()
+        switchIdleBurst = NeonSwitch()
         switchIdleBurst.target = self
         switchIdleBurst.action = #selector(togglesChanged)
         addToggleCard(
@@ -702,7 +904,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             control: switchIdleBurst
         )
 
-        switchMonitorCrossing = NSSwitch()
+        switchMonitorCrossing = NeonSwitch()
         switchMonitorCrossing.target = self
         switchMonitorCrossing.action = #selector(togglesChanged)
         addToggleCard(
@@ -735,6 +937,378 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         embed(lines, in: card, padding: 16)
         stack.addArrangedSubview(card)
         card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    }
+
+    // MARK: Tab: Updates
+
+    private func buildUpdatesTab(into stack: NSStackView) {
+        // ---- Header row: title/subtitle + primary Check button ----
+        let titleStack = NSStackView(views: [
+            makeLabel("Software Updates & Release Feeds", size: 17, weight: .bold, color: Theme.textPrimary),
+            makeLabel("Validate the installed build against verified GitHub Release metadata and install upgrades.", size: 11, weight: .regular, color: Theme.textSecondary)
+        ])
+        titleStack.orientation = .vertical
+        titleStack.alignment = .leading
+        titleStack.spacing = 2
+
+        checkNowButton = CardButton()
+        checkNowButton.layer?.cornerRadius = 7
+        applyPrimaryGradient(to: checkNowButton)
+        checkNowLabel = makeLabel("🔄  Check for Updates", size: 12, weight: .bold, color: NSColor(hexString: "#22080F"))
+        checkNowLabel.translatesAutoresizingMaskIntoConstraints = false
+        checkNowButton.addSubview(checkNowLabel)
+        NSLayoutConstraint.activate([
+            checkNowLabel.centerXAnchor.constraint(equalTo: checkNowButton.centerXAnchor),
+            checkNowLabel.centerYAnchor.constraint(equalTo: checkNowButton.centerYAnchor),
+            checkNowButton.widthAnchor.constraint(greaterThanOrEqualTo: checkNowLabel.widthAnchor, constant: 24),
+            checkNowButton.heightAnchor.constraint(equalToConstant: 32)
+        ])
+        checkNowButton.onClick = { [weak self] in self?.runManualUpdateCheck() }
+
+        let headerRow = NSStackView(views: [titleStack, NSView(), checkNowButton])
+        headerRow.orientation = .horizontal
+        headerRow.alignment = .centerY
+        stack.addArrangedSubview(headerRow)
+        headerRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(16, after: headerRow)
+
+        // ---- Status hero card (tint follows the updater phase) ----
+        updatesHeroCard = makeCard(background: Theme.insetBg)
+        updatesHeroIconTile = NSView()
+        updatesHeroIconTile.wantsLayer = true
+        updatesHeroIconTile.layer?.cornerRadius = 12
+        updatesHeroIconTile.translatesAutoresizingMaskIntoConstraints = false
+        updatesHeroIconTile.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        updatesHeroIconTile.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        updatesHeroIconLabel = makeLabel("🛰️", size: 22, weight: .regular, color: .white)
+        updatesHeroIconLabel.translatesAutoresizingMaskIntoConstraints = false
+        updatesHeroIconTile.addSubview(updatesHeroIconLabel)
+        NSLayoutConstraint.activate([
+            updatesHeroIconLabel.centerXAnchor.constraint(equalTo: updatesHeroIconTile.centerXAnchor),
+            updatesHeroIconLabel.centerYAnchor.constraint(equalTo: updatesHeroIconTile.centerYAnchor)
+        ])
+
+        updatesHeadlineLabel = makeLabel("", size: 14, weight: .bold, color: Theme.textPrimary)
+
+        updatesStatusLabel = makeLabel("", size: 11, weight: .regular, color: Theme.textMuted)
+        updatesStatusLabel.lineBreakMode = .byWordWrapping
+        updatesStatusLabel.maximumNumberOfLines = 3
+
+        updatesMetaLabel = makeLabel("", size: 10.5, weight: .regular, color: Theme.textMuted)
+        updatesMetaLabel.lineBreakMode = .byTruncatingTail
+
+        let heroText = NSStackView(views: [updatesHeadlineLabel, updatesStatusLabel, updatesMetaLabel])
+        heroText.orientation = .vertical
+        heroText.alignment = .leading
+        heroText.spacing = 4
+
+        let heroTop = NSStackView(views: [updatesHeroIconTile, heroText])
+        heroTop.orientation = .horizontal
+        heroTop.spacing = 12
+        heroTop.alignment = .top
+
+        updatesActionButton = CardButton()
+        updatesActionButton.layer?.cornerRadius = 7
+        updatesActionLabel = makeLabel("", size: 12, weight: .bold, color: NSColor(hexString: "#22080F"))
+        updatesActionLabel.translatesAutoresizingMaskIntoConstraints = false
+        updatesActionButton.addSubview(updatesActionLabel)
+        NSLayoutConstraint.activate([
+            updatesActionLabel.centerXAnchor.constraint(equalTo: updatesActionButton.centerXAnchor),
+            updatesActionLabel.centerYAnchor.constraint(equalTo: updatesActionButton.centerYAnchor),
+            updatesActionButton.widthAnchor.constraint(greaterThanOrEqualTo: updatesActionLabel.widthAnchor, constant: 24),
+            updatesActionButton.heightAnchor.constraint(equalToConstant: 32)
+        ])
+        applyPrimaryGradient(to: updatesActionButton)
+        updatesActionButton.isHidden = true
+        updatesActionButton.onClick = { [weak self] in self?.performUpdateAction() }
+
+        let notesButton = makeFilledButton(title: "View on GitHub", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 12, height: 32)
+        notesButton.onClick = { [weak self] in self?.openReleaseNotes() }
+
+        let actionsRow = NSStackView(views: [updatesActionButton, notesButton, NSView()])
+        actionsRow.orientation = .horizontal
+        actionsRow.spacing = 8
+        actionsRow.alignment = .centerY
+
+        let heroStack = NSStackView(views: [heroTop, actionsRow])
+        heroStack.orientation = .vertical
+        heroStack.alignment = .leading
+        heroStack.spacing = 12
+        embed(heroStack, in: updatesHeroCard, padding: 16)
+        heroTop.widthAnchor.constraint(equalTo: heroStack.widthAnchor).isActive = true
+        updatesStatusLabel.widthAnchor.constraint(lessThanOrEqualTo: heroStack.widthAnchor, constant: -56).isActive = true
+        stack.addArrangedSubview(updatesHeroCard)
+        updatesHeroCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        // ---- Release feed header ----
+        let feedLabel = makeLabel("✨ RELEASE FEED — LIVE FROM GITHUB RELEASES", size: 10, weight: .bold, color: Theme.textFaint)
+        stack.addArrangedSubview(feedLabel)
+
+        // ---- Two-column row: changelog + cadence preferences ----
+        let changelogCard = makeCard()
+        let changelogHeader = makeLabel("📋 ITEMIZED CHANGELOG", size: 10.5, weight: .bold, color: Theme.textSecondary)
+        changelogStack = NSStackView()
+        changelogStack.orientation = .vertical
+        changelogStack.alignment = .leading
+        changelogStack.spacing = 6
+        changelogFooterLabel = makeLabel("", size: 10.5, weight: .regular, color: Theme.textMuted)
+        let changelogDivider = makeDivider()
+        changelogDivider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        let changelogContent = NSStackView(views: [changelogHeader, changelogStack, NSView(), changelogDivider, changelogFooterLabel])
+        changelogContent.orientation = .vertical
+        changelogContent.alignment = .leading
+        changelogContent.spacing = 10
+        embed(changelogContent, in: changelogCard, padding: 14)
+        changelogStack.widthAnchor.constraint(equalTo: changelogContent.widthAnchor).isActive = true
+        changelogDivider.widthAnchor.constraint(equalTo: changelogContent.widthAnchor).isActive = true
+
+        let cadenceCard = makeCard()
+        let cadenceHeader = makeLabel("⚙️ UPDATE CADENCE & PREFERENCES", size: 10.5, weight: .bold, color: Theme.textSecondary)
+
+        switchAutoUpdate = NeonSwitch()
+        switchAutoUpdate.target = self
+        switchAutoUpdate.action = #selector(togglesChanged)
+        let autoTitle = makeLabel("Automatic Background Checks", size: 12, weight: .semibold, color: Theme.textPrimary)
+        let autoSub = makeLabel("Periodically query the release feed silently.", size: 10.5, weight: .regular, color: Theme.textMuted)
+        let autoText = NSStackView(views: [autoTitle, autoSub])
+        autoText.orientation = .vertical
+        autoText.alignment = .leading
+        autoText.spacing = 1
+        let autoRow = NSStackView(views: [autoText, NSView(), switchAutoUpdate])
+        autoRow.orientation = .horizontal
+        autoRow.alignment = .centerY
+
+        let freqLabel = makeLabel("Check Frequency", size: 11, weight: .medium, color: Theme.textSecondary)
+        updateIntervalPopup = NeonPopUp()
+        updateIntervalPopup.addItems(withTitles: [
+            "Every 6 Hours (High Frequency)",
+            "Every 24 Hours (Daily)",
+            "Every 72 Hours (Weekly)",
+            "Manual Checks Only"
+        ])
+        updateIntervalPopup.target = self
+        updateIntervalPopup.action = #selector(updateIntervalChanged)
+
+        let reqHeader = makeLabel("🛡️ Minimum System Requirements", size: 10.5, weight: .semibold, color: Theme.textSecondary)
+        let reqLine = makeLabel("• macOS 13 (Ventura) or later — Apple Silicon & Intel", size: 10.5, weight: .regular, color: Theme.textMuted)
+
+        let cadenceDivider1 = makeDivider()
+        cadenceDivider1.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        let cadenceDivider2 = makeDivider()
+        cadenceDivider2.heightAnchor.constraint(equalToConstant: 1).isActive = true
+
+        let cadenceContent = NSStackView(views: [cadenceHeader, autoRow, cadenceDivider1, freqLabel, updateIntervalPopup, cadenceDivider2, reqHeader, reqLine])
+        cadenceContent.orientation = .vertical
+        cadenceContent.alignment = .leading
+        cadenceContent.spacing = 9
+        embed(cadenceContent, in: cadenceCard, padding: 14)
+        autoRow.widthAnchor.constraint(equalTo: cadenceContent.widthAnchor).isActive = true
+        updateIntervalPopup.widthAnchor.constraint(equalTo: cadenceContent.widthAnchor).isActive = true
+        cadenceDivider1.widthAnchor.constraint(equalTo: cadenceContent.widthAnchor).isActive = true
+        cadenceDivider2.widthAnchor.constraint(equalTo: cadenceContent.widthAnchor).isActive = true
+
+        let columnsRow = NSStackView(views: [changelogCard, cadenceCard])
+        columnsRow.orientation = .horizontal
+        columnsRow.spacing = 12
+        columnsRow.distribution = .fillEqually
+        columnsRow.alignment = .top
+        stack.addArrangedSubview(columnsRow)
+        columnsRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        changelogCard.heightAnchor.constraint(equalTo: cadenceCard.heightAnchor).isActive = true
+
+        refreshUpdatesUI()
+    }
+
+    /// Mirrors Updater.shared.phase (and latestInfo) into the Updates tab.
+    /// Runs on the main thread (phase changes arrive via updaterPhaseChanged).
+    private func refreshUpdatesUI() {
+        guard updatesStatusLabel != nil else { return }
+        let cfg = SettingsManager.shared.settings
+        let info = Updater.shared.latestInfo
+        let installed = Updater.shared.currentVersion
+
+        var actionTitle: String?
+        var tint = Theme.neonViolet
+        var emoji = "🛰️"
+        var headline = "Mouseflare v\(installed)"
+
+        switch Updater.shared.phase {
+        case .idle:
+            if Updater.shared.isDevBuild {
+                emoji = "🧪"
+                headline = "Development Build"
+                updatesStatusLabel.stringValue = "Dev builds don't self-update — download stable builds from GitHub Releases."
+                updatesStatusLabel.textColor = Theme.textMuted
+            } else if info != nil {
+                tint = Theme.emerald
+                emoji = "✅"
+                headline = "Mouseflare is Up to Date (v\(installed))"
+                if !isCheckingForUpdates {
+                    updatesStatusLabel.stringValue = "You are running the latest verified stable build. All physics and stability patches are applied."
+                    updatesStatusLabel.textColor = Theme.textMuted
+                }
+            } else if !isCheckingForUpdates {
+                updatesStatusLabel.stringValue = "Run a check to compare this build against the latest verified GitHub release."
+                updatesStatusLabel.textColor = Theme.textMuted
+            }
+        case .available(let release):
+            tint = Theme.amber
+            emoji = "⬆️"
+            headline = "Update Available: v\(release.version)"
+            updatesStatusLabel.stringValue = release.title
+            updatesStatusLabel.textColor = Theme.amberBright
+            actionTitle = "⬆️ Install v\(release.version)"
+        case .downloading(let release):
+            tint = Theme.cyan
+            emoji = "⏳"
+            headline = "Downloading v\(release.version)…"
+            updatesStatusLabel.stringValue = "Downloading and verifying the signed package…"
+            updatesStatusLabel.textColor = Theme.cyan
+        case .ready(let release, _):
+            tint = Theme.emerald
+            emoji = "🔁"
+            headline = "v\(release.version) Ready to Install"
+            updatesStatusLabel.stringValue = "The update is verified and staged. Restart Mouseflare to finish installing."
+            updatesStatusLabel.textColor = Theme.emerald
+            actionTitle = "🔁 Restart to Update"
+        case .error(let message):
+            tint = NSColor(hexString: "#F87171")
+            emoji = "⚠️"
+            headline = "Update Check Failed"
+            updatesStatusLabel.stringValue = message
+            updatesStatusLabel.textColor = NSColor(hexString: "#F87171")
+        }
+
+        // Hero chrome follows the state tint
+        updatesHeroCard.setStyle(
+            background: Theme.insetBg.blended(withFraction: 0.08, of: tint) ?? Theme.insetBg,
+            border: tint.withAlphaComponent(0.4),
+            borderWidth: 1
+        )
+        updatesHeroIconTile.layer?.backgroundColor = tint.withAlphaComponent(0.18).cgColor
+        updatesHeroIconLabel.stringValue = emoji
+        updatesHeadlineLabel.stringValue = headline
+
+        // Meta row: Checked / Installed / Latest — real data only
+        var meta = "Checked: \(Self.formatTimeAgo(cfg.lastUpdateCheck))  •  Installed: v\(installed)"
+        if let info {
+            meta += "  •  Latest: v\(info.version)"
+            if let date = info.publishedAt {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                meta += " (\(formatter.string(from: date)))"
+            }
+        }
+        updatesMetaLabel.stringValue = meta
+
+        // Changelog card mirrors the latest fetched release
+        changelogStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        let bullets = info?.changelogBullets ?? []
+        if bullets.isEmpty {
+            let placeholder = makeLabel(
+                info == nil ? "Run a check to fetch the latest release notes." : "No itemized changes — open the release on GitHub for details.",
+                size: 11, weight: .regular, color: Theme.textMuted
+            )
+            changelogStack.addArrangedSubview(placeholder)
+        } else {
+            for bullet in bullets.prefix(6) {
+                let dot = makeLabel("•", size: 11, weight: .bold, color: Theme.amber)
+                let text = makeLabel(bullet, size: 11, weight: .regular, color: Theme.textSecondary)
+                text.lineBreakMode = .byWordWrapping
+                text.maximumNumberOfLines = 2
+                let row = NSStackView(views: [dot, text])
+                row.orientation = .horizontal
+                row.spacing = 6
+                row.alignment = .top
+                changelogStack.addArrangedSubview(row)
+                row.widthAnchor.constraint(equalTo: changelogStack.widthAnchor).isActive = true
+                text.widthAnchor.constraint(lessThanOrEqualTo: row.widthAnchor, constant: -14).isActive = true
+            }
+        }
+        changelogFooterLabel.stringValue = "Feed: GitHub Releases (stable)  •  Target: Apple Silicon / Intel"
+
+        if let actionTitle {
+            updatesActionLabel.stringValue = actionTitle
+            updatesActionButton.isHidden = false
+        } else {
+            updatesActionButton.isHidden = true
+        }
+    }
+
+    private static func formatTimeAgo(_ date: Date?) -> String {
+        guard let date else { return "never" }
+        let seconds = Int(-date.timeIntervalSinceNow)
+        switch seconds {
+        case ..<60: return "just now"
+        case ..<3600: return "\(seconds / 60)m ago"
+        case ..<86400: return "\(seconds / 3600)h ago"
+        default:
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            return formatter.string(from: date)
+        }
+    }
+
+    @objc private func updateIntervalChanged() {
+        let index = updateIntervalPopup.indexOfSelectedItem
+        guard Self.updateIntervalChoices.indices.contains(index) else { return }
+        SettingsManager.shared.settings.updateCheckIntervalHours = Self.updateIntervalChoices[index]
+    }
+
+
+    @objc private func updaterPhaseChanged() {
+        DispatchQueue.main.async { [weak self] in self?.refreshUpdatesUI() }
+    }
+
+    private func runManualUpdateCheck() {
+        if Updater.shared.isDevBuild {
+            updatesStatusLabel.stringValue = "Dev builds don't self-update — download stable builds from GitHub Releases."
+            updatesStatusLabel.textColor = Theme.textMuted
+            return
+        }
+        guard !isCheckingForUpdates else { return }
+        isCheckingForUpdates = true
+        checkNowLabel.stringValue = "Checking…"
+        updatesStatusLabel.stringValue = "Checking GitHub Releases…"
+        updatesStatusLabel.textColor = Theme.textSecondary
+        Task { @MainActor in
+            defer {
+                self.isCheckingForUpdates = false
+                self.checkNowLabel.stringValue = "🔄  Check for Updates"
+            }
+            do {
+                // A found release flips the phase to .available and the
+                // notification repaints; the up-to-date case repaints here so
+                // the hero card, meta row, and changelog pick up latestInfo.
+                _ = try await Updater.shared.check()
+                self.refreshUpdatesUI()
+            } catch {
+                self.refreshUpdatesUI()
+                self.updatesStatusLabel.stringValue = "Update check failed: \(error.localizedDescription)"
+                self.updatesStatusLabel.textColor = NSColor(hexString: "#F87171")
+            }
+        }
+    }
+
+    /// Runs the same download/stage/install flow as the menu bar items.
+    private func performUpdateAction() {
+        guard let delegate = NSApp.delegate as? AppDelegate else { return }
+        switch Updater.shared.phase {
+        case .available: delegate.startUpdateDownload()
+        case .ready: delegate.installStagedUpdate()
+        default: break
+        }
+    }
+
+    private func openReleaseNotes() {
+        switch Updater.shared.phase {
+        case .available(let release), .downloading(let release):
+            NSWorkspace.shared.open(release.pageURL)
+        case .ready(let release, _):
+            NSWorkspace.shared.open(release.pageURL)
+        default:
+            NSWorkspace.shared.open(URL(string: "https://github.com/OffBy1-tech/Mouse-Flare/releases")!)
+        }
     }
 
     // MARK: Footer
@@ -772,7 +1346,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             self?.fxDesigner?.reloadFromSettings()
             self?.setStatus("✓ Settings Reset to Factory Defaults")
         }
-        saveButton = makeFilledButton(title: "Apply & Save", background: Theme.amber, foreground: Theme.windowBg, fontSize: 12, height: 32, bold: true)
+        saveButton = makeFilledButton(title: "Apply & Save", background: .clear, foreground: NSColor(hexString: "#22080F"), fontSize: 12, height: 32, bold: true)
+        applyPrimaryGradient(to: saveButton)
         saveButton.onClick = { [weak self] in
             self?.fxBaseline = SettingsManager.shared.settings
             SettingsManager.shared.save()
@@ -813,7 +1388,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         sliderDissipation.doubleValue = cfg.fluidDissipation
         updateSliderLabels()
 
-        hotkeyLabel.stringValue = cfg.hotkey
+        let intervalIndex = Self.updateIntervalChoices.firstIndex(of: cfg.updateCheckIntervalHours) ?? 0
+        updateIntervalPopup.selectItem(at: intervalIndex)
+
+        if !isRecordingHotkey { hotkeyLabel.stringValue = cfg.hotkey }
         customHexField.stringValue = cfg.customColorHex
         customHexPreview.layer?.backgroundColor = NSColor(hexString: cfg.customColorHex).cgColor
         refreshQuickSwatches()
@@ -822,21 +1400,37 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func refreshPresetHighlights() {
         let cfg = SettingsManager.shared.settings
+        // Selected cards become filled glowing gradient pills (the web build's
+        // .neon-selected / .neon-selected-cyan, i.e. the reference's "Mars" row).
         for (id, card) in passiveCards {
             let active = id == cfg.passivePreset
-            card.setStyle(
-                background: active ? Theme.amber.withAlphaComponent(0.16) : Theme.cardBg,
-                border: active ? Theme.amber : Theme.cardBorder,
-                borderWidth: active ? 1.5 : 1
-            )
+            if active {
+                card.setStyle(background: .clear, border: NSColor(hexString: "#BEA0FF").withAlphaComponent(0.9), borderWidth: 1.5)
+                card.setGradient([
+                    Theme.neonBlue.withAlphaComponent(0.78),
+                    Theme.neonViolet.withAlphaComponent(0.66)
+                ])
+                card.setGlow(NSColor(hexString: "#6E5AFF"), radius: 9, opacity: 0.5)
+            } else {
+                card.setGradient(nil)
+                card.setGlow(nil)
+                card.setStyle(background: Theme.cardBg, border: Theme.cardBorder, borderWidth: 1)
+            }
         }
         for (id, card) in flareCards {
             let active = id == cfg.flarePreset
-            card.setStyle(
-                background: active ? Theme.cyan.withAlphaComponent(0.16) : Theme.cardBg,
-                border: active ? Theme.cyan : Theme.cardBorder,
-                borderWidth: active ? 1.5 : 1
-            )
+            if active {
+                card.setStyle(background: .clear, border: NSColor(hexString: "#96E6FF").withAlphaComponent(0.9), borderWidth: 1.5)
+                card.setGradient([
+                    Theme.cyan.withAlphaComponent(0.65),
+                    Theme.neonBlue.withAlphaComponent(0.72)
+                ])
+                card.setGlow(NSColor(hexString: "#3CB4FF"), radius: 9, opacity: 0.5)
+            } else {
+                card.setGradient(nil)
+                card.setGlow(nil)
+                card.setStyle(background: Theme.cardBg, border: Theme.cardBorder, borderWidth: 1)
+            }
         }
         for (id, chip) in colorChips {
             let active = id == cfg.colorPreset
@@ -845,6 +1439,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 border: active ? .white : Theme.cardBorder,
                 borderWidth: active ? 1.5 : 1
             )
+            chip.card.setGlow(active ? Theme.neonViolet : nil, radius: 7, opacity: 0.35)
         }
     }
 
@@ -990,7 +1585,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 && cfg.customColorHex.uppercased() == hex.uppercased()
             button.setStyle(
                 background: NSColor(hexString: hex),
-                border: isSelected ? .white : NSColor(hexString: "#3F3F46"),
+                border: isSelected ? .white : Theme.neonViolet.withAlphaComponent(0.3),
                 borderWidth: isSelected ? 2 : 1
             )
         }
@@ -1060,7 +1655,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return card
     }
 
-    private func makeToggleCard(title: String, subtitle: String, control: NSSwitch) -> NSView {
+    private func makeToggleCard(title: String, subtitle: String, control: NeonSwitch) -> NSView {
         let card = makeCard()
         let titleLabel = makeLabel(title, size: 13, weight: .bold, color: Theme.textPrimary)
         let subLabel = makeLabel(subtitle, size: 11, weight: .regular, color: Theme.textMuted)
@@ -1078,7 +1673,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     }
 
     /// Adds a full-width toggle card to a tab stack (width constraint must come after insertion).
-    private func addToggleCard(to stack: NSStackView, title: String, subtitle: String, control: NSSwitch) {
+    private func addToggleCard(to stack: NSStackView, title: String, subtitle: String, control: NeonSwitch) {
         let card = makeToggleCard(title: title, subtitle: subtitle, control: control)
         stack.addArrangedSubview(card)
         card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -1161,13 +1756,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return (chip, chipLabel)
     }
 
-    private func makeSlider(min: Double, max: Double) -> NSSlider {
-        let slider = NSSlider(value: min, minValue: min, maxValue: max, target: self, action: #selector(slidersChanged))
+    private func makeSlider(min: Double, max: Double, accent: NeonSlider.Accent = .violet) -> NeonSlider {
+        let slider = NeonSlider(value: min, minValue: min, maxValue: max, target: self, action: #selector(slidersChanged))
         slider.isContinuous = true
+        slider.accent = accent
         return slider
     }
 
-    private func makeValueLabel(color: NSColor = Theme.amber) -> NSTextField {
+    private func makeValueLabel(color: NSColor = Theme.neonValue) -> NSTextField {
         let field = makeLabel("", size: 11, weight: .bold, color: color)
         field.alignment = .right
         return field
@@ -1212,6 +1808,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             row.centerYAnchor.constraint(equalTo: card.centerYAnchor)
         ])
         return (card, titleLabel)
+    }
+
+    /// Amber→magenta gradient fill with a warm glow — the web build's
+    /// .neon-btn-primary, used for Apply & Save and Test Flare.
+    private func applyPrimaryGradient(to button: CardButton) {
+        button.setStyle(background: .clear, border: NSColor(hexString: "#FFC88C").withAlphaComponent(0.5), borderWidth: 1)
+        button.setGradient([
+            Theme.amber,
+            NSColor(hexString: "#FF5E62"),
+            Theme.neonMagenta
+        ])
+        button.setGlow(NSColor(hexString: "#FF8C3C"), radius: 8, opacity: 0.45)
     }
 
     private func makeFilledButton(

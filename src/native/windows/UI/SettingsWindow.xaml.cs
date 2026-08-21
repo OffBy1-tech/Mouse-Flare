@@ -33,6 +33,7 @@ namespace Mouseflare.UI
         private bool _isRecordingHotkey = false;
         private string _currentHotkey;
         private bool _loading;
+        private bool _updateCheckInFlight;
 
         // FX Studio / FX Designer changes preview live on the overlay but are a
         // draft until Apply & Save; this holds the last committed FX state so
@@ -52,6 +53,9 @@ namespace Mouseflare.UI
             InitializeComponent();
             LoadCurrentSettings();
             _loading = false;
+            // The updater raises PhaseChanged from a thread-pool thread; keep
+            // the Updates tab current while the window is open
+            Core.Updater.Shared.PhaseChanged += OnUpdaterPhaseChanged;
         }
 
         private void LoadCurrentSettings()
@@ -64,7 +68,7 @@ namespace Mouseflare.UI
             chkMonitorCrossing.IsChecked = _overlay.MonitorCrossingFxEnabled;
             chkSoundFx.IsChecked = _overlay.SoundFxEnabled;
             chkAutoUpdates.IsChecked = _overlay.AutoCheckUpdates;
-            txtAutoUpdatesSub.Text = $"Quietly check GitHub Releases every 6 hours (installed: v{Core.Updater.Shared.CurrentVersion}). Use the tray menu for a manual check.";
+            RefreshUpdatesTab();
 
             sliderIntensity.Value = _overlay.IntensityMultiplier;
             sliderDensity.Value = _overlay.SparkDensityMultiplier * 5.0;
@@ -126,6 +130,31 @@ namespace Mouseflare.UI
         private void OnNavBehavior(object sender, RoutedEventArgs e) => UpdateTabSelection("behavior");
         private void OnNavDiagnostics(object sender, RoutedEventArgs e) => UpdateTabSelection("diagnostics");
 
+        // Diagnostics is a hidden section: click the sidebar version text 5
+        // times to reveal it. Session-only — the window is recreated per open,
+        // so it re-hides automatically.
+        private int _versionClicks = 0;
+        private bool _diagnosticsUnlocked = false;
+
+        private void OnVersionTextClicked(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (_diagnosticsUnlocked) return;
+            _versionClicks++;
+            int remaining = 5 - _versionClicks;
+            if (remaining <= 0)
+            {
+                _diagnosticsUnlocked = true;
+                btnNavDiagnostics.Visibility = Visibility.Visible;
+                UpdateTabSelection("diagnostics");
+                SetStatusText("\U0001F4CA Diagnostics unlocked");
+            }
+            else if (_versionClicks >= 3)
+            {
+                SetStatusText($"{remaining} more click{(remaining == 1 ? "" : "s")} to unlock Diagnostics");
+            }
+        }
+        private void OnNavUpdates(object sender, RoutedEventArgs e) => UpdateTabSelection("updates");
+
         private void UpdateTabSelection(string tab)
         {
             _activeTab = tab;
@@ -140,6 +169,7 @@ namespace Mouseflare.UI
             }
             tabBehavior.Visibility = tab == "behavior" ? Visibility.Visible : Visibility.Collapsed;
             tabDiagnostics.Visibility = tab == "diagnostics" ? Visibility.Visible : Visibility.Collapsed;
+            tabUpdates.Visibility = tab == "updates" ? Visibility.Visible : Visibility.Collapsed;
 
             // Only FX Studio / FX Designer changes are a draft needing Apply & Save;
             // every other tab saves instantly, so hide the button there
@@ -152,14 +182,16 @@ namespace Mouseflare.UI
             SetNavButtonState(btnNavFxDesigner, tab == "fx-designer");
             SetNavButtonState(btnNavBehavior, tab == "behavior");
             SetNavButtonState(btnNavDiagnostics, tab == "diagnostics");
+            SetNavButtonState(btnNavUpdates, tab == "updates");
         }
 
         private void SetNavButtonState(Button btn, bool isActive)
         {
             if (btn == null) return;
-            btn.Background = isActive ? new SolidColorBrush(Color.FromArgb(35, 245, 158, 11)) : Brushes.Transparent;
-            btn.BorderBrush = isActive ? new SolidColorBrush(Color.FromArgb(80, 245, 158, 11)) : Brushes.Transparent;
+            btn.Background = isActive ? NeonTheme.NavActiveFill : Brushes.Transparent;
+            btn.BorderBrush = isActive ? NeonTheme.NavActiveBorder : Brushes.Transparent;
             btn.BorderThickness = isActive ? new Thickness(1) : new Thickness(0);
+            btn.Effect = isActive ? NeonTheme.NavGlow : null;
         }
 
         // General Toggles (instant domain: applied and saved as they change)
@@ -200,6 +232,256 @@ namespace Mouseflare.UI
         {
             if (_overlay != null) _overlay.AutoCheckUpdates = chkAutoUpdates.IsChecked == true;
             PersistInstantSettings();
+        }
+
+        // ---- Updates tab ----
+
+        private void OnUpdaterPhaseChanged() => Dispatcher.InvokeAsync(() => RefreshUpdatesTab());
+
+        private bool _syncingUpdatesUi;
+
+        private static SolidColorBrush Tinted(Color accent, byte alpha)
+        {
+            var brush = new SolidColorBrush(Color.FromArgb(alpha, accent.R, accent.G, accent.B));
+            brush.Freeze();
+            return brush;
+        }
+
+        private static readonly Color AccentEmerald = Color.FromRgb(0x10, 0xB9, 0x81);
+        private static readonly Color AccentAmber = Color.FromRgb(0xFF, 0xA6, 0x2E);
+        private static readonly Color AccentCyan = Color.FromRgb(0x2F, 0xD4, 0xF5);
+        private static readonly Color AccentRed = Color.FromRgb(0xEF, 0x44, 0x44);
+        private static readonly Color AccentViolet = Color.FromRgb(0xA8, 0x55, 0xF7);
+
+        private void TintHero(Color accent)
+        {
+            cardUpdateHero.BorderBrush = Tinted(accent, 0x80);
+            heroIconTile.Background = Tinted(accent, 0x22);
+            heroIconTile.BorderBrush = Tinted(accent, 0x55);
+            txtHeroIcon.Foreground = Tinted(accent, 0xFF);
+        }
+
+        private static string FormatTimeAgo(DateTime? utc)
+        {
+            if (utc == null) return "never";
+            var span = DateTime.UtcNow - utc.Value;
+            if (span < TimeSpan.FromMinutes(1)) return "just now";
+            if (span < TimeSpan.FromHours(1)) return $"{(int)span.TotalMinutes} min ago";
+            if (span < TimeSpan.FromHours(48)) return $"{(int)span.TotalHours} h ago";
+            return $"{(int)span.TotalDays} days ago";
+        }
+
+        /// <summary>
+        /// Renders the whole Updates tab from the updater state. statusOverride
+        /// carries transient messages ("Checking…", "You're up to date") that
+        /// the phase alone cannot express.
+        /// </summary>
+        private void RefreshUpdatesTab(string? statusOverride = null)
+        {
+            var updater = Core.Updater.Shared;
+            var available = updater.AvailableRelease;
+            var latest = available ?? updater.LatestSeenRelease;
+            int hours = _overlay?.CheckIntervalHours ?? 6;
+
+            btnCheckNow.IsEnabled = !updater.IsDevBuild && !_updateCheckInFlight;
+            btnCheckNow.Content = _updateCheckInFlight ? "Validating Release Feed…" : "🔄 Check for Updates";
+
+            // Hero card
+            bool hasUpdate = available != null && updater.Phase is Core.Updater.UpdatePhase.Available
+                or Core.Updater.UpdatePhase.Downloading
+                or Core.Updater.UpdatePhase.Ready;
+            Color accent;
+            string icon, headline, titleLine;
+            if (updater.IsDevBuild)
+            {
+                (accent, icon) = (AccentViolet, "🧪");
+                headline = "Mouseflare dev build (unversioned)";
+                titleLine = "Dev builds don't self-update — download stable builds from GitHub Releases.";
+            }
+            else if (updater.Phase == Core.Updater.UpdatePhase.Error)
+            {
+                (accent, icon) = (AccentRed, "⚠");
+                headline = "Update check failed";
+                titleLine = updater.ErrorMessage ?? "Unknown error.";
+            }
+            else if (hasUpdate)
+            {
+                bool downloading = updater.Phase == Core.Updater.UpdatePhase.Downloading;
+                accent = downloading ? AccentCyan : AccentAmber;
+                icon = downloading ? "⏬" : updater.Phase == Core.Updater.UpdatePhase.Ready ? "🔁" : "⬆";
+                headline = $"Update Available: v{available!.Version}";
+                titleLine = updater.Phase switch
+                {
+                    Core.Updater.UpdatePhase.Downloading => "Downloading and verifying the update…",
+                    Core.Updater.UpdatePhase.Ready => "Update verified and staged — restart Mouseflare to finish installing.",
+                    _ => string.IsNullOrWhiteSpace(available.Title) ? "Verified update from GitHub Releases." : available.Title,
+                };
+            }
+            else if (latest != null)
+            {
+                (accent, icon) = (AccentEmerald, "✓");
+                headline = $"Mouseflare is Up to Date (v{updater.CurrentVersion})";
+                titleLine = "You are running the latest verified stable build.";
+            }
+            else
+            {
+                (accent, icon) = (AccentEmerald, "✓");
+                headline = $"Mouseflare v{updater.CurrentVersion}";
+                titleLine = "No release check has run yet — use Check for Updates to query GitHub Releases.";
+            }
+            TintHero(accent);
+            txtHeroIcon.Text = icon;
+            txtHeroHeadline.Text = headline;
+            txtHeroTitleLine.Text = statusOverride ?? titleLine;
+
+            var meta = $"Checked: {FormatTimeAgo(updater.LastCheckedUtc)}  •  Installed: v{updater.CurrentVersion}";
+            if (latest != null)
+            {
+                meta += $"  •  Latest: v{latest.Version}";
+                if (latest.PublishedAt is { } published) meta += $" ({published:yyyy-MM-dd})";
+            }
+            txtHeroMeta.Text = meta;
+
+            pnlHeroActions.Visibility = hasUpdate ? Visibility.Visible : Visibility.Collapsed;
+            if (hasUpdate)
+            {
+                switch (updater.Phase)
+                {
+                    case Core.Updater.UpdatePhase.Downloading:
+                        btnInstallUpdate.Content = $"Downloading v{available!.Version}…";
+                        btnInstallUpdate.IsEnabled = false;
+                        break;
+                    case Core.Updater.UpdatePhase.Ready:
+                        btnInstallUpdate.Content = $"🔁 Restart to Update to v{available!.Version}";
+                        btnInstallUpdate.IsEnabled = true;
+                        break;
+                    default:
+                        btnInstallUpdate.Content = $"⬇ Download & Install v{available!.Version}";
+                        btnInstallUpdate.IsEnabled = true;
+                        break;
+                }
+            }
+
+            // Changelog card — real release-body bullets only
+            pnlChangelog.Children.Clear();
+            if (latest == null)
+            {
+                pnlChangelog.Children.Add(new TextBlock
+                {
+                    Text = "Run a check to load the latest release notes from GitHub.",
+                    FontSize = 11,
+                    Foreground = Tinted(Color.FromRgb(0x71, 0x71, 0x7A), 0xFF),
+                    TextWrapping = TextWrapping.Wrap,
+                });
+            }
+            else if (latest.Changelog.Length == 0)
+            {
+                pnlChangelog.Children.Add(new TextBlock
+                {
+                    Text = string.IsNullOrWhiteSpace(latest.Title) ? "See release notes on GitHub." : latest.Title,
+                    FontSize = 11,
+                    Foreground = Tinted(Color.FromRgb(0xD4, 0xD4, 0xD8), 0xFF),
+                    TextWrapping = TextWrapping.Wrap,
+                });
+            }
+            else
+            {
+                foreach (string item in latest.Changelog)
+                {
+                    var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 0, 0, 5) };
+                    var bullet = new TextBlock
+                    {
+                        Text = "•",
+                        FontWeight = FontWeights.Bold,
+                        FontSize = 11,
+                        Foreground = Tinted(AccentAmber, 0xFF),
+                        Margin = new Thickness(0, 0, 7, 0),
+                    };
+                    DockPanel.SetDock(bullet, Dock.Left);
+                    row.Children.Add(bullet);
+                    row.Children.Add(new TextBlock
+                    {
+                        Text = item,
+                        FontSize = 11,
+                        Foreground = Tinted(Color.FromRgb(0xD4, 0xD4, 0xD8), 0xFF),
+                        TextWrapping = TextWrapping.Wrap,
+                    });
+                    pnlChangelog.Children.Add(row);
+                }
+            }
+            // Cadence card
+            txtFrequencyValue.Text = hours == 0 ? "Manual Only" : $"Every {hours} Hours";
+            txtAutoUpdatesSub.Text = hours == 0
+                ? "Manual checks only — background polling is off."
+                : $"Quietly check the release feed every {hours} hours in the background.";
+            _syncingUpdatesUi = true;
+            foreach (var entry in cmbCheckFrequency.Items)
+            {
+                if (entry is ComboBoxItem item && item.Tag is string tag && tag == hours.ToString())
+                {
+                    cmbCheckFrequency.SelectedItem = item;
+                    break;
+                }
+            }
+            _syncingUpdatesUi = false;
+        }
+
+        private async void OnCheckUpdatesNow(object sender, RoutedEventArgs e)
+        {
+            var updater = Core.Updater.Shared;
+            if (updater.IsDevBuild || _updateCheckInFlight) return;
+            _updateCheckInFlight = true;
+            RefreshUpdatesTab("Checking GitHub Releases…");
+            try
+            {
+                var release = await updater.CheckAsync();
+                _updateCheckInFlight = false;
+                PersistInstantSettings(); // keep the persisted last-checked time current
+                RefreshUpdatesTab(release == null
+                    ? $"You're up to date — v{updater.CurrentVersion} is the latest stable release."
+                    : null);
+            }
+            catch (Exception ex)
+            {
+                _updateCheckInFlight = false;
+                RefreshUpdatesTab($"Update check failed: {ex.Message}");
+            }
+        }
+
+        private void OnCheckFrequencyChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (_overlay == null || _loading || _syncingUpdatesUi) return;
+            if (cmbCheckFrequency.SelectedItem is ComboBoxItem item && item.Tag is string tag && int.TryParse(tag, out int hours))
+            {
+                _overlay.CheckIntervalHours = hours;
+                PersistInstantSettings();
+                RefreshUpdatesTab();
+            }
+        }
+
+        private void OnViewReleaseNotes(object sender, RoutedEventArgs e)
+        {
+            var latest = Core.Updater.Shared.AvailableRelease ?? Core.Updater.Shared.LatestSeenRelease;
+            OpenUrl(latest?.PageUrl is { Length: > 0 } page ? page : "https://github.com/OffBy1-tech/Mouse-Flare/releases");
+        }
+
+        private static void OpenUrl(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true,
+                });
+            }
+            catch { /* no browser is not worth a crash */ }
+        }
+
+        private void OnInstallUpdate(object sender, RoutedEventArgs e)
+        {
+            // Same download → verify → stage → restart path the tray menu uses
+            (Application.Current as App)?.RequestUpdateInstall();
         }
 
         // Passive Presets (9 Styles)
@@ -246,15 +528,17 @@ namespace Mouseflare.UI
                 {
                     if (tag == _overlay.PassiveFxStyle)
                     {
-                        btn.BorderBrush = new SolidColorBrush(Color.FromRgb(245, 158, 11));
-                        btn.Background = new SolidColorBrush(Color.FromArgb(40, 245, 158, 11));
+                        btn.BorderBrush = NeonTheme.SelectedBorder;
+                        btn.Background = NeonTheme.SelectedFill;
                         btn.BorderThickness = new Thickness(1.5);
+                        btn.Effect = NeonTheme.SelectedGlow;
                     }
                     else if (tag == _overlay.FlareFxStyle)
                     {
-                        btn.BorderBrush = new SolidColorBrush(Color.FromRgb(6, 182, 212));
-                        btn.Background = new SolidColorBrush(Color.FromArgb(40, 6, 182, 212));
+                        btn.BorderBrush = NeonTheme.SelectedBorderCyan;
+                        btn.Background = NeonTheme.SelectedFillCyan;
                         btn.BorderThickness = new Thickness(1.5);
+                        btn.Effect = NeonTheme.SelectedGlowCyan;
                     }
                     else if (tag == "color-amber" && _overlay.CurrentColor == Color.FromRgb(245, 158, 11))
                     {
@@ -299,15 +583,17 @@ namespace Mouseflare.UI
                 {
                     if (child == selectedBtn)
                     {
-                        child.BorderBrush = isPassive ? new SolidColorBrush(Color.FromRgb(245, 158, 11)) : new SolidColorBrush(Color.FromRgb(6, 182, 212));
-                        child.Background = isPassive ? new SolidColorBrush(Color.FromArgb(40, 245, 158, 11)) : new SolidColorBrush(Color.FromArgb(40, 6, 182, 212));
+                        child.BorderBrush = isPassive ? NeonTheme.SelectedBorder : NeonTheme.SelectedBorderCyan;
+                        child.Background = isPassive ? NeonTheme.SelectedFill : NeonTheme.SelectedFillCyan;
                         child.BorderThickness = new Thickness(1.5);
+                        child.Effect = isPassive ? NeonTheme.SelectedGlow : NeonTheme.SelectedGlowCyan;
                     }
                     else
                     {
-                        child.BorderBrush = new SolidColorBrush(Color.FromRgb(39, 39, 42));
-                        child.Background = new SolidColorBrush(Color.FromRgb(24, 24, 27));
+                        child.BorderBrush = NeonTheme.CardBorder;
+                        child.Background = NeonTheme.CardBackground;
                         child.BorderThickness = new Thickness(1);
+                        child.Effect = null;
                     }
                 }
             }
@@ -323,13 +609,13 @@ namespace Mouseflare.UI
                     if (child == selectedBtn)
                     {
                         child.BorderBrush = Brushes.White;
-                        child.Background = new SolidColorBrush(Color.FromRgb(39, 39, 42));
+                        child.Background = NeonTheme.CardBorder;
                         child.BorderThickness = new Thickness(1.5);
                     }
                     else
                     {
-                        child.BorderBrush = new SolidColorBrush(Color.FromRgb(39, 39, 42));
-                        child.Background = new SolidColorBrush(Color.FromRgb(24, 24, 27));
+                        child.BorderBrush = NeonTheme.CardBorder;
+                        child.Background = NeonTheme.CardBackground;
                         child.BorderThickness = new Thickness(1);
                     }
                 }
@@ -867,6 +1153,14 @@ namespace Mouseflare.UI
             // Closing without Apply & Save discards the FX preview
             RevertUnappliedFx();
             base.OnClosing(e);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            // Updater.Shared outlives this window — unhook or the closed
+            // window is kept alive by the static event
+            Core.Updater.Shared.PhaseChanged -= OnUpdaterPhaseChanged;
+            base.OnClosed(e);
         }
 
         private void OnTestFlare(object sender, RoutedEventArgs e)

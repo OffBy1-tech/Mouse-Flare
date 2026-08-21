@@ -98,8 +98,9 @@ namespace Mouseflare
                 Shutdown();
             };
 
-            // 6. Auto-updater: quiet 6h background checks, tray-driven install
+            // 6. Auto-updater: quiet interval-driven background checks, tray-driven install
             Updater.Shared.AutoCheckEnabled = () => _overlay?.AutoCheckUpdates ?? true;
+            Updater.Shared.CheckIntervalHours = () => _overlay?.CheckIntervalHours ?? 6;
             Updater.Shared.PhaseChanged += () => Dispatcher.InvokeAsync(RefreshUpdaterTrayItem);
             Updater.Shared.StartBackgroundChecks();
 
@@ -191,6 +192,13 @@ namespace Mouseflare
                 MessageBox.Show(updater.ErrorMessage ?? "Unknown error", "Update failed", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
+
+        /// <summary>
+        /// Settings-window entry into the tray's download → verify → stage →
+        /// restart path. StartUpdateDownload already forwards to
+        /// InstallStagedUpdate when a staged update is waiting.
+        /// </summary>
+        internal void RequestUpdateInstall() => Dispatcher.InvokeAsync(StartUpdateDownload);
 
         private void InstallStagedUpdate()
         {
@@ -313,6 +321,8 @@ namespace Mouseflare
             overlay.MonitorCrossingFxEnabled = s.MonitorCrossingFxEnabled;
             overlay.SoundFxEnabled = s.SoundFxEnabled;
             overlay.AutoCheckUpdates = s.AutoCheckUpdates;
+            overlay.CheckIntervalHours = s.CheckIntervalHours;
+            Updater.Shared.SeedLastChecked(s.LastCheckedUtc);
             if (s.QuickSwatches is { Length: > 0 })
             {
                 // Older installs saved fewer swatches; pad with the new defaults

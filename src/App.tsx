@@ -65,11 +65,11 @@ export default function App() {
   // Check for updates on mount if enabled
   useEffect(() => {
     if (settings.autoCheckUpdates) {
-      checkNativeBuildUpdates(CURRENT_BUILD_INFO.version, settings.updateChannel || 'stable').then((res) => {
+      checkNativeBuildUpdates(CURRENT_BUILD_INFO.version).then((res) => {
         setUpdateInfo(res);
       });
     }
-  }, [settings.autoCheckUpdates, settings.updateChannel]);
+  }, [settings.autoCheckUpdates]);
 
   // Core Engine instance
   const engine = useMemo(() => new ParticleEngine(), []);

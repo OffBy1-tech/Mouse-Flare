@@ -167,33 +167,23 @@ export function isNewerVersion(current: string, latest: string): boolean {
   return lPatch > cPatch;
 }
 
-// One in-flight/completed fetch per channel per page load; the feed changes
-// rarely and api.github.com allows 60 unauthenticated requests/hour.
-const channelCache = new Map<string, Promise<ReleaseMetadata>>();
+// One in-flight/completed fetch per page load; the feed changes rarely and
+// api.github.com allows 60 unauthenticated requests/hour.
+let releaseCache: Promise<ReleaseMetadata> | null = null;
 
-async function fetchRelease(channel: 'stable' | 'beta'): Promise<ReleaseMetadata> {
-  const cached = channelCache.get(channel);
-  if (cached) return cached;
+async function fetchRelease(): Promise<ReleaseMetadata> {
+  if (releaseCache) return releaseCache;
 
   const promise = (async () => {
-    if (channel === 'stable') {
-      const res = await fetch(`${REPO_API}/latest`, { headers: { Accept: 'application/vnd.github+json' } });
-      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-      return toMetadata((await res.json()) as GitHubRelease, 'stable');
-    }
-    // Beta = newest prerelease (the rolling `latest` dev build)
-    const res = await fetch(`${REPO_API}?per_page=10`, { headers: { Accept: 'application/vnd.github+json' } });
+    const res = await fetch(`${REPO_API}/latest`, { headers: { Accept: 'application/vnd.github+json' } });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    const releases = (await res.json()) as GitHubRelease[];
-    const prerelease = releases.find((r) => r.prerelease && !r.draft);
-    if (!prerelease) throw new Error('no prerelease published');
-    return toMetadata(prerelease, 'beta');
+    return toMetadata((await res.json()) as GitHubRelease, 'stable');
   })().catch((err) => {
-    channelCache.delete(channel); // allow retry on the next manual check
+    releaseCache = null; // allow retry on the next manual check
     throw err;
   });
 
-  channelCache.set(channel, promise);
+  releaseCache = promise;
   return promise;
 }
 
@@ -203,13 +193,12 @@ async function fetchRelease(channel: 'stable' | 'beta'): Promise<ReleaseMetadata
  * offline.
  */
 export async function checkNativeBuildUpdates(
-  currentVersion: string = CURRENT_BUILD_INFO.version,
-  channel: 'stable' | 'beta' = 'stable'
+  currentVersion: string = CURRENT_BUILD_INFO.version
 ): Promise<UpdateCheckResult> {
   let release: ReleaseMetadata;
   let errored = false;
   try {
-    release = await fetchRelease(channel);
+    release = await fetchRelease();
   } catch {
     release = FALLBACK_RELEASE;
     errored = true;
@@ -227,7 +216,7 @@ export async function checkNativeBuildUpdates(
       ? `Could not reach the release feed — showing cached v${release.version} info.`
       : updateAvailable
         ? `A new version (v${release.version}) is available!`
-        : `You are on the latest ${channel} build (v${currentVersion}).`,
+        : `You are on the latest stable build (v${currentVersion}).`,
   };
 }
 

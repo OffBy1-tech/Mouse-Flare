@@ -356,18 +356,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func matchesConfiguredHotkey(_ event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection([.command, .shift, .control, .option])
-        let key = event.charactersIgnoringModifiers?.lowercased() ?? ""
-        switch SettingsManager.shared.settings.hotkey {
-        case "⌃ + Space":
-            return flags == [.control] && key == " "
-        case "⌥ + M":
-            return flags == [.option] && (key == "m" || key == "µ")
-        case "F1":
-            return event.keyCode == 122 // F1 function key
-        default: // "⌘ + Shift + F"
-            return flags == [.command, .shift] && key == "f"
+        guard let combo = HotkeyCombo(string: SettingsManager.shared.settings.hotkey) else {
+            // Unparseable stored value: fall back to the classic default.
+            let flags = event.modifierFlags.intersection([.command, .shift, .control, .option])
+            return flags == [.command, .shift] && event.charactersIgnoringModifiers?.lowercased() == "f"
         }
+        return combo.matches(event)
     }
 
     @objc private func menuTriggerFindMouse() {
@@ -435,7 +429,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func startUpdateDownload() {
+    // Internal (not private): the Settings window's Updates tab drives the
+    // same download/stage/install flow as these menu-bar actions.
+    @objc func startUpdateDownload() {
         guard case .available(let release) = Updater.shared.phase else {
             // Manual path can arrive here right after check(); re-read phase safely
             if case .ready = Updater.shared.phase { installStagedUpdate() }
@@ -454,7 +450,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func installStagedUpdate() {
+    @objc func installStagedUpdate() {
         guard case .ready(_, let stagedApp) = Updater.shared.phase else { return }
         do {
             try Updater.shared.installAndRelaunch(stagedApp: stagedApp)
