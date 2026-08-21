@@ -2,6 +2,16 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.6.2 (2026-08-21)
+
+## Mouseflare 0.6.2 — Windows Stability
+
+### 🐛 Fixed
+- **Windows**: repeated crashes with custom FX active. The 0.6.0 pixel compositor ran inside the frame-render callback, where a single failure (such as a graphics-environment hiccup during sprite creation) took the whole app down — and again every frame after relaunch while the same design was active. The compositor is now fully fail-safed: any fault falls back to plain rendering for the session instead of crashing, and its inputs are hardened against runaway or malformed custom-FX configs.
+
+### 🩺 Added
+- **Windows crash log**: unhandled errors are now recorded to `%AppData%\Mouseflare\crash.log` (with a per-launch marker), so if anything still goes wrong, the log tells us exactly what.
+
 ## Mouseflare v0.6.1 (2026-08-21)
 
 ## Mouseflare 0.6.1 — macOS Layout Hotfix
