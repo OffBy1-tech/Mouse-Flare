@@ -32,6 +32,12 @@ namespace Mouseflare.UI
         private string _activeTab = "fx-studio";
         private bool _isRecordingHotkey = false;
         private string _currentHotkey;
+        private bool _loading;
+
+        // FX Studio / FX Designer changes preview live on the overlay but are a
+        // draft until Apply & Save; this holds the last committed FX state so
+        // closing the window (or any background persist) can fall back to it.
+        private Core.MouseflareSettings _committedFx;
 
         /// <summary>Raised when the user successfully binds a new global hotkey combo.</summary>
         public event Action<string>? HotkeyChanged;
@@ -41,8 +47,11 @@ namespace Mouseflare.UI
             _overlay = overlay;
             _hotkeys = hotkeys;
             _currentHotkey = currentHotkey;
+            _committedFx = overlay != null ? SnapshotCurrentSettings() : new Core.MouseflareSettings();
+            _loading = true;
             InitializeComponent();
             LoadCurrentSettings();
+            _loading = false;
         }
 
         private void LoadCurrentSettings()
@@ -132,6 +141,11 @@ namespace Mouseflare.UI
             tabBehavior.Visibility = tab == "behavior" ? Visibility.Visible : Visibility.Collapsed;
             tabDiagnostics.Visibility = tab == "diagnostics" ? Visibility.Visible : Visibility.Collapsed;
 
+            // Only FX Studio / FX Designer changes are a draft needing Apply & Save;
+            // every other tab saves instantly, so hide the button there
+            if (btnSave != null)
+                btnSave.Visibility = tab is "fx-studio" or "fx-designer" ? Visibility.Visible : Visibility.Collapsed;
+
             // Update sidebar nav button active states
             SetNavButtonState(btnNavGeneral, tab == "general");
             SetNavButtonState(btnNavFxStudio, tab == "fx-studio");
@@ -148,35 +162,44 @@ namespace Mouseflare.UI
             btn.BorderThickness = isActive ? new Thickness(1) : new Thickness(0);
         }
 
-        // General Toggles
+        // General Toggles (instant domain: applied and saved as they change)
         private void OnMasterEnabledChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.IsFxEnabled = chkEnabled.IsChecked == true;
+            PersistInstantSettings();
         }
 
         private void OnPassiveFxChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.EnablePassiveFx = chkPassiveFx.IsChecked == true;
+            // The FX Designer also drafts this flag; an explicit toggle here is a
+            // committed choice, so re-baseline it or the close-revert would undo it
+            _committedFx.EnablePassiveFx = chkPassiveFx.IsChecked == true;
+            PersistInstantSettings();
         }
 
         private void OnIdleBurstChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.IdleBurstEnabled = chkIdleBurst.IsChecked == true;
+            PersistInstantSettings();
         }
 
         private void OnMonitorCrossingChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.MonitorCrossingFxEnabled = chkMonitorCrossing.IsChecked == true;
+            PersistInstantSettings();
         }
 
         private void OnSoundFxChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.SoundFxEnabled = chkSoundFx.IsChecked == true;
+            PersistInstantSettings();
         }
 
         private void OnAutoUpdatesChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.AutoCheckUpdates = chkAutoUpdates.IsChecked == true;
+            PersistInstantSettings();
         }
 
         // Passive Presets (9 Styles)
@@ -727,7 +750,8 @@ namespace Mouseflare.UI
             _currentHotkey = combo;
             btnHotkey.Content = combo;
             HotkeyChanged?.Invoke(combo);
-            SetStatusText($"Global hotkey set to {combo} • Click Apply & Save to persist");
+            PersistInstantSettings();
+            SetStatusText($"Global hotkey set to {combo} — saved.");
         }
 
         private void OnResetDefaults(object sender, RoutedEventArgs e)
@@ -751,13 +775,24 @@ namespace Mouseflare.UI
                 _overlay.FluidVorticity = 0.85;
                 _overlay.FluidDissipation = 0.96;
             }
+            _loading = true;
             LoadCurrentSettings();
-            SetStatusText("✓ All Settings Reset to Factory Defaults!");
+            _loading = false;
+            // Reset is an explicit action: commit and save everything, including
+            // the FX fields that are normally a draft until Apply & Save
+            if (_overlay != null)
+            {
+                _committedFx = SnapshotCurrentSettings();
+                Core.SettingsStore.Save(_overlay.ToSettings(_currentHotkey));
+            }
+            SetStatusText("✓ All Settings Reset to Factory Defaults & Saved!");
         }
 
         private void OnSaveAndApply(object sender, RoutedEventArgs e)
         {
-            bool saved = PersistSettings();
+            if (_overlay == null) return;
+            _committedFx = SnapshotCurrentSettings();
+            bool saved = Core.SettingsStore.Save(_overlay.ToSettings(_currentHotkey));
             try
             {
                 System.Media.SystemSounds.Asterisk.Play();
@@ -768,10 +803,70 @@ namespace Mouseflare.UI
                 : "⚠️ Applied to live engine, but writing settings.json failed.");
         }
 
-        private bool PersistSettings()
+        /// <summary>Full snapshot of the live overlay state (quick swatches deep-copied).</summary>
+        private Core.MouseflareSettings SnapshotCurrentSettings()
         {
-            if (_overlay == null) return false;
-            return Core.SettingsStore.Save(_overlay.ToSettings(_currentHotkey));
+            var snapshot = _overlay!.ToSettings(_currentHotkey);
+            // ToSettings shares the swatch array with the overlay, and the picker
+            // mutates it in place — clone it or the revert baseline drifts along
+            snapshot.QuickSwatches = (string[])snapshot.QuickSwatches.Clone();
+            return snapshot;
+        }
+
+        /// <summary>
+        /// Settings safe to write to disk right now: live instant-domain values
+        /// combined with the last committed FX state, so background persists
+        /// (tray toggle, session end, update install) never capture an FX draft.
+        /// </summary>
+        internal Core.MouseflareSettings ComposeSettingsForPersist()
+        {
+            var settings = _overlay!.ToSettings(_currentHotkey);
+            settings.PassiveFxStyle = _committedFx.PassiveFxStyle;
+            settings.FlareFxStyle = _committedFx.FlareFxStyle;
+            settings.EnablePassiveFx = _committedFx.EnablePassiveFx;
+            settings.CurrentColorHex = _committedFx.CurrentColorHex;
+            settings.SecondaryColorHex = _committedFx.SecondaryColorHex;
+            settings.IntensityMultiplier = _committedFx.IntensityMultiplier;
+            settings.SparkDensityMultiplier = _committedFx.SparkDensityMultiplier;
+            settings.AnimationSpeedMultiplier = _committedFx.AnimationSpeedMultiplier;
+            settings.MinMovementThreshold = _committedFx.MinMovementThreshold;
+            settings.FluidVorticity = _committedFx.FluidVorticity;
+            settings.FluidDissipation = _committedFx.FluidDissipation;
+            settings.QuickSwatches = (string[])_committedFx.QuickSwatches.Clone();
+            settings.CustomFxJson = _committedFx.CustomFxJson;
+            return settings;
+        }
+
+        private void PersistInstantSettings()
+        {
+            if (_overlay == null || _loading) return;
+            Core.SettingsStore.Save(ComposeSettingsForPersist());
+        }
+
+        /// <summary>Puts the overlay back to the last Apply &amp; Save (a no-op if nothing is drafted).</summary>
+        private void RevertUnappliedFx()
+        {
+            if (_overlay == null) return;
+            _overlay.PassiveFxStyle = _committedFx.PassiveFxStyle;
+            _overlay.FlareFxStyle = _committedFx.FlareFxStyle;
+            _overlay.EnablePassiveFx = _committedFx.EnablePassiveFx;
+            _overlay.CurrentColor = App.ParseHexColor(_committedFx.CurrentColorHex, Color.FromRgb(245, 158, 11));
+            _overlay.SecondaryColor = App.ParseHexColor(_committedFx.SecondaryColorHex, Color.FromRgb(251, 191, 36));
+            _overlay.IntensityMultiplier = _committedFx.IntensityMultiplier;
+            _overlay.SparkDensityMultiplier = _committedFx.SparkDensityMultiplier;
+            _overlay.AnimationSpeedMultiplier = _committedFx.AnimationSpeedMultiplier;
+            _overlay.MinMovementThreshold = _committedFx.MinMovementThreshold;
+            _overlay.FluidVorticity = _committedFx.FluidVorticity;
+            _overlay.FluidDissipation = _committedFx.FluidDissipation;
+            _overlay.QuickSwatches = (string[])_committedFx.QuickSwatches.Clone();
+            _overlay.CustomFxJson = _committedFx.CustomFxJson;
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Closing without Apply & Save discards the FX preview
+            RevertUnappliedFx();
+            base.OnClosing(e);
         }
 
         private void OnTestFlare(object sender, RoutedEventArgs e)

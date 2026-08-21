@@ -260,6 +260,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func selectPresetFromMenu(_ sender: NSMenuItem) {
         guard let presetId = sender.representedObject as? String else { return }
         SettingsManager.shared.settings.passivePreset = presetId
+        // Menu-bar picks commit immediately — keep an open Settings window's
+        // draft baseline in agreement so closing it can't revert this choice.
+        settingsWindowController?.noteExternalPassivePresetChange()
     }
 
     private func setupOverlayWindows() {
@@ -345,6 +348,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        // Quitting with the Settings window open must not persist an FX draft
+        // that was never committed with Apply & Save.
+        settingsWindowController?.revertUnappliedFx()
         if let monitor = globalKeyMonitor { NSEvent.removeMonitor(monitor) }
         if let monitor = localKeyMonitor { NSEvent.removeMonitor(monitor) }
     }

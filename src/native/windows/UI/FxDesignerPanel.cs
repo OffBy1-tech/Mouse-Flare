@@ -14,7 +14,7 @@ namespace Mouseflare.UI
     /// Native FX Designer (Settings → FX Designer), mirroring the macOS
     /// FxDesignerView: the web designer's full parameter model with LIVE
     /// preview — every change applies to the cursor immediately (the overlay is
-    /// topmost) and persists as the "custom-fx" preset.
+    /// topmost) as a draft; Apply &amp; Save commits it as the "custom-fx" preset.
     /// </summary>
     public sealed class FxDesignerPanel
     {
@@ -43,7 +43,7 @@ namespace Mouseflare.UI
         private static CustomFxConfig Clone(CustomFxConfig source) =>
             CustomFxConfig.FromJson(JsonSerializer.Serialize(source)) ?? new CustomFxConfig();
 
-        // ---- Apply (live preview + persistence via the app's auto-persist) ----
+        // ---- Apply (live draft preview; committed by the window's Apply & Save) ----
 
         private void Apply()
         {
@@ -152,7 +152,7 @@ namespace Mouseflare.UI
 
             root.Children.Add(new TextBlock
             {
-                Text = "Every change previews live on your cursor and is saved as the Custom FX preset.",
+                Text = "Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.",
                 FontSize = 10,
                 Foreground = Hex("#71717A"),
                 Margin = new Thickness(0, 0, 0, 10),
@@ -229,8 +229,9 @@ namespace Mouseflare.UI
             foreach (var spec in specs) grid.Children.Add(SliderColumn(spec));
             root.Children.Add(grid);
 
+            // No Apply() here: just visiting the tab must not hijack the live
+            // preset — the preview starts with the first actual edit
             SyncControls();
-            Apply();
             return root;
         }
 
