@@ -346,7 +346,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({ currentConfi
               type="color"
               value={config[c.field]}
               onChange={(e) => applyEdit({ [c.field]: e.target.value })}
-              className="w-5 h-5 rounded-full border border-white/20 cursor-pointer bg-transparent"
+              className="w-5 h-5 rounded-full border border-white/20 hover:border-white/60 transition-colors cursor-pointer bg-transparent"
             />
             <span className="text-[11px] text-neutral-400">{c.label}</span>
           </label>

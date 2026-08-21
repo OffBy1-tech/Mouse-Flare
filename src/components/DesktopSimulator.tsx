@@ -184,7 +184,7 @@ export const DesktopSimulator: React.FC<DesktopSimulatorProps> = ({
                 <span className="font-medium">Enterprise_Q3_Financial_Forecast.xlsx</span>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => setActiveWindow(null)} className="w-3 h-3 rounded-full bg-red-500/80" />
+                <button onClick={() => setActiveWindow(null)} className="w-3 h-3 rounded-full bg-red-500/80 hover:opacity-80" />
               </div>
             </div>
             <div className="flex-1 p-3 overflow-auto bg-neutral-950 font-mono text-[11px]">

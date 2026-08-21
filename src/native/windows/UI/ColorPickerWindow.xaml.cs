@@ -66,6 +66,17 @@ namespace Mouseflare.UI
                     RefreshAll(fireLive: true);
                     e.Handled = true;
                 };
+                // Hover: brighten the ring so the swatch reads as clickable
+                swatch.MouseEnter += (s, e) =>
+                {
+                    swatch.Stroke = new SolidColorBrush(Color.FromArgb(230, 255, 255, 255));
+                    swatch.StrokeThickness = 2;
+                };
+                swatch.MouseLeave += (s, e) =>
+                {
+                    swatch.Stroke = new SolidColorBrush(Color.FromArgb(64, 255, 255, 255));
+                    swatch.StrokeThickness = 1;
+                };
                 pnlSwatches.Children.Add(swatch);
             }
 

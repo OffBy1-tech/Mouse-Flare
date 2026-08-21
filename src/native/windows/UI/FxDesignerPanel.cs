@@ -299,6 +299,9 @@ namespace Mouseflare.UI
                 Margin = new Thickness(8, 0, 4, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            // Hover: brighten the ring so the chip reads as clickable
+            chip.MouseEnter += (s, e) => chip.BorderBrush = Hex("#A855F7");
+            chip.MouseLeave += (s, e) => chip.BorderBrush = Hex("#4A2E75");
             chip.MouseLeftButtonDown += (s, e) =>
             {
                 string prior = get(_config);

@@ -123,6 +123,7 @@
                             <Button x:Name="btnNavGeneral" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavGeneral">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
                                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
@@ -131,6 +132,13 @@
                                                 <TextBlock Text="General" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
                                             </StackPanel>
                                         </Border>
+                                            <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="7" Opacity="0" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -138,6 +146,7 @@
                             <Button x:Name="btnNavFxStudio" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="#2EA855F7" BorderBrush="#80A855F7" BorderThickness="1" Foreground="#E9D5FF" Cursor="Hand" Click="OnNavFxStudio">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
                                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#2E1B4A" Margin="0,0,8,0">
@@ -146,6 +155,13 @@
                                                 <TextBlock Text="FX Studio" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
                                             </StackPanel>
                                         </Border>
+                                            <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="7" Opacity="0" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -153,6 +169,7 @@
                             <Button x:Name="btnNavFxDesigner" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavFxDesigner">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
                                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
@@ -161,6 +178,13 @@
                                                 <TextBlock Text="FX Designer" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
                                             </StackPanel>
                                         </Border>
+                                            <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="7" Opacity="0" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -168,6 +192,7 @@
                             <Button x:Name="btnNavBehavior" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavBehavior">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
                                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
@@ -176,6 +201,13 @@
                                                 <TextBlock Text="Behavior &amp; Monitors" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
                                             </StackPanel>
                                         </Border>
+                                            <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="7" Opacity="0" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -183,6 +215,7 @@
                             <Button x:Name="btnNavDiagnostics" Visibility="Collapsed" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavDiagnostics">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
                                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
@@ -191,6 +224,13 @@
                                                 <TextBlock Text="Diagnostics" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
                                             </StackPanel>
                                         </Border>
+                                            <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="7" Opacity="0" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -198,6 +238,7 @@
                             <Button x:Name="btnNavUpdates" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavUpdates">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
                                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
@@ -206,6 +247,13 @@
                                                 <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
                                             </StackPanel>
                                         </Border>
+                                            <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="7" Opacity="0" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -235,6 +283,7 @@
                                 <Button Tag="fluid-simulation" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
@@ -246,6 +295,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -253,6 +309,7 @@
                                 <Button Tag="spark-trail" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#FFA62E" BorderThickness="1.5" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
@@ -264,6 +321,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -271,6 +335,7 @@
                                 <Button Tag="fluid-smoke" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#281A3C" Margin="0,0,8,0">
@@ -282,6 +347,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -289,6 +361,7 @@
                                 <Button Tag="neon-fluid" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
@@ -300,6 +373,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -307,6 +387,7 @@
                                 <Button Tag="cosmic-vortex" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1F1B3E" Margin="0,0,8,0">
@@ -318,6 +399,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -325,6 +413,7 @@
                                 <Button Tag="ink-diffusion" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1E293B" Margin="0,0,8,0">
@@ -336,6 +425,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -343,6 +439,7 @@
                                 <Button Tag="glow-pulse" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
@@ -354,6 +451,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -361,6 +465,7 @@
                                 <Button Tag="comet-trail" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
@@ -372,6 +477,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -379,6 +491,7 @@
                                 <Button Tag="bubbles" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
@@ -390,6 +503,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -397,6 +517,7 @@
                                 <Button Tag="fireflies" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#063324" Margin="0,0,8,0">
@@ -408,6 +529,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -415,6 +543,7 @@
                                 <Button Tag="star-dust" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#292006" Margin="0,0,8,0">
@@ -426,6 +555,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -433,6 +569,7 @@
                                 <Button Tag="lightning" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
@@ -444,6 +581,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -451,6 +595,7 @@
                                 <Button Tag="rainbow" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2E1022" Margin="0,0,8,0">
@@ -462,6 +607,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -469,6 +621,7 @@
                                 <Button Tag="plasma" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
@@ -480,6 +633,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -487,6 +647,7 @@
                                 <Button Tag="matrix-rain" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#052E16" Margin="0,0,8,0">
@@ -498,6 +659,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -505,6 +673,7 @@
                                 <Button Tag="fire-flame" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2E1010" Margin="0,0,8,0">
@@ -516,6 +685,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -523,6 +699,7 @@
                                 <Button Tag="neon-cyber" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1A0B2E" Margin="0,0,8,0">
@@ -534,6 +711,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -541,6 +725,7 @@
                                 <Button Tag="magic-dust" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A1B3D" Margin="0,0,8,0">
@@ -552,6 +737,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -559,6 +751,7 @@
                                 <Button Tag="galaxy" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1F1B3E" Margin="0,0,8,0">
@@ -570,6 +763,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -577,6 +777,7 @@
                                 <Button Tag="minimal-beacon" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#1A0F2E" BorderBrush="#4A2E75" BorderThickness="1" Margin="0,0,8,0">
@@ -588,6 +789,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -595,6 +803,7 @@
                                 <Button Tag="custom-fx" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A1B3D" Margin="0,0,8,0">
@@ -606,6 +815,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -614,9 +830,17 @@
                             <Button Content="📋 Import Custom FX (JSON from clipboard)" Height="28" Margin="0,0,0,14" HorizontalAlignment="Left" Padding="12,0" Background="#2E1B4A" Foreground="#FAFAFA" FontSize="11" Cursor="Hand" Click="OnImportCustomFx">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
                                         <Border Background="{TemplateBinding Background}" BorderBrush="#4A2E75" BorderThickness="1" CornerRadius="6" Padding="12,0">
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
+                                            <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -627,6 +851,7 @@
                                 <Button Tag="solar-flare" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2FD4F5" BorderThickness="1.5" Cursor="Hand" Click="OnSelectFlarePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
@@ -638,6 +863,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -645,6 +877,7 @@
                                 <Button Tag="fluid-vortex-burst" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#0C343D" Margin="0,0,8,0">
@@ -656,6 +889,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -663,6 +903,7 @@
                                 <Button Tag="sonar-radar" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#082F3B" Margin="0,0,8,0">
@@ -674,6 +915,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -681,6 +929,7 @@
                                 <Button Tag="neon-beacon" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#063324" Margin="0,0,8,0">
@@ -692,6 +941,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -699,6 +955,7 @@
                                 <Button Tag="quantum-shockwave" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#22163B" Margin="0,0,8,0">
@@ -710,6 +967,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -717,6 +981,7 @@
                                 <Button Tag="supernova" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Border Width="30" Height="30" CornerRadius="6" Background="#2E1212" Margin="0,0,8,0">
@@ -728,6 +993,13 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -739,12 +1011,20 @@
                                 <Button Tag="color-amber" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#FFA62E" BorderThickness="1.5" Cursor="Hand" Click="OnColorAmber">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8" Fill="#FFA62E" Margin="0,0,6,0"/>
                                                     <TextBlock Text="Amber Flare" FontSize="10" FontWeight="SemiBold" Foreground="#FFA62E"/>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -752,12 +1032,20 @@
                                 <Button Tag="color-cyan" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnColorCyan">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8" Fill="#2FD4F5" Margin="0,0,6,0"/>
                                                     <TextBlock Text="Cyber Cyan" FontSize="10" FontWeight="SemiBold" Foreground="#2FD4F5"/>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -765,12 +1053,20 @@
                                 <Button Tag="color-emerald" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnColorEmerald">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8" Fill="#10B981" Margin="0,0,6,0"/>
                                                     <TextBlock Text="Emerald Glow" FontSize="10" FontWeight="SemiBold" Foreground="#10B981"/>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -778,12 +1074,20 @@
                                 <Button Tag="color-violet" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnColorViolet">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8" Fill="#8B5CF6" Margin="0,0,6,0"/>
                                                     <TextBlock Text="Electric Violet" FontSize="10" FontWeight="SemiBold" Foreground="#8B5CF6"/>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -791,12 +1095,20 @@
                                 <Button Tag="color-gold" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnColorGold">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8" Fill="#EAB308" Margin="0,0,6,0"/>
                                                     <TextBlock Text="Solar Gold" FontSize="10" FontWeight="SemiBold" Foreground="#EAB308"/>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -804,12 +1116,20 @@
                                 <Button Tag="color-white" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnColorWhite">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8" Fill="#FFFFFF" Margin="0,0,6,0"/>
                                                     <TextBlock Text="Pure White" FontSize="10" FontWeight="SemiBold" Foreground="#FAFAFA"/>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -817,12 +1137,20 @@
                                 <Button Tag="color-crimson" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnColorCrimson">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8" Fill="#EF4444" Margin="0,0,6,0"/>
                                                     <TextBlock Text="Crimson Fire" FontSize="10" FontWeight="SemiBold" Foreground="#EF4444"/>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -830,12 +1158,20 @@
                                 <Button x:Name="btnCustomColor" Tag="color-custom" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnApplyCustomHex">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
                                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="8,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8" Fill="#FFA62E" Margin="0,0,6,0"/>
                                                     <TextBlock Text="Custom Hex" FontSize="10" FontWeight="SemiBold" Foreground="#FAFAFA"/>
                                                 </StackPanel>
                                             </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -862,56 +1198,120 @@
                                         <Button x:Name="btnQuickSwatch0" Tag="0" Width="18" Height="18" Margin="0,0,4,0" Background="#FF007F" BorderBrush="#4A2E75" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
                                         <Button x:Name="btnQuickSwatch1" Tag="1" Width="18" Height="18" Margin="0,0,4,0" Background="#3B82F6" BorderBrush="#4A2E75" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
                                         <Button x:Name="btnQuickSwatch2" Tag="2" Width="18" Height="18" Margin="0,0,4,0" Background="#14B8A6" BorderBrush="#4A2E75" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
                                         <Button x:Name="btnQuickSwatch3" Tag="3" Width="18" Height="18" Margin="0,0,4,0" Background="#F97316" BorderBrush="#4A2E75" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
                                         <Button x:Name="btnQuickSwatch4" Tag="4" Width="18" Height="18" Margin="0,0,4,0" Background="#A855F7" BorderBrush="#4A2E75" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
                                         <Button x:Name="btnQuickSwatch5" Tag="5" Width="18" Height="18" Margin="0,0,4,0" Background="#EF4444" BorderBrush="#4A2E75" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
                                         <Button x:Name="btnQuickSwatch6" Tag="6" Width="18" Height="18" Margin="0,0,4,0" Background="#FACC15" BorderBrush="#4A2E75" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
                                         <Button x:Name="btnQuickSwatch7" Tag="7" Width="18" Height="18" Margin="0,0,4,0" Background="#22C55E" BorderBrush="#4A2E75" BorderThickness="1" Cursor="Hand" Click="OnSelectQuickSwatch" MouseDoubleClick="OnEditQuickSwatch" ToolTip="Click to use this color; double-click to edit it">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"/>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
@@ -1043,9 +1443,17 @@
                                         <Button x:Name="btnHotkey" DockPanel.Dock="Right" Content="Ctrl + Shift + F" Padding="12,6" Background="#2E1B4A" Foreground="#FBBF24" BorderBrush="#FFA62E" BorderThickness="1" FontWeight="Bold" FontSize="12" Cursor="Hand" Click="OnRecordHotkey">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Grid>
                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
+                                                        <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="6" Opacity="0" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
