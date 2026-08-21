@@ -443,9 +443,9 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-neutral-950 text-neutral-100 font-sans select-none overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-[#0a0512] text-neutral-100 font-sans select-none overflow-hidden">
       {/* Top Header & Preset Bar */}
-      <div className="h-14 bg-neutral-900/90 border-b border-neutral-800 px-4 flex items-center justify-between z-20 backdrop-blur-md shrink-0">
+      <div className="h-14 bg-[#120a20]/90 border-b border-violet-500/20 px-4 flex items-center justify-between z-20 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg text-white font-bold text-sm">
@@ -454,7 +454,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-sm text-neutral-100">{activeConfig.name}</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded font-mono uppercase bg-neutral-800 text-amber-400 border border-neutral-700">
+                <span className="text-[10px] px-1.5 py-0.2 rounded font-mono uppercase bg-white/5 text-violet-300 border border-white/10">
                   {activeConfig.category}
                 </span>
                 {activeConfig.isCustom && (
@@ -477,7 +477,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
             <select
               value={activeConfig.id}
               onChange={(e) => handleSelectPreset(e.target.value)}
-              className="bg-neutral-800 border border-neutral-700 text-neutral-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer font-medium"
+              className="neon-input text-xs rounded-lg px-2.5 py-1.5 cursor-pointer font-medium"
             >
               <optgroup label="🌟 Curated Built-in Archetypes">
                 {DEFAULT_FX_PRESETS.map((p) => (
@@ -503,7 +503,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
               setSavePresetName(`${activeConfig.name} Custom`);
               setSaveModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-medium transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-200 border border-white/10 text-xs font-medium transition-all cursor-pointer"
             title="Save as a new custom preset"
           >
             <Save className="w-3.5 h-3.5 text-amber-400" />
@@ -523,7 +523,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
           {/* Primary Action: Apply to Cursor */}
           <button
             onClick={handleApplyToCursor}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-neutral-950 font-bold text-xs shadow-lg transition-all active:scale-95 cursor-pointer"
+            className="neon-btn-primary flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all active:scale-95 cursor-pointer"
             title="Apply this particle effect directly to your active mouse cursor!"
           >
             <Zap className="w-3.5 h-3.5 fill-current" />
@@ -533,7 +533,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-neutral-200 text-xs"
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-neutral-200 text-xs"
               title="Close Editor"
             >
               ✕
@@ -553,9 +553,9 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
       {/* Main Workspace (Split Sandbox Stage + Parameter Controls) */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* LEFT / CENTER: Interactive Physics Testing Stage */}
-        <div className="lg:w-7/12 flex flex-col border-b lg:border-b-0 lg:border-r border-neutral-800 bg-neutral-950 relative min-h-[320px] lg:min-h-0">
+        <div className="lg:w-7/12 flex flex-col border-b lg:border-b-0 lg:border-r border-violet-500/15 bg-[#0a0512] relative min-h-[320px] lg:min-h-0">
           {/* Stage Controls Toolbar */}
-          <div className="h-10 bg-neutral-900/60 border-b border-neutral-800 px-3 flex items-center justify-between text-xs text-neutral-300">
+          <div className="h-10 bg-[#0d0618]/70 border-b border-violet-500/15 px-3 flex items-center justify-between text-xs text-neutral-300">
             {/* Auto Motion Switcher */}
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-neutral-400 hidden sm:inline">Motion Test:</span>
@@ -573,7 +573,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                   onClick={() => setAutoMotion(m.id)}
                   className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
                     autoMotion === m.id
-                      ? 'bg-neutral-800 text-amber-300 font-bold border border-neutral-700'
+                      ? 'bg-violet-500/20 text-violet-200 font-bold border border-violet-400/40'
                       : 'text-neutral-400 hover:text-neutral-200'
                   }`}
                 >
@@ -586,7 +586,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsPaused(!isPaused)}
-                className="p-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px]"
+                className="p-1 rounded bg-white/5 hover:bg-white/10 text-neutral-300 text-[11px]"
                 title={isPaused ? 'Resume Simulation' : 'Pause Simulation'}
               >
                 {isPaused ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5" />}
@@ -594,7 +594,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
 
               <button
                 onClick={() => renderer.clear()}
-                className="p-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px]"
+                className="p-1 rounded bg-white/5 hover:bg-white/10 text-neutral-300 text-[11px]"
                 title="Clear stage particles"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -604,7 +604,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
               <select
                 value={stageBg}
                 onChange={(e) => setStageBg(e.target.value as SandboxBackground)}
-                className="bg-neutral-800 border border-neutral-700 text-neutral-300 text-[11px] rounded px-1.5 py-0.5"
+                className="neon-input text-[11px] rounded px-1.5 py-0.5"
               >
                 <option value="matrix-grid">Dark Grid</option>
                 <option value="deep-void">Deep Void</option>
@@ -626,16 +626,16 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
             />
 
             {/* Sandbox Hint Overlay */}
-            <div className="absolute top-3 left-3 pointer-events-none bg-neutral-900/80 backdrop-blur border border-neutral-800 rounded-lg px-2.5 py-1 text-[10px] text-neutral-400 flex items-center gap-1.5">
+            <div className="absolute top-3 left-3 pointer-events-none bg-[#120a20]/85 backdrop-blur border border-violet-500/25 rounded-lg px-2.5 py-1 text-[10px] text-neutral-400 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Move mouse to emit trail • Click stage to blast burst flare</span>
             </div>
 
             {/* Live Telemetry Hud */}
-            <div className="absolute bottom-3 right-3 pointer-events-none bg-neutral-900/90 backdrop-blur border border-neutral-800 rounded-xl px-3 py-1.5 text-[11px] font-mono text-neutral-300 flex items-center gap-3 shadow-xl">
+            <div className="absolute bottom-3 right-3 pointer-events-none bg-[#120a20]/90 backdrop-blur border border-violet-500/25 rounded-xl px-3 py-1.5 text-[11px] font-mono text-neutral-300 flex items-center gap-3 shadow-xl">
               <div>
                 <span className="text-neutral-500">Particles: </span>
-                <strong className="text-amber-400">{telemetry.count}</strong>
+                <strong className="text-violet-300">{telemetry.count}</strong>
               </div>
               <div>
                 <span className="text-neutral-500">FPS: </span>
@@ -650,9 +650,9 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
         </div>
 
         {/* RIGHT SIDE: Modular Parameter Controls & Customizer Tabs */}
-        <div className="lg:w-5/12 flex flex-col bg-neutral-900/50 overflow-hidden">
+        <div className="lg:w-5/12 flex flex-col bg-[#120a20]/60 overflow-hidden">
           {/* Sub-tab Switcher */}
-          <div className="flex items-center gap-1 p-2 bg-neutral-900 border-b border-neutral-800 text-xs overflow-x-auto">
+          <div className="flex items-center gap-1 p-2 bg-[#0d0618]/70 border-b border-violet-500/15 text-xs overflow-x-auto">
             {(
               [
                 { id: 'emitter', label: 'Emitter', icon: <Compass className="w-3.5 h-3.5" /> },
@@ -670,8 +670,8 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all whitespace-nowrap cursor-pointer ${
                   editorTab === t.id
-                    ? 'bg-neutral-800 text-amber-300 border border-neutral-700 font-bold shadow'
-                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
+                    ? 'neon-nav-active font-bold'
+                    : 'text-violet-100/60 hover:text-violet-100 hover:bg-violet-400/10'
                 }`}
               >
                 {t.icon}
@@ -705,8 +705,8 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         onClick={() => updateField('emissionPattern', pat.id)}
                         className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${
                           activeConfig.emissionPattern === pat.id
-                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/50 font-bold shadow'
-                            : 'bg-neutral-800/40 text-neutral-300 border-neutral-700/60 hover:bg-neutral-800'
+                            ? 'bg-violet-500/20 text-violet-200 border-violet-400/60 font-bold shadow'
+                            : 'bg-white/5 text-neutral-300 border-white/10 hover:bg-white/10'
                         }`}
                       >
                         <span className="text-base">{pat.icon}</span>
@@ -717,11 +717,11 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                 </div>
 
                 {/* Spawn Rates */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3.5">
+                <div className="p-3.5 rounded-xl neon-card space-y-3.5">
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold text-neutral-200">Spawn Rate on Cursor Move</span>
-                      <span className="font-mono text-amber-400">{activeConfig.spawnRateOnMove} particles/step</span>
+                      <span className="font-mono text-violet-300">{activeConfig.spawnRateOnMove} particles/step</span>
                     </div>
                     <input
                       type="range"
@@ -730,14 +730,14 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       step="1"
                       value={activeConfig.spawnRateOnMove}
                       onChange={(e) => updateField('spawnRateOnMove', Number(e.target.value))}
-                      className="w-full accent-amber-500"
+                      className="neon-range w-full"
                     />
                   </div>
 
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold text-neutral-200">Spawn Burst Count (on Click)</span>
-                      <span className="font-mono text-amber-400">{activeConfig.spawnBurstOnClick} particles</span>
+                      <span className="font-mono text-violet-300">{activeConfig.spawnBurstOnClick} particles</span>
                     </div>
                     <input
                       type="range"
@@ -746,14 +746,14 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       step="2"
                       value={activeConfig.spawnBurstOnClick}
                       onChange={(e) => updateField('spawnBurstOnClick', Number(e.target.value))}
-                      className="w-full accent-amber-500"
+                      className="neon-range w-full"
                     />
                   </div>
 
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold text-neutral-200">Cursor Velocity Inheritance</span>
-                      <span className="font-mono text-amber-400">{Math.round(activeConfig.velocityInheritance * 100)}%</span>
+                      <span className="font-mono text-violet-300">{Math.round(activeConfig.velocityInheritance * 100)}%</span>
                     </div>
                     <input
                       type="range"
@@ -762,17 +762,17 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       step="0.05"
                       value={activeConfig.velocityInheritance}
                       onChange={(e) => updateField('velocityInheritance', Number(e.target.value))}
-                      className="w-full accent-amber-500"
+                      className="neon-range w-full"
                     />
                   </div>
                 </div>
 
                 {/* Direction & Spread Angles */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3">
+                <div className="p-3.5 rounded-xl neon-card space-y-3">
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold text-neutral-200">Emission Angle</span>
-                      <span className="font-mono text-amber-400">{activeConfig.emissionAngle}°</span>
+                      <span className="font-mono text-violet-300">{activeConfig.emissionAngle}°</span>
                     </div>
                     <input
                       type="range"
@@ -781,14 +781,14 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       step="5"
                       value={activeConfig.emissionAngle}
                       onChange={(e) => updateField('emissionAngle', Number(e.target.value))}
-                      className="w-full accent-amber-500"
+                      className="neon-range w-full"
                     />
                   </div>
 
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold text-neutral-200">Emission Spread Arc</span>
-                      <span className="font-mono text-amber-400">{activeConfig.emissionSpread}°</span>
+                      <span className="font-mono text-violet-300">{activeConfig.emissionSpread}°</span>
                     </div>
                     <input
                       type="range"
@@ -797,7 +797,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       step="10"
                       value={activeConfig.emissionSpread}
                       onChange={(e) => updateField('emissionSpread', Number(e.target.value))}
-                      className="w-full accent-amber-500"
+                      className="neon-range w-full"
                     />
                   </div>
                 </div>
@@ -818,8 +818,8 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         onClick={() => updateField('shape', sh.id)}
                         className={`p-2 rounded-xl border text-center flex flex-col items-center gap-1 transition-all cursor-pointer ${
                           activeConfig.shape === sh.id
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 font-bold shadow'
-                            : 'bg-neutral-800/40 text-neutral-300 border-neutral-700/60 hover:bg-neutral-800'
+                            ? 'bg-violet-500/20 text-violet-200 border-violet-400/60 font-bold shadow'
+                            : 'bg-white/5 text-neutral-300 border-white/10 hover:bg-white/10'
                         }`}
                       >
                         <span className="text-xl">{sh.icon}</span>
@@ -830,7 +830,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                 </div>
 
                 {/* Blend Mode */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-2">
+                <div className="p-3.5 rounded-xl neon-card space-y-2">
                   <span className="font-semibold text-neutral-200 block">Composite Blend Mode</span>
                   <div className="grid grid-cols-3 gap-2">
                     {[
@@ -843,8 +843,8 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         onClick={() => updateField('blendMode', b.id as BlendMode)}
                         className={`px-2 py-1.5 rounded-lg border text-center text-[11px] transition-all cursor-pointer ${
                           activeConfig.blendMode === b.id
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 font-bold'
-                            : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:text-neutral-200'
+                            ? 'bg-violet-500/20 text-violet-200 border-violet-400/50 font-bold'
+                            : 'bg-white/5 text-neutral-400 border-white/10 hover:text-neutral-200'
                         }`}
                       >
                         {b.label}
@@ -854,7 +854,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                 </div>
 
                 {/* Glow Bloom */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3">
+                <div className="p-3.5 rounded-xl neon-card space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-neutral-200">Luminescent Glow Bloom</div>
@@ -864,7 +864,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       type="checkbox"
                       checked={activeConfig.glowBloom}
                       onChange={(e) => updateField('glowBloom', e.target.checked)}
-                      className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
+                      className="neon-check rounded h-4 w-4"
                     />
                   </div>
 
@@ -872,7 +872,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                     <div>
                       <div className="flex justify-between mb-1 text-[11px]">
                         <span className="text-neutral-300">Glow Blur Radius</span>
-                        <span className="font-mono text-amber-400">{activeConfig.glowRadius}px</span>
+                        <span className="font-mono text-violet-300">{activeConfig.glowRadius}px</span>
                       </div>
                       <input
                         type="range"
@@ -881,7 +881,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="1"
                         value={activeConfig.glowRadius}
                         onChange={(e) => updateField('glowRadius', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                   )}
@@ -893,13 +893,13 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
             {editorTab === 'physics' && (
               <div className="space-y-4">
                 {/* Speed Range */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3">
+                <div className="p-3.5 rounded-xl neon-card space-y-3">
                   <div className="font-semibold text-neutral-200">Initial Velocity Speed (Min / Max)</div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>Min Speed</span>
-                        <span className="font-mono text-amber-400">{activeConfig.initialSpeedMin}</span>
+                        <span className="font-mono text-violet-300">{activeConfig.initialSpeedMin}</span>
                       </div>
                       <input
                         type="range"
@@ -908,13 +908,13 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="0.2"
                         value={activeConfig.initialSpeedMin}
                         onChange={(e) => updateField('initialSpeedMin', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>Max Speed</span>
-                        <span className="font-mono text-amber-400">{activeConfig.initialSpeedMax}</span>
+                        <span className="font-mono text-violet-300">{activeConfig.initialSpeedMax}</span>
                       </div>
                       <input
                         type="range"
@@ -923,20 +923,20 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="0.5"
                         value={activeConfig.initialSpeedMax}
                         onChange={(e) => updateField('initialSpeedMax', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Gravity Vector */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3">
+                <div className="p-3.5 rounded-xl neon-card space-y-3">
                   <div className="font-semibold text-neutral-200">Gravity &amp; Wind Vector</div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>Gravity Y (Fall/Rise)</span>
-                        <span className="font-mono text-amber-400">{activeConfig.gravityY}</span>
+                        <span className="font-mono text-violet-300">{activeConfig.gravityY}</span>
                       </div>
                       <input
                         type="range"
@@ -945,13 +945,13 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="0.05"
                         value={activeConfig.gravityY}
                         onChange={(e) => updateField('gravityY', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>Wind X (Horizontal)</span>
-                        <span className="font-mono text-amber-400">{activeConfig.gravityX}</span>
+                        <span className="font-mono text-violet-300">{activeConfig.gravityX}</span>
                       </div>
                       <input
                         type="range"
@@ -960,18 +960,18 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="0.05"
                         value={activeConfig.gravityX}
                         onChange={(e) => updateField('gravityX', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Fluid Drag & Turbulence */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3">
+                <div className="p-3.5 rounded-xl neon-card space-y-3">
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold text-neutral-200">Air Resistance / Drag</span>
-                      <span className="font-mono text-amber-400">{Math.round(activeConfig.drag * 100)}%</span>
+                      <span className="font-mono text-violet-300">{Math.round(activeConfig.drag * 100)}%</span>
                     </div>
                     <input
                       type="range"
@@ -980,14 +980,14 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       step="0.01"
                       value={activeConfig.drag}
                       onChange={(e) => updateField('drag', Number(e.target.value))}
-                      className="w-full accent-amber-500"
+                      className="neon-range w-full"
                     />
                   </div>
 
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold text-neutral-200">Turbulence / Curl Noise Jitter</span>
-                      <span className="font-mono text-amber-400">{activeConfig.turbulence}</span>
+                      <span className="font-mono text-violet-300">{activeConfig.turbulence}</span>
                     </div>
                     <input
                       type="range"
@@ -996,14 +996,14 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       step="0.2"
                       value={activeConfig.turbulence}
                       onChange={(e) => updateField('turbulence', Number(e.target.value))}
-                      className="w-full accent-amber-500"
+                      className="neon-range w-full"
                     />
                   </div>
 
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold text-neutral-200">Vortex / Pointer Centripetal Attraction</span>
-                      <span className="font-mono text-amber-400">{activeConfig.vortexAttraction}</span>
+                      <span className="font-mono text-violet-300">{activeConfig.vortexAttraction}</span>
                     </div>
                     <input
                       type="range"
@@ -1012,7 +1012,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                       step="0.2"
                       value={activeConfig.vortexAttraction}
                       onChange={(e) => updateField('vortexAttraction', Number(e.target.value))}
-                      className="w-full accent-amber-500"
+                      className="neon-range w-full"
                     />
                   </div>
                 </div>
@@ -1023,7 +1023,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
             {editorTab === 'colors' && (
               <div className="space-y-4">
                 {/* Color Mode */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-2">
+                <div className="p-3.5 rounded-xl neon-card space-y-2">
                   <span className="font-semibold text-neutral-200 block">Color Progression Mode</span>
                   <div className="grid grid-cols-2 gap-2">
                     {[
@@ -1037,8 +1037,8 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         onClick={() => updateField('colorMode', cm.id as ColorMode)}
                         className={`p-2 rounded-lg border text-left text-[11px] transition-all cursor-pointer ${
                           activeConfig.colorMode === cm.id
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 font-bold'
-                            : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:text-neutral-200'
+                            ? 'bg-violet-500/20 text-violet-200 border-violet-400/50 font-bold'
+                            : 'bg-white/5 text-neutral-400 border-white/10 hover:text-neutral-200'
                         }`}
                       >
                         {cm.label}
@@ -1061,7 +1061,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                           updateField('secondaryColor', pal.secondary);
                           updateField('accentColor', pal.accent);
                         }}
-                        className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 flex flex-col items-center gap-1 cursor-pointer"
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex flex-col items-center gap-1 cursor-pointer"
                       >
                         <div className="flex gap-1">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: pal.primary }} />
@@ -1075,7 +1075,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                 </div>
 
                 {/* Custom Color Pickers */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 grid grid-cols-3 gap-2">
+                <div className="p-3.5 rounded-xl neon-card grid grid-cols-3 gap-2">
                   <div>
                     <label className="text-[11px] text-neutral-300 block mb-1">Primary Color</label>
                     <div className="flex items-center gap-2">
@@ -1083,7 +1083,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         type="color"
                         value={activeConfig.primaryColor}
                         onChange={(e) => updateField('primaryColor', e.target.value)}
-                        className="w-7 h-7 rounded border border-neutral-700 cursor-pointer bg-transparent"
+                        className="w-7 h-7 rounded border border-white/10 cursor-pointer bg-transparent"
                       />
                       <span className="font-mono text-[10px] text-neutral-400">{activeConfig.primaryColor}</span>
                     </div>
@@ -1096,7 +1096,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         type="color"
                         value={activeConfig.secondaryColor}
                         onChange={(e) => updateField('secondaryColor', e.target.value)}
-                        className="w-7 h-7 rounded border border-neutral-700 cursor-pointer bg-transparent"
+                        className="w-7 h-7 rounded border border-white/10 cursor-pointer bg-transparent"
                       />
                       <span className="font-mono text-[10px] text-neutral-400">{activeConfig.secondaryColor}</span>
                     </div>
@@ -1109,7 +1109,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         type="color"
                         value={activeConfig.accentColor}
                         onChange={(e) => updateField('accentColor', e.target.value)}
-                        className="w-7 h-7 rounded border border-neutral-700 cursor-pointer bg-transparent"
+                        className="w-7 h-7 rounded border border-white/10 cursor-pointer bg-transparent"
                       />
                       <span className="font-mono text-[10px] text-neutral-400">{activeConfig.accentColor}</span>
                     </div>
@@ -1117,13 +1117,13 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                 </div>
 
                 {/* Size & Scaling Curves */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3">
+                <div className="p-3.5 rounded-xl neon-card space-y-3">
                   <div className="font-semibold text-neutral-200">Particle Size Evolution</div>
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>Start</span>
-                        <span className="font-mono text-amber-400">{activeConfig.startSize}px</span>
+                        <span className="font-mono text-violet-300">{activeConfig.startSize}px</span>
                       </div>
                       <input
                         type="range"
@@ -1132,13 +1132,13 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="1"
                         value={activeConfig.startSize}
                         onChange={(e) => updateField('startSize', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>Peak</span>
-                        <span className="font-mono text-amber-400">{activeConfig.peakSize}px</span>
+                        <span className="font-mono text-violet-300">{activeConfig.peakSize}px</span>
                       </div>
                       <input
                         type="range"
@@ -1147,13 +1147,13 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="1"
                         value={activeConfig.peakSize}
                         onChange={(e) => updateField('peakSize', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>End</span>
-                        <span className="font-mono text-amber-400">{activeConfig.endSize}px</span>
+                        <span className="font-mono text-violet-300">{activeConfig.endSize}px</span>
                       </div>
                       <input
                         type="range"
@@ -1162,7 +1162,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="1"
                         value={activeConfig.endSize}
                         onChange={(e) => updateField('endSize', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                   </div>
@@ -1172,7 +1172,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                     <select
                       value={activeConfig.sizeCurve}
                       onChange={(e) => updateField('sizeCurve', e.target.value as SizeCurve)}
-                      className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-2.5 py-1 text-xs text-neutral-200"
+                      className="neon-input w-full rounded-lg px-2.5 py-1 text-xs"
                     >
                       <option value="grow-shrink">Grow to Peak then Shrink</option>
                       <option value="linear-shrink">Linear Shrink to Zero</option>
@@ -1183,13 +1183,13 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                 </div>
 
                 {/* Lifetime Range */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3">
+                <div className="p-3.5 rounded-xl neon-card space-y-3">
                   <div className="font-semibold text-neutral-200">Lifetime Duration (Frames)</div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>Min Life</span>
-                        <span className="font-mono text-amber-400">{activeConfig.lifetimeMin}f</span>
+                        <span className="font-mono text-violet-300">{activeConfig.lifetimeMin}f</span>
                       </div>
                       <input
                         type="range"
@@ -1198,13 +1198,13 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="5"
                         value={activeConfig.lifetimeMin}
                         onChange={(e) => updateField('lifetimeMin', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                     <div>
                       <div className="flex justify-between text-[11px] mb-1">
                         <span>Max Life</span>
-                        <span className="font-mono text-amber-400">{activeConfig.lifetimeMax}f</span>
+                        <span className="font-mono text-violet-300">{activeConfig.lifetimeMax}f</span>
                       </div>
                       <input
                         type="range"
@@ -1213,7 +1213,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                         step="5"
                         value={activeConfig.lifetimeMax}
                         onChange={(e) => updateField('lifetimeMax', Number(e.target.value))}
-                        className="w-full accent-amber-500"
+                        className="neon-range w-full"
                       />
                     </div>
                   </div>
@@ -1224,7 +1224,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
             {/* TAB 5: CODE & EXPORT */}
             {editorTab === 'export' && (
               <div className="space-y-4">
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-3">
+                <div className="p-3.5 rounded-xl neon-card space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-neutral-200">JSON Preset Configuration</div>
@@ -1233,14 +1233,14 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleCopy(JSON.stringify(activeConfig, null, 2), 'json')}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-[11px] font-medium border border-neutral-700"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-violet-300 text-[11px] font-medium border border-white/10"
                       >
                         {copiedCodeType === 'json' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedCodeType === 'json' ? 'Copied JSON!' : 'Copy JSON'}</span>
                       </button>
                       <button
                         onClick={() => setImportJsonOpen(true)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium border border-neutral-700"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-neutral-300 text-[11px] font-medium border border-white/10"
                       >
                         <Upload className="w-3.5 h-3.5" />
                         <span>Import JSON</span>
@@ -1248,41 +1248,41 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                     </div>
                   </div>
 
-                  <pre className="p-3 rounded-lg bg-neutral-950 border border-neutral-800 text-[10px] font-mono text-neutral-300 max-h-40 overflow-y-auto leading-relaxed">
+                  <pre className="p-3 rounded-lg bg-[#0a0512] border border-white/10 text-[10px] font-mono text-neutral-300 max-h-40 overflow-y-auto leading-relaxed">
                     {JSON.stringify(activeConfig, null, 2)}
                   </pre>
                 </div>
 
                 {/* Windows C# Code */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-2">
+                <div className="p-3.5 rounded-xl neon-card space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-neutral-200 text-xs">Windows C# (.NET 8 WPF) Snippet</span>
                     <button
                       onClick={() => handleCopy(generateCSharpCode(), 'csharp')}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-blue-300 text-[11px] border border-neutral-700"
+                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-blue-300 text-[11px] border border-white/10"
                     >
                       {copiedCodeType === 'csharp' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedCodeType === 'csharp' ? 'Copied C#!' : 'Copy C#'}</span>
                     </button>
                   </div>
-                  <pre className="p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-[10px] font-mono text-neutral-300 max-h-28 overflow-y-auto">
+                  <pre className="p-2.5 rounded-lg bg-[#0a0512] border border-white/10 text-[10px] font-mono text-neutral-300 max-h-28 overflow-y-auto">
                     {generateCSharpCode()}
                   </pre>
                 </div>
 
                 {/* macOS Swift Code */}
-                <div className="p-3.5 rounded-xl bg-neutral-800/30 border border-neutral-700/60 space-y-2">
+                <div className="p-3.5 rounded-xl neon-card space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-neutral-200 text-xs">macOS Swift 5.9 (AppKit) Snippet</span>
                     <button
                       onClick={() => handleCopy(generateSwiftCode(), 'swift')}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-purple-300 text-[11px] border border-neutral-700"
+                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-purple-300 text-[11px] border border-white/10"
                     >
                       {copiedCodeType === 'swift' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedCodeType === 'swift' ? 'Copied Swift!' : 'Copy Swift'}</span>
                     </button>
                   </div>
-                  <pre className="p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-[10px] font-mono text-neutral-300 max-h-28 overflow-y-auto">
+                  <pre className="p-2.5 rounded-lg bg-[#0a0512] border border-white/10 text-[10px] font-mono text-neutral-300 max-h-28 overflow-y-auto">
                     {generateSwiftCode()}
                   </pre>
                 </div>
@@ -1295,7 +1295,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
       {/* Save Preset Modal */}
       {saveModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-900 border border-neutral-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+          <div className="neon-frame p-6 max-w-md w-full space-y-4 animate-in fade-in zoom-in-95">
             <h3 className="text-base font-bold text-neutral-100 flex items-center gap-2">
               <Save className="w-5 h-5 text-amber-400" />
               <span>Save Custom Particle FX Preset</span>
@@ -1310,20 +1310,20 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
                 value={savePresetName}
                 onChange={(e) => setSavePresetName(e.target.value)}
                 placeholder="e.g. Hyperdrive Nova Spark"
-                className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-3 py-2 text-xs text-neutral-100 focus:outline-none focus:border-amber-500"
+                className="neon-input w-full rounded-xl px-3 py-2 text-xs"
                 autoFocus
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setSaveModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-medium"
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveCustomPreset}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow"
+                className="neon-btn-primary px-4 py-2 rounded-xl font-bold text-xs"
               >
                 Save Preset
               </button>
@@ -1335,7 +1335,7 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
       {/* Import JSON Modal */}
       {importJsonOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-900 border border-neutral-700 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+          <div className="neon-frame p-6 max-w-lg w-full space-y-4 animate-in fade-in zoom-in-95">
             <h3 className="text-base font-bold text-neutral-100 flex items-center gap-2">
               <Upload className="w-5 h-5 text-amber-400" />
               <span>Import Particle FX Configuration</span>
@@ -1348,18 +1348,18 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({
               value={jsonInputText}
               onChange={(e) => setJsonInputText(e.target.value)}
               placeholder='Paste JSON config here, e.g. { "name": "My Effect", "shape": "sparkle-star", ... }'
-              className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-3 text-xs font-mono text-neutral-200 focus:outline-none focus:border-amber-500"
+              className="neon-input w-full rounded-xl p-3 text-xs font-mono"
             />
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setImportJsonOpen(false)}
-                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-medium"
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleImportJson}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow"
+                className="neon-btn-primary px-4 py-2 rounded-xl font-bold text-xs"
               >
                 Import Preset
               </button>

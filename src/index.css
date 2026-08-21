@@ -38,6 +38,129 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
+/* ===================================================================== */
+/* Neon / synthwave menu theme (experiment/neon-menus)                    */
+/* Deep-space grounds with a few luminous gradient edges. Boldness lives  */
+/* in the window frame, selected states, and the primary button — cards   */
+/* and body text stay quiet.                                              */
+/* ===================================================================== */
+
+:root {
+  --neon-ground-0: #0a0512;
+  --neon-ground-1: #120a20;
+  --neon-ground-2: #1a0f2e;
+  --neon-violet: #a855f7;
+  --neon-blue: #4f7cff;
+  --neon-magenta: #f043c8;
+  --neon-cyan: #2fd4f5;
+  --neon-amber: #ffa62e;
+}
+
+/* Window / modal frame: 2px gradient border with layered outer glow */
+.neon-frame {
+  border: 2px solid transparent;
+  border-radius: 16px;
+  background:
+    linear-gradient(165deg, var(--neon-ground-1), var(--neon-ground-0)) padding-box,
+    linear-gradient(135deg, var(--neon-violet), var(--neon-blue) 55%, var(--neon-magenta)) border-box;
+  box-shadow:
+    0 0 22px rgba(168, 85, 247, 0.35),
+    0 0 64px rgba(79, 124, 255, 0.16),
+    0 25px 60px rgba(0, 0, 0, 0.65);
+}
+
+/* Quiet raised card: 1px gradient edge, no glow until hovered */
+.neon-card {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(170deg, var(--neon-ground-2), var(--neon-ground-1)) padding-box,
+    linear-gradient(160deg, rgba(168, 85, 247, 0.4), rgba(79, 124, 255, 0.28) 55%, rgba(240, 67, 200, 0.24)) border-box;
+}
+.neon-card-hover:hover {
+  background:
+    linear-gradient(170deg, #21133a, var(--neon-ground-1)) padding-box,
+    linear-gradient(160deg, rgba(168, 85, 247, 0.75), rgba(79, 124, 255, 0.55) 55%, rgba(240, 67, 200, 0.45)) border-box;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.22);
+}
+
+/* Cyan-edged variant (fluid dynamics section) */
+.neon-card-cyan {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(170deg, #101b30, var(--neon-ground-1)) padding-box,
+    linear-gradient(160deg, rgba(47, 212, 245, 0.5), rgba(79, 124, 255, 0.35)) border-box;
+  box-shadow: 0 0 20px rgba(47, 212, 245, 0.08);
+}
+
+/* Selected item: the filled glowing pill ("Mars" row in the reference) */
+.neon-selected {
+  border: 1px solid rgba(190, 160, 255, 0.9);
+  background: linear-gradient(115deg, rgba(79, 124, 255, 0.78), rgba(139, 92, 246, 0.72) 60%, rgba(168, 85, 247, 0.66));
+  box-shadow:
+    0 0 18px rgba(110, 90, 255, 0.5),
+    inset 0 0 14px rgba(255, 255, 255, 0.08);
+}
+.neon-selected-cyan {
+  border: 1px solid rgba(150, 230, 255, 0.9);
+  background: linear-gradient(115deg, rgba(47, 212, 245, 0.65), rgba(79, 124, 255, 0.72) 65%, rgba(139, 92, 246, 0.6));
+  box-shadow:
+    0 0 18px rgba(60, 180, 255, 0.5),
+    inset 0 0 14px rgba(255, 255, 255, 0.08);
+}
+
+/* Sidebar nav active pill: gradient outline ("Products" in the reference) */
+.neon-nav-active {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(rgba(88, 40, 150, 0.38), rgba(50, 25, 110, 0.38)) padding-box,
+    linear-gradient(120deg, var(--neon-violet), var(--neon-magenta)) border-box;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.38);
+  color: #e9d5ff;
+}
+
+/* Primary action (Apply & Save, Test Flare): amber→magenta gradient fill */
+.neon-btn-primary {
+  border: 1px solid rgba(255, 200, 140, 0.5);
+  background: linear-gradient(120deg, var(--neon-amber), #ff5e62 55%, var(--neon-magenta));
+  color: #22080f;
+  box-shadow: 0 0 16px rgba(255, 140, 60, 0.4);
+}
+.neon-btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 24px rgba(255, 140, 60, 0.6);
+}
+
+/* Form controls */
+.neon-switch {
+  background: #2a1a45;
+}
+input:checked + .neon-switch {
+  background: linear-gradient(90deg, var(--neon-blue), var(--neon-violet));
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.55);
+}
+.neon-check { accent-color: var(--neon-violet); }
+.neon-check-cyan { accent-color: var(--neon-cyan); }
+.neon-range { accent-color: var(--neon-violet); }
+.neon-range-cyan { accent-color: var(--neon-cyan); }
+.neon-input {
+  background: var(--neon-ground-0);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #e5e0f2;
+}
+.neon-input:focus {
+  outline: none;
+  border-color: var(--neon-violet);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .neon-card-hover,
+  .neon-btn-primary,
+  .neon-nav-active {
+    transition: box-shadow 150ms ease, filter 150ms ease;
+  }
+}
+
 /* Pulse beacon animations */
 @keyframes radar-sweep {
   0% { transform: scale(0.2); opacity: 1; }
