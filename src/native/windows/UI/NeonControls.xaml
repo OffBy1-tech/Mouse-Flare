@@ -542,14 +542,20 @@
                                  The glow sits on a childless carrier so the
                                  item text never gets rasterized by it. -->
                             <Grid Margin="8" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
-                                  TextOptions.TextFormattingMode="Display">
+                                  TextOptions.TextFormattingMode="Display"
+                                  UseLayoutRounding="True">
                                 <Border Background="#120A20"
                                         BorderBrush="#8CA855F7"
                                         BorderThickness="1"
                                         CornerRadius="10"
                                         Effect="{StaticResource NeonPopupGlow}"
                                         SnapsToDevicePixels="True"/>
-                                <Border BorderThickness="1" BorderBrush="Transparent" CornerRadius="10"
+                                <!-- Opaque background repeated on the content
+                                     layer so ClearTypeHint can restore crisp
+                                     subpixel text inside the transparent
+                                     popup window. -->
+                                <Border Background="#120A20" BorderThickness="1" BorderBrush="Transparent" CornerRadius="10"
+                                        RenderOptions.ClearTypeHint="Enabled"
                                         MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                     <ScrollViewer Margin="0,4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                         <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>

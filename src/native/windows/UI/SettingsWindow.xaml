@@ -45,7 +45,18 @@
             </Border.Effect>
         </Border>
 
-        <Border BorderThickness="2" BorderBrush="Transparent" CornerRadius="14">
+        <!-- Opaque background repeated here (identical pixels to the carrier
+             behind) so ClearTypeHint's opacity guarantee holds locally: the
+             layered window disables ClearType by default, and the hint is
+             what restores crisp subpixel text for the whole content tree. -->
+        <Border BorderThickness="2" BorderBrush="Transparent" CornerRadius="14"
+                RenderOptions.ClearTypeHint="Enabled">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
+                    <GradientStop Color="#120A20" Offset="0"/>
+                    <GradientStop Color="#0A0512" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
 
         <Grid>
             <Grid.RowDefinitions>

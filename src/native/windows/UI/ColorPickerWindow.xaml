@@ -32,7 +32,10 @@
             </Border.Effect>
         </Border>
 
-        <Border BorderThickness="2" BorderBrush="Transparent" CornerRadius="14">
+        <!-- Opaque background repeated so ClearTypeHint can restore crisp
+             subpixel text inside this layered window (see SettingsWindow). -->
+        <Border Background="#0A0512" BorderThickness="2" BorderBrush="Transparent" CornerRadius="14"
+                RenderOptions.ClearTypeHint="Enabled">
 
         <Grid Margin="22,18,22,18">
             <Grid.RowDefinitions>
