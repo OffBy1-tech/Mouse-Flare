@@ -33,6 +33,36 @@ final class CardButton: NSView {
     var onClick: (() -> Void)?
     var onDoubleClick: (() -> Void)?
 
+    /// How the button responds to the pointer resting on it. The setters below
+    /// record the "base" appearance; hover renders a variation on top of it and
+    /// mouse-exit restores the base exactly, so dynamic restyles
+    /// (refreshPresetHighlights, selectTab) can never leave a stale hover look.
+    enum HoverStyle {
+        /// Quiet cards/buttons: border and surface brighten, faint glow —
+        /// the web build's `.neon-card-hover` feel. The default.
+        case brightenBorder
+        /// Primary gradient buttons: gradient brightens ~10%, glow strengthens.
+        case brightenGradient
+        /// Selected/active elements own their look; hover changes nothing.
+        case none
+    }
+    var hoverStyle: HoverStyle = .brightenBorder {
+        didSet { if isHovered { render(animated: false) } }
+    }
+
+    private var isHovered = false
+    private var hoverTrackingArea: NSTrackingArea?
+    private var gradientLayer: CAGradientLayer?
+
+    // Base appearance as last set by the call site.
+    private var baseBackground = Theme.cardBg
+    private var baseBorder = Theme.cardBorder
+    private var baseBorderWidth: CGFloat = 1
+    private var baseGradientColors: [NSColor]?
+    private var baseGlowColor: NSColor?
+    private var baseGlowRadius: CGFloat = 9
+    private var baseGlowOpacity: Float = 0.5
+
     init() {
         super.init(frame: .zero)
         wantsLayer = true
@@ -44,16 +74,130 @@ final class CardButton: NSView {
     required init?(coder: NSCoder) { fatalError() }
 
     func setStyle(background: NSColor, border: NSColor, borderWidth: CGFloat) {
-        layer?.backgroundColor = background.cgColor
-        layer?.borderColor = border.cgColor
-        layer?.borderWidth = borderWidth
+        baseBackground = background
+        baseBorder = border
+        baseBorderWidth = borderWidth
+        render(animated: false)
     }
-
-    private var gradientLayer: CAGradientLayer?
 
     /// Fills the card with a diagonal gradient (pass nil to remove it). The
     /// gradient sits under the label subviews, so text stays readable.
     func setGradient(_ colors: [NSColor]?) {
+        baseGradientColors = colors
+        render(animated: false)
+    }
+
+    /// Soft outer glow in the given color (pass nil to remove it).
+    func setGlow(_ color: NSColor?, radius: CGFloat = 9, opacity: Float = 0.5) {
+        baseGlowColor = color
+        baseGlowRadius = radius
+        baseGlowOpacity = opacity
+        render(animated: false)
+    }
+
+    // MARK: Hover mechanics
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let hoverTrackingArea { removeTrackingArea(hoverTrackingArea) }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeInKeyWindow],
+            owner: self, userInfo: nil
+        )
+        addTrackingArea(area)
+        hoverTrackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        isHovered = true
+        render(animated: true)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        isHovered = false
+        render(animated: true)
+    }
+
+    override func viewDidHide() {
+        super.viewDidHide()
+        // A tab switch can hide a hovered button without a mouseExited event.
+        if isHovered {
+            isHovered = false
+            render(animated: false)
+        }
+    }
+
+    private static func brightened(_ color: NSColor) -> NSColor {
+        let lifted = color.withAlphaComponent(min(1, color.alphaComponent * 1.6 + 0.15))
+        return lifted.blended(withFraction: 0.2, of: .white) ?? lifted
+    }
+
+    private func render(animated: Bool) {
+        var background = baseBackground
+        var border = baseBorder
+        var gradientColors = baseGradientColors
+        var glowColor = baseGlowColor
+        var glowRadius = baseGlowRadius
+        var glowOpacity = baseGlowOpacity
+
+        if isHovered {
+            switch hoverStyle {
+            case .none:
+                break
+            case .brightenBorder:
+                if baseBackground.alphaComponent < 0.05 {
+                    // Transparent buttons (inactive nav, Reset Defaults) get the
+                    // web nav's violet hover wash.
+                    background = Theme.neonViolet.withAlphaComponent(0.12)
+                } else {
+                    background = baseBackground.blended(withFraction: 0.07, of: .white) ?? baseBackground
+                }
+                let hasVisibleBorder = baseBorderWidth > 0 && baseBorder.alphaComponent > 0.05
+                if hasVisibleBorder { border = Self.brightened(baseBorder) }
+                if baseGlowColor == nil {
+                    glowColor = hasVisibleBorder ? baseBorder.withAlphaComponent(1) : Theme.neonViolet
+                    glowRadius = 8
+                    glowOpacity = 0.25
+                }
+            case .brightenGradient:
+                if let colors = baseGradientColors {
+                    gradientColors = colors.map { $0.blended(withFraction: 0.1, of: .white) ?? $0 }
+                } else {
+                    background = baseBackground.blended(withFraction: 0.1, of: .white) ?? baseBackground
+                }
+                glowRadius = baseGlowRadius + 4
+                glowOpacity = min(1, baseGlowOpacity * 1.5)
+            }
+        }
+
+        let apply = {
+            self.layer?.backgroundColor = background.cgColor
+            self.layer?.borderColor = border.cgColor
+            self.layer?.borderWidth = self.baseBorderWidth
+            self.layer?.masksToBounds = false
+            self.layer?.shadowColor = glowColor?.cgColor
+            self.layer?.shadowOpacity = glowColor == nil ? 0 : glowOpacity
+            self.layer?.shadowRadius = glowRadius
+            self.layer?.shadowOffset = .zero
+            self.applyGradient(gradientColors)
+        }
+        if animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.15
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                context.allowsImplicitAnimation = true
+                apply()
+            }
+        } else {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            apply()
+            CATransaction.commit()
+        }
+    }
+
+    private func applyGradient(_ colors: [NSColor]?) {
         guard let colors else {
             gradientLayer?.removeFromSuperlayer()
             gradientLayer = nil
@@ -71,15 +215,6 @@ final class CardButton: NSView {
         gradient.endPoint = CGPoint(x: 1, y: 0.75)
         gradient.cornerRadius = layer?.cornerRadius ?? 8
         gradient.frame = bounds
-    }
-
-    /// Soft outer glow in the given color (pass nil to remove it).
-    func setGlow(_ color: NSColor?, radius: CGFloat = 9, opacity: Float = 0.5) {
-        layer?.masksToBounds = false
-        layer?.shadowColor = color?.cgColor
-        layer?.shadowOpacity = color == nil ? 0 : opacity
-        layer?.shadowRadius = radius
-        layer?.shadowOffset = .zero
     }
 
     override func layout() {
@@ -587,6 +722,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             let isActive = navId == id
             if isActive {
                 // Gradient pill with soft glow — the web build's .neon-nav-active
+                nav.card.hoverStyle = .none
                 nav.card.setStyle(background: .clear, border: Theme.neonViolet.withAlphaComponent(0.9), borderWidth: 1)
                 nav.card.setGradient([
                     Theme.neonViolet.withAlphaComponent(0.32),
@@ -595,6 +731,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 nav.card.setGlow(Theme.neonViolet, radius: 8, opacity: 0.45)
                 nav.label.textColor = Theme.neonTextBright
             } else {
+                nav.card.hoverStyle = .brightenBorder
                 nav.card.setGradient(nil)
                 nav.card.setGlow(nil)
                 nav.card.setStyle(background: .clear, border: .clear, borderWidth: 0)
@@ -1404,6 +1541,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // .neon-selected / .neon-selected-cyan, i.e. the reference's "Mars" row).
         for (id, card) in passiveCards {
             let active = id == cfg.passivePreset
+            card.hoverStyle = active ? .none : .brightenBorder
             if active {
                 card.setStyle(background: .clear, border: NSColor(hexString: "#BEA0FF").withAlphaComponent(0.9), borderWidth: 1.5)
                 card.setGradient([
@@ -1419,6 +1557,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         for (id, card) in flareCards {
             let active = id == cfg.flarePreset
+            card.hoverStyle = active ? .none : .brightenBorder
             if active {
                 card.setStyle(background: .clear, border: NSColor(hexString: "#96E6FF").withAlphaComponent(0.9), borderWidth: 1.5)
                 card.setGradient([
@@ -1434,6 +1573,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         for (id, chip) in colorChips {
             let active = id == cfg.colorPreset
+            chip.card.hoverStyle = active ? .none : .brightenBorder
             chip.card.setStyle(
                 background: active ? Theme.controlBg : Theme.cardBg,
                 border: active ? .white : Theme.cardBorder,
@@ -1813,6 +1953,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     /// Amber→magenta gradient fill with a warm glow — the web build's
     /// .neon-btn-primary, used for Apply & Save and Test Flare.
     private func applyPrimaryGradient(to button: CardButton) {
+        button.hoverStyle = .brightenGradient
         button.setStyle(background: .clear, border: NSColor(hexString: "#FFC88C").withAlphaComponent(0.5), borderWidth: 1)
         button.setGradient([
             Theme.amber,

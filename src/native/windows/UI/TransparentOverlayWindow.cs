@@ -655,7 +655,8 @@ namespace Mouseflare.UI
                 // Custom FX Designer engine (updates physics and draws in one pass)
                 if (PassiveFxStyle == "custom-fx" && _customFxConfig != null)
                 {
-                    _customFx.UpdateAndDraw(dc, _customFxConfig, _lastX, _lastY);
+                    _customFx.UpdateAndDraw(dc, _customFxConfig, _lastX, _lastY,
+                        VisualTreeHelper.GetDpi(this).DpiScaleX);
                 }
 
                 for (int i = _rings.Count - 1; i >= 0; i--)

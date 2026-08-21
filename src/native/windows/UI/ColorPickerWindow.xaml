@@ -4,7 +4,9 @@
         Title="Color Picker" Width="356" Height="632"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -14,17 +16,23 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Border Background="#0A0512" BorderThickness="2" CornerRadius="14" Margin="8">
-        <Border.BorderBrush>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#A855F7" Offset="0"/>
-                <GradientStop Color="#4F7CFF" Offset="0.55"/>
-                <GradientStop Color="#F043C8" Offset="1"/>
-            </LinearGradientBrush>
-        </Border.BorderBrush>
-        <Border.Effect>
-            <DropShadowEffect Color="#A855F7" BlurRadius="24" ShadowDepth="0" Opacity="0.4"/>
-        </Border.Effect>
+    <!-- Glowing frame is a childless sibling behind the content: an Effect
+         rasterizes its whole subtree, which would blur all the text. -->
+    <Grid Margin="8">
+        <Border Background="#0A0512" BorderThickness="2" CornerRadius="14">
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#A855F7" Offset="0"/>
+                    <GradientStop Color="#4F7CFF" Offset="0.55"/>
+                    <GradientStop Color="#F043C8" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <Border.Effect>
+                <DropShadowEffect Color="#A855F7" BlurRadius="24" ShadowDepth="0" Opacity="0.4"/>
+            </Border.Effect>
+        </Border>
+
+        <Border BorderThickness="2" BorderBrush="Transparent" CornerRadius="14">
 
         <Grid Margin="22,18,22,18">
             <Grid.RowDefinitions>
@@ -45,9 +53,17 @@
                     <Button x:Name="btnEyedropper" Width="30" Height="30" Background="#1A0F2E" BorderBrush="#4A2E75" Cursor="Hand" ToolTip="Pick a color from the screen" Click="OnEyedropper">
                         <Button.Template>
                             <ControlTemplate TargetType="{x:Type Button}">
+                                <Grid>
                                 <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="15">
                                     <Path Data="M 17,3 L 21,7 L 19,9 L 20,10 L 18,12 L 12,6 L 14,4 L 15,5 Z M 11,7 L 17,13 L 8,22 L 4,22 L 2,20 L 2,16 Z" Fill="#FAFAFA" Stretch="Uniform" Width="13" Height="13"/>
                                 </Border>
+                                    <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="15" Opacity="0" IsHitTestVisible="False"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
@@ -94,5 +110,6 @@
                         Style="{StaticResource NeonPrimaryButton}"/>
             </DockPanel>
         </Grid>
-    </Border>
+        </Border>
+    </Grid>
 </Window>

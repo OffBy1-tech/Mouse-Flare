@@ -73,8 +73,10 @@ namespace Mouseflare.Core
 
     /// <summary>
     /// Native port of the web FX Designer engine (src/engine/customFxRenderer.ts).
-    /// WPF's DrawingContext has no canvas-style blend modes or shadow blur, so
-    /// blendMode/glowBloom are approximated by normal compositing.
+    /// Plain designs render through the retained-mode DrawingContext; designs
+    /// using blendMode "lighter"/"screen"/"color-dodge" or glow bloom route
+    /// through CustomFxCompositor, which reproduces the canvas blend and
+    /// shadow-blur semantics per pixel (issue #1).
     /// </summary>
     public sealed class CustomFxEngine
     {
@@ -86,13 +88,18 @@ namespace Mouseflare.Core
         private readonly List<P> _particles = new();
         private const int MaxParticles = 500;
         private readonly Random _rand = new();
+        private readonly CustomFxCompositor _compositor = new();
         private double _globalHue;
         private double _cursorVx, _cursorVy, _cursorSpeed;
         private long _lastTime = Environment.TickCount64;
 
         public int ActiveCount => _particles.Count;
 
-        public void Clear() => _particles.Clear();
+        public void Clear()
+        {
+            _particles.Clear();
+            _compositor.Clear();
+        }
 
         public void OnMove(double x, double y, double dx, double dy, CustomFxConfig config)
         {
@@ -182,10 +189,15 @@ namespace Mouseflare.Core
             });
         }
 
-        public void UpdateAndDraw(DrawingContext dc, CustomFxConfig config, double cursorX, double cursorY)
+        public void UpdateAndDraw(DrawingContext dc, CustomFxConfig config, double cursorX, double cursorY, double dpiScale = 1.0)
         {
             double gravityX = config.gravityX * 0.1;
             double gravityY = config.gravityY * 0.1;
+
+            // Blend modes and glow bloom need per-pixel compositing; plain
+            // designs keep the retained-mode path so they cannot regress.
+            bool composited = CustomFxCompositor.Needed(config);
+            if (composited) _compositor.BeginFrame();
 
             for (int i = _particles.Count - 1; i >= 0; i--)
             {
@@ -238,8 +250,18 @@ namespace Mouseflare.Core
                     : config.peakAlpha - (config.peakAlpha - config.endAlpha) * ((progress - 0.2) / 0.8);
                 p.Alpha = Math.Max(0, Math.Min(1, p.Alpha));
 
-                DrawShape(dc, p, CurrentColor(p, progress, config), config);
+                Color color = CurrentColor(p, progress, config);
+                if (composited)
+                {
+                    _compositor.AddParticle(p.X, p.Y, p.Size, p.Alpha, p.Rotation, color, config, dpiScale);
+                }
+                else
+                {
+                    DrawShape(dc, p, color, config);
+                }
             }
+
+            if (composited) _compositor.Present(dc, config, dpiScale);
         }
 
         private Color CurrentColor(P p, double progress, CustomFxConfig config)
@@ -293,15 +315,26 @@ namespace Mouseflare.Core
 
         private static void DrawShape(DrawingContext dc, P p, Color color, CustomFxConfig config)
         {
-            byte alpha = (byte)(p.Alpha * 255);
-            var brush = new SolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
-            brush.Freeze();
-            double s = p.Size;
-
             dc.PushTransform(new TranslateTransform(p.X, p.Y));
             if (p.Rotation != 0) dc.PushTransform(new RotateTransform(p.Rotation * 180 / Math.PI));
 
-            switch (config.shape)
+            DrawShapeGeometry(dc, config.shape, p.Size, color, (byte)(p.Alpha * 255));
+
+            if (p.Rotation != 0) dc.Pop();
+            dc.Pop();
+        }
+
+        /// <summary>
+        /// Draws one particle shape centered at the origin, unrotated. Shared
+        /// by the retained-mode path (which wraps it in transforms) and the
+        /// compositor's sprite rasterizer, so both render identical geometry.
+        /// </summary>
+        internal static void DrawShapeGeometry(DrawingContext dc, string shape, double s, Color color, byte alpha)
+        {
+            var brush = new SolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
+            brush.Freeze();
+
+            switch (shape)
             {
                 case "glow-disc":
                 {
@@ -375,7 +408,7 @@ namespace Mouseflare.Core
                     var geo = new StreamGeometry();
                     using (var g = geo.Open())
                     {
-                        if (config.shape == "sakura-petal")
+                        if (shape == "sakura-petal")
                         {
                             g.BeginFigure(new Point(0, -s), true, true);
                             g.BezierTo(new Point(s * 0.8, -s * 0.8), new Point(s * 0.8, s * 0.6), new Point(0, s), true, false);
@@ -408,9 +441,6 @@ namespace Mouseflare.Core
                     dc.DrawEllipse(brush, null, new Point(0, 0), Math.Max(0.5, s), Math.Max(0.5, s));
                     break;
             }
-
-            if (p.Rotation != 0) dc.Pop();
-            dc.Pop();
         }
 
         private static StreamGeometry Poly(params (double X, double Y)[] points)

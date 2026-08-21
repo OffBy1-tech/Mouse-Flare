@@ -147,6 +147,11 @@ input:checked + .neon-switch {
   border: 1px solid rgba(168, 85, 247, 0.3);
   color: #e5e0f2;
 }
+@media (hover: hover) {
+  .neon-input:not(:disabled):hover {
+    border-color: rgba(168, 85, 247, 0.6);
+  }
+}
 .neon-input:focus {
   outline: none;
   border-color: var(--neon-violet);
@@ -214,6 +219,9 @@ input:checked + .neon-switch {
   .neon-btn-primary,
   .neon-nav-active {
     transition: box-shadow 150ms ease, filter 150ms ease;
+  }
+  .neon-input {
+    transition: border-color 150ms ease;
   }
   .neon-select-chevron {
     transition: transform 150ms ease;

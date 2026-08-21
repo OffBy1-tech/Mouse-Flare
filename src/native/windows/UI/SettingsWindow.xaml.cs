@@ -191,7 +191,20 @@ namespace Mouseflare.UI
             btn.Background = isActive ? NeonTheme.NavActiveFill : Brushes.Transparent;
             btn.BorderBrush = isActive ? NeonTheme.NavActiveBorder : Brushes.Transparent;
             btn.BorderThickness = isActive ? new Thickness(1) : new Thickness(0);
-            btn.Effect = isActive ? NeonTheme.NavGlow : null;
+            SetButtonGlow(btn, isActive ? NeonTheme.NavGlow : null);
+        }
+
+        /// <summary>
+        /// Applies a glow to the template's childless "glowHost" carrier. A WPF
+        /// Effect rasterizes its element's whole subtree, so putting the glow on
+        /// the Button itself would blur its text; the carrier holds only the
+        /// background/border shape.
+        /// </summary>
+        private static void SetButtonGlow(Button btn, System.Windows.Media.Effects.Effect? fx)
+        {
+            btn.ApplyTemplate();
+            if (btn.Template?.FindName("glowHost", btn) is Border host) host.Effect = fx;
+            else btn.Effect = fx; // template without a carrier: no worse than before
         }
 
         // General Toggles (instant domain: applied and saved as they change)
@@ -531,14 +544,14 @@ namespace Mouseflare.UI
                         btn.BorderBrush = NeonTheme.SelectedBorder;
                         btn.Background = NeonTheme.SelectedFill;
                         btn.BorderThickness = new Thickness(1.5);
-                        btn.Effect = NeonTheme.SelectedGlow;
+                        SetButtonGlow(btn, NeonTheme.SelectedGlow);
                     }
                     else if (tag == _overlay.FlareFxStyle)
                     {
                         btn.BorderBrush = NeonTheme.SelectedBorderCyan;
                         btn.Background = NeonTheme.SelectedFillCyan;
                         btn.BorderThickness = new Thickness(1.5);
-                        btn.Effect = NeonTheme.SelectedGlowCyan;
+                        SetButtonGlow(btn, NeonTheme.SelectedGlowCyan);
                     }
                     else if (tag == "color-amber" && _overlay.CurrentColor == Color.FromRgb(245, 158, 11))
                     {
@@ -586,14 +599,14 @@ namespace Mouseflare.UI
                         child.BorderBrush = isPassive ? NeonTheme.SelectedBorder : NeonTheme.SelectedBorderCyan;
                         child.Background = isPassive ? NeonTheme.SelectedFill : NeonTheme.SelectedFillCyan;
                         child.BorderThickness = new Thickness(1.5);
-                        child.Effect = isPassive ? NeonTheme.SelectedGlow : NeonTheme.SelectedGlowCyan;
+                        SetButtonGlow(child, isPassive ? NeonTheme.SelectedGlow : NeonTheme.SelectedGlowCyan);
                     }
                     else
                     {
                         child.BorderBrush = NeonTheme.CardBorder;
                         child.Background = NeonTheme.CardBackground;
                         child.BorderThickness = new Thickness(1);
-                        child.Effect = null;
+                        SetButtonGlow(child, null);
                     }
                 }
             }
