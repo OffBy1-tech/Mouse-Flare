@@ -145,6 +145,7 @@ namespace Mouseflare.UI
             {
                 _diagnosticsUnlocked = true;
                 btnNavDiagnostics.Visibility = Visibility.Visible;
+                UpdateTabSelection("diagnostics");
                 SetStatusText("\U0001F4CA Diagnostics unlocked");
             }
             else if (_versionClicks >= 3)

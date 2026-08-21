@@ -329,6 +329,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         if remaining <= 0 {
             diagnosticsUnlocked = true
             navButtons["diagnostics"]?.card.isHidden = false
+            selectTab("diagnostics")
             setStatus("📊 Diagnostics unlocked")
         } else if versionClickCount >= 3 {
             setStatus("\(remaining) more click\(remaining == 1 ? "" : "s") to unlock Diagnostics")

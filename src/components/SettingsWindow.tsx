@@ -98,6 +98,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     const remaining = 5 - versionClicksRef.current;
     if (remaining <= 0) {
       setDiagnosticsUnlocked(true);
+      setActiveTab('diagnostics');
       soundEngine.playToggle(true);
       setSaveStatus('Diagnostics unlocked');
       setTimeout(() => setSaveStatus(null), 2500);
