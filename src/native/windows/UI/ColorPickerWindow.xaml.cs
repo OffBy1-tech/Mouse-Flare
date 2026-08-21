@@ -38,6 +38,8 @@ namespace Mouseflare.UI
 
         public ColorPickerWindow(string title, string initialHex, string[] swatches)
         {
+            // Opaque WindowChrome window (for ClearType); DWM rounds the corners on Win11
+            SourceInitialized += (_, _) => DwmChrome.RoundWindow(this);
             InitializeComponent();
             txtTitle.Text = title;
 

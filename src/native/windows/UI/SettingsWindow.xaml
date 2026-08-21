@@ -1,9 +1,10 @@
 <Window x:Class="Mouseflare.UI.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Mouseflare — Settings" Height="660" Width="890"
+        xmlns:ui="clr-namespace:Mouseflare.UI"
+        Title="Mouseflare — Settings" Height="640" Width="870"
         Icon="/Assets/app-logo.png"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStyle="None" Background="#0A0512"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         PreviewKeyDown="OnHotkeyPreviewKeyDown"
         FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
@@ -11,52 +12,48 @@
         UseLayoutRounding="True"
         RenderOptions.ClearTypeHint="Enabled">
 
+    <!-- Opaque WindowChrome window: layered windows (AllowsTransparency)
+         disable ClearType outright, so the chrome went opaque for crisp
+         text. DWM supplies rounded corners + drop shadow on Windows 11
+         (DwmChrome, hooked on SourceInitialized); the bottom glass sliver
+         keeps the standard window shadow alive. -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="0"
+                      GlassFrameThickness="0,0,0,1" CornerRadius="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
     <Window.Resources>
         <ResourceDictionary>
             <!-- Neon control templates + shared brushes; implicit styles here
-                 also reach the code-built FX Designer and Updates controls -->
+                 also reach the code-built FX Designer and Updates controls.
+                 Element form (not Source=): the dictionary has code-behind
+                 for the popup DWM-rounding handler, which Source= ignores. -->
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="NeonControls.xaml"/>
+                <ui:NeonControls/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
 
-    <!-- MAIN WINDOW CONTAINER: neon gradient frame with violet glow.
-         The glowing frame is a childless sibling BEHIND the content: a WPF
-         Effect rasterizes its entire subtree, so a glow on a border wrapping
-         the UI would blur every piece of text in the window. -->
-    <Grid Margin="10">
-        <Border BorderThickness="2" CornerRadius="14">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
-                    <GradientStop Color="#120A20" Offset="0"/>
-                    <GradientStop Color="#0A0512" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-            <Border.BorderBrush>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#A855F7" Offset="0"/>
-                    <GradientStop Color="#4F7CFF" Offset="0.55"/>
-                    <GradientStop Color="#F043C8" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.BorderBrush>
-            <Border.Effect>
-                <DropShadowEffect Color="#A855F7" BlurRadius="26" ShadowDepth="0" Opacity="0.45"/>
-            </Border.Effect>
-        </Border>
-
-        <!-- Opaque background repeated here (identical pixels to the carrier
-             behind) so ClearTypeHint's opacity guarantee holds locally: the
-             layered window disables ClearType by default, and the hint is
-             what restores crisp subpixel text for the whole content tree. -->
-        <Border BorderThickness="2" BorderBrush="Transparent" CornerRadius="14"
-                RenderOptions.ClearTypeHint="Enabled">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
-                    <GradientStop Color="#120A20" Offset="0"/>
-                    <GradientStop Color="#0A0512" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
+    <!-- MAIN WINDOW CONTAINER: neon gradient border at the window edge.
+         Square-drawn (CornerRadius 0) so DWM's Windows 11 corner rounding
+         clips border and content together with no notch; Windows 10 shows
+         square corners. The old outer glow margin is gone — effects cannot
+         extend past an opaque window, so DWM's shadow stands in. -->
+    <Border BorderThickness="2">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
+                <GradientStop Color="#120A20" Offset="0"/>
+                <GradientStop Color="#0A0512" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#A855F7" Offset="0"/>
+                <GradientStop Color="#4F7CFF" Offset="0.55"/>
+                <GradientStop Color="#F043C8" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.BorderBrush>
 
         <Grid>
             <Grid.RowDefinitions>
@@ -65,7 +62,7 @@
             </Grid.RowDefinitions>
 
             <!-- CUSTOM MODERN TITLEBAR -->
-            <Border Grid.Row="0" Background="#0D0718" BorderBrush="#2E1B4A" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0" MouseDown="OnTitleBarMouseDown">
+            <Border Grid.Row="0" Background="#0D0718" BorderBrush="#2E1B4A" BorderThickness="0,0,0,1" CornerRadius="0" MouseDown="OnTitleBarMouseDown">
                 <DockPanel LastChildFill="True">
                     <!-- Title Bar Window Controls (Right) -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
@@ -1739,6 +1736,5 @@
                 </Grid>
             </Grid>
         </Grid>
-        </Border>
-    </Grid>
+    </Border>
 </Window>
