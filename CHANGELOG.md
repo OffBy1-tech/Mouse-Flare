@@ -2,6 +2,13 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.6.4 (2026-08-21)
+
+## Mouseflare 0.6.4 — Crisp Text on Windows
+
+### 🐛 Fixed
+- **Windows**: remaining soft/thin text — most visible in dropdown lists and the small version line. The transparent window style had ClearType disabled entirely; subpixel text rendering is now explicitly re-enabled over the app's opaque surfaces, in both windows and inside dropdown popups, with pixel-snapped popup layout.
+
 ## Mouseflare v0.6.3 (2026-08-21)
 
 ## Mouseflare 0.6.3 — Windows FX Hang Fix
