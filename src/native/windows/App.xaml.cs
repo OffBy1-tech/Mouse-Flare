@@ -23,6 +23,21 @@ namespace Mouseflare
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            // Crash evidence first, before anything that could throw:
+            // %AppData%\Mouseflare\crash.log
+            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+                Core.CrashLog.Write("AppDomain (fatal)", args.ExceptionObject as Exception);
+            DispatcherUnhandledException += (s, args) =>
+                // Log and let it crash: swallowing a render-loop exception
+                // would just re-throw every frame with the overlay wedged.
+                Core.CrashLog.Write("Dispatcher", args.Exception);
+            TaskScheduler.UnobservedTaskException += (s, args) =>
+            {
+                Core.CrashLog.Write("UnobservedTask", args.Exception);
+                args.SetObserved();
+            };
+            Core.CrashLog.NoteStartup();
+
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
             // Remove leftovers (*.old, update-staging) from a previous self-update

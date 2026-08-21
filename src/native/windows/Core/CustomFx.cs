@@ -196,8 +196,15 @@ namespace Mouseflare.Core
 
             // Blend modes and glow bloom need per-pixel compositing; plain
             // designs keep the retained-mode path so they cannot regress.
-            bool composited = CustomFxCompositor.Needed(config);
-            if (composited) _compositor.BeginFrame();
+            // An exception anywhere in the compositor would propagate out of
+            // CompositionTarget.Rendering and take the whole app down, so any
+            // fault permanently falls back to the plain path for this session.
+            bool composited = !_compositorFaulted && CustomFxCompositor.Needed(config);
+            if (composited)
+            {
+                try { _compositor.BeginFrame(); }
+                catch (Exception ex) { CompositorFault(ex); composited = false; }
+            }
 
             for (int i = _particles.Count - 1; i >= 0; i--)
             {
@@ -253,7 +260,16 @@ namespace Mouseflare.Core
                 Color color = CurrentColor(p, progress, config);
                 if (composited)
                 {
-                    _compositor.AddParticle(p.X, p.Y, p.Size, p.Alpha, p.Rotation, color, config, dpiScale);
+                    try
+                    {
+                        _compositor.AddParticle(p.X, p.Y, p.Size, p.Alpha, p.Rotation, color, config, dpiScale);
+                    }
+                    catch (Exception ex)
+                    {
+                        CompositorFault(ex);
+                        composited = false;
+                        DrawShape(dc, p, color, config);
+                    }
                 }
                 else
                 {
@@ -261,7 +277,26 @@ namespace Mouseflare.Core
                 }
             }
 
-            if (composited) _compositor.Present(dc, config, dpiScale);
+            if (composited)
+            {
+                try { _compositor.Present(dc, config, dpiScale); }
+                catch (Exception ex) { CompositorFault(ex); }
+            }
+        }
+
+        // Set (never reset) when the pixel compositor throws: blend/glow
+        // fidelity degrades to the plain path, but the render loop survives.
+        private bool _compositorFaulted;
+
+        /// <summary>Human-readable reason the compositor was disabled, if it was; for diagnostics/logging.</summary>
+        public static string? CompositorFaultInfo { get; private set; }
+
+        private void CompositorFault(Exception ex)
+        {
+            _compositorFaulted = true;
+            CompositorFaultInfo = ex.ToString();
+            System.Diagnostics.Trace.WriteLine($"[Mouseflare] Custom FX compositor disabled after fault: {ex}");
+            CrashLog.Write("CustomFxCompositor (non-fatal, fell back to plain rendering)", ex);
         }
 
         private Color CurrentColor(P p, double progress, CustomFxConfig config)
