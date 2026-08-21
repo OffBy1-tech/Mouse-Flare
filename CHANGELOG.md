@@ -2,6 +2,16 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.6.3 (2026-08-21)
+
+## Mouseflare 0.6.3 — Windows FX Hang Fix
+
+### 🐛 Fixed
+- **Windows**: multi-second hangs (and the fallback to flat rendering) with color-cycling custom effects like Chromatic Rainbow Rush. The FX sprite cache was keyed on particle color, so a cycling hue rebuilt GPU bitmaps hundreds of times per second until Windows refused. Sprites are now cached color-free and tinted per particle — a rainbow design uses one cached sprite instead of one per hue — with hard caps on sprite size and per-frame bitmap creation so no design can stall the app.
+
+### ✨ Improved
+- Rainbow and gradient custom effects on Windows render with exact per-particle color (no more quantization banding).
+
 ## Mouseflare v0.6.2 (2026-08-21)
 
 ## Mouseflare 0.6.2 — Windows Stability
