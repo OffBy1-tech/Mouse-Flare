@@ -199,6 +199,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var hotkeyLabel: NSTextField!
     private var isRecordingHotkey = false
     private var hotkeyRecordMonitor: Any?
+
+    // Diagnostics is a hidden section: click the sidebar version label 5
+    // times to reveal it. Session-only — re-hidden on each window open.
+    private var diagnosticsUnlocked = false
+    private var versionClickCount = 0
     private var customHexField: NSTextField!
     private var customHexPreview: NSView!
     private var quickSwatchButtons: [CardButton] = []
@@ -294,6 +299,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             // that closing without Apply & Save falls back to.
             fxBaseline = SettingsManager.shared.settings
             fxDesigner?.reloadFromSettings()
+            rehideDiagnostics()
         }
         win.makeKeyAndOrderFront(nil)
         win.orderFrontRegardless()
@@ -312,6 +318,28 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         stopHotkeyRecording(revertLabel: true)
         revertUnappliedFx()
         window?.orderOut(nil)
+    }
+
+    // MARK: Hidden Diagnostics unlock
+
+    @objc private func versionLabelClicked() {
+        guard !diagnosticsUnlocked else { return }
+        versionClickCount += 1
+        let remaining = 5 - versionClickCount
+        if remaining <= 0 {
+            diagnosticsUnlocked = true
+            navButtons["diagnostics"]?.card.isHidden = false
+            setStatus("📊 Diagnostics unlocked")
+        } else if versionClickCount >= 3 {
+            setStatus("\(remaining) more click\(remaining == 1 ? "" : "s") to unlock Diagnostics")
+        }
+    }
+
+    private func rehideDiagnostics() {
+        diagnosticsUnlocked = false
+        versionClickCount = 0
+        navButtons["diagnostics"]?.card.isHidden = true
+        if activeTab == "diagnostics" { selectTab("fx-studio") }
     }
 
     // MARK: Custom hotkey recording
@@ -442,12 +470,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             navStack.addArrangedSubview(card)
             card.widthAnchor.constraint(equalTo: navStack.widthAnchor).isActive = true
         }
+        navButtons["diagnostics"]?.card.isHidden = true
 
         let versionLabel = makeLabel(
             Updater.shared.isDevBuild ? "Mouseflare dev build" : "Mouseflare v\(Updater.shared.currentVersion)",
             size: 10, weight: .regular, color: Theme.textPrimary
         )
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
+        versionLabel.addGestureRecognizer(NSClickGestureRecognizer(target: self, action: #selector(versionLabelClicked)))
         sidebar.addSubview(versionLabel)
 
         let testFlareButton = makeFilledButton(title: "⚡  Test Flare Now", background: .clear, foreground: NSColor(hexString: "#22080F"))

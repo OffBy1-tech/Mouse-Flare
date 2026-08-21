@@ -107,7 +107,7 @@
                     <DockPanel LastChildFill="True">
                         <!-- Bottom Action Button -->
                         <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
-                            <TextBlock x:Name="txtSidebarVersion" Text="Mouseflare v0.0.0" FontSize="10" Foreground="#FAFAFA" HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBlock x:Name="txtSidebarVersion" Text="Mouseflare v0.0.0" FontSize="10" Foreground="#FAFAFA" HorizontalAlignment="Center" Margin="0,0,0,6" MouseLeftButtonDown="OnVersionTextClicked"/>
                             <Button x:Name="btnTestFlareSidebar" Height="36" Style="{StaticResource NeonPrimaryButton}" FontSize="11" Click="OnTestFlare">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="⚡" FontSize="12" Margin="0,0,6,0"/>
@@ -180,7 +180,7 @@
                                 </Button.Template>
                             </Button>
 
-                            <Button x:Name="btnNavDiagnostics" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavDiagnostics">
+                            <Button x:Name="btnNavDiagnostics" Visibility="Collapsed" Height="38" Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="10,0" Background="Transparent" Foreground="#D4D4D8" BorderThickness="0" Cursor="Hand" Click="OnNavDiagnostics">
                                 <Button.Template>
                                     <ControlTemplate TargetType="{x:Type Button}">
                                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="10,0">

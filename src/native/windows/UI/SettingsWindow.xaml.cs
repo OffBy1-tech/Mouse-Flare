@@ -129,6 +129,29 @@ namespace Mouseflare.UI
         private void OnNavFxDesigner(object sender, RoutedEventArgs e) => UpdateTabSelection("fx-designer");
         private void OnNavBehavior(object sender, RoutedEventArgs e) => UpdateTabSelection("behavior");
         private void OnNavDiagnostics(object sender, RoutedEventArgs e) => UpdateTabSelection("diagnostics");
+
+        // Diagnostics is a hidden section: click the sidebar version text 5
+        // times to reveal it. Session-only — the window is recreated per open,
+        // so it re-hides automatically.
+        private int _versionClicks = 0;
+        private bool _diagnosticsUnlocked = false;
+
+        private void OnVersionTextClicked(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (_diagnosticsUnlocked) return;
+            _versionClicks++;
+            int remaining = 5 - _versionClicks;
+            if (remaining <= 0)
+            {
+                _diagnosticsUnlocked = true;
+                btnNavDiagnostics.Visibility = Visibility.Visible;
+                SetStatusText("\U0001F4CA Diagnostics unlocked");
+            }
+            else if (_versionClicks >= 3)
+            {
+                SetStatusText($"{remaining} more click{(remaining == 1 ? "" : "s")} to unlock Diagnostics");
+            }
+        }
         private void OnNavUpdates(object sender, RoutedEventArgs e) => UpdateTabSelection("updates");
 
         private void UpdateTabSelection(string tab)

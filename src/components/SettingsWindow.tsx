@@ -87,6 +87,25 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedChecksum, setCopiedChecksum] = useState<string | null>(null);
   const [isRecordingHotkey, setIsRecordingHotkey] = useState(false);
+
+  // Diagnostics is a hidden section: click the sidebar version text 5 times
+  // to reveal it (session-only — the window unmounts on close, re-hiding it).
+  const [diagnosticsUnlocked, setDiagnosticsUnlocked] = useState(false);
+  const versionClicksRef = useRef(0);
+  const handleVersionClick = () => {
+    if (diagnosticsUnlocked) return;
+    versionClicksRef.current += 1;
+    const remaining = 5 - versionClicksRef.current;
+    if (remaining <= 0) {
+      setDiagnosticsUnlocked(true);
+      soundEngine.playToggle(true);
+      setSaveStatus('Diagnostics unlocked');
+      setTimeout(() => setSaveStatus(null), 2500);
+    } else if (versionClicksRef.current >= 3) {
+      setSaveStatus(`${remaining} more ${remaining === 1 ? 'click' : 'clicks'} to unlock Diagnostics`);
+      setTimeout(() => setSaveStatus(null), 2000);
+    }
+  };
   const [downloadingType, setDownloadingType] = useState<'windows' | 'macos' | 'universal' | null>(null);
 
   // Update check states
@@ -341,17 +360,19 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 <span>Behavior &amp; Monitors</span>
               </button>
 
-              <button
-                onClick={() => setActiveTab('diagnostics')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                  activeTab === 'diagnostics'
-                    ? 'neon-nav-active font-semibold'
-                    : 'text-violet-100/70 hover:bg-violet-400/10'
-                }`}
-              >
-                <Activity className="w-4 h-4 text-violet-400" />
-                <span>Diagnostics</span>
-              </button>
+              {diagnosticsUnlocked && (
+                <button
+                  onClick={() => setActiveTab('diagnostics')}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                    activeTab === 'diagnostics'
+                      ? 'neon-nav-active font-semibold'
+                      : 'text-violet-100/70 hover:bg-violet-400/10'
+                  }`}
+                >
+                  <Activity className="w-4 h-4 text-violet-400" />
+                  <span>Diagnostics</span>
+                </button>
+              )}
 
               <button
                 onClick={() => setActiveTab('native-code')}
@@ -391,6 +412,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
             {/* Quick Actions in Sidebar */}
             <div className="pt-3 border-t border-violet-500/20 space-y-2">
+              <div
+                onClick={handleVersionClick}
+                className="text-center text-[10px] text-neutral-500 select-none"
+              >
+                Mouseflare v{CURRENT_BUILD_INFO.version}
+              </div>
               <button
                 onClick={onTriggerFlare}
                 className="neon-btn-primary w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl font-bold text-xs transition-all active:scale-95"
