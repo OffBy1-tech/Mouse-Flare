@@ -3,7 +3,8 @@ import Cocoa
 /// Native FX Designer (Settings → FX Designer): the same parameter model as the
 /// web simulator's designer, editing a CustomFxConfig with LIVE preview — every
 /// change applies to the cursor immediately (the overlay draws above this
-/// window), and the result persists as the "custom-fx" preset.
+/// window). The result becomes the "custom-fx" preset once committed with
+/// Apply & Save; closing the window first reverts the preview.
 final class FxDesignerView: NSView {
     var onStatus: ((String) -> Void)?
 
@@ -26,6 +27,15 @@ final class FxDesignerView: NSView {
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    /// Re-reads the saved Custom FX config after the settings change outside
+    /// this view (window shown again, or an unapplied draft was reverted) so
+    /// the controls match the live settings instead of a stale working copy.
+    func reloadFromSettings() {
+        let saved = SettingsManager.shared.settings.customFxJson.flatMap(CustomFxConfig.fromJSON)
+        config = saved ?? DefaultFxPresets.archetypes.first ?? CustomFxConfig()
+        syncControls()
+    }
 
     // MARK: Apply (live preview + persistence)
 
@@ -149,7 +159,7 @@ final class FxDesignerView: NSView {
         stack.addArrangedSubview(headerRow)
         headerRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
-        let hint = label("Every change previews live on your cursor and is saved as the Custom FX preset.", size: 10, color: Theme.textMuted)
+        let hint = label("Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.", size: 10, color: Theme.textMuted)
         stack.addArrangedSubview(hint)
 
         // Popups: pattern / shape / blend / color mode / size curve

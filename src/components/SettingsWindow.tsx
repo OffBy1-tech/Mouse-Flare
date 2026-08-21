@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, ColorPreset, FlarePreset, FxPreset } from '../types';
 import { NATIVE_SOURCE_FILES } from '../data/nativeSource';
 import { ParticleFxEditor } from './ParticleFxEditor';
@@ -55,6 +55,24 @@ export type TabType = 'general' | 'fx-studio' | 'fx-designer' | 'behavior' | 'di
 
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
 
+// The settings keys the FX Studio and FX Designer tabs can write — the "FX
+// draft" domain that Apply & Save commits and close-without-apply reverts.
+const pickFxDraft = (s: AppSettings): Partial<AppSettings> => ({
+  passiveFx: s.passiveFx,
+  findMouseFx: s.findMouseFx,
+  colorPreset: s.colorPreset,
+  intensity: s.intensity,
+  particleDensity: s.particleDensity,
+  animationSpeed: s.animationSpeed,
+  minMovementThreshold: s.minMovementThreshold,
+  fluidVorticity: s.fluidVorticity,
+  fluidDissipation: s.fluidDissipation,
+  fluidBloom: s.fluidBloom,
+  fluidRainbowDye: s.fluidRainbowDye,
+  enablePassiveFx: s.enablePassiveFx,
+  customFxConfig: s.customFxConfig,
+});
+
 export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   settings,
   onUpdateSettings,
@@ -103,7 +121,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
       setUpdateResult(result);
       const now = Date.now();
       setLastCheckTime(now);
-      updateDraft({ lastCheckedTimestamp: now, updateChannel: channel });
+      updateInstant({ lastCheckedTimestamp: now, updateChannel: channel });
       if (result.hasUpdate) {
         soundEngine.playToggle(true);
       }
@@ -118,15 +136,36 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     setTimeout(() => setCopiedChecksum(null), 2500);
   };
 
-  // Settings apply (and persist, via App) immediately — there is no separate
-  // draft copy, so changes made elsewhere (tray, workspace switcher) can never
-  // be clobbered by a stale save.
-  const updateDraft = (partial: Partial<AppSettings>) => {
+  // Two settings domains:
+  // - Instant (General, Behavior, Diagnostics, Updates): applies and persists
+  //   the moment a control changes; no Apply & Save involved.
+  // - FX draft (FX Studio, FX Designer): previews live on the cursor, but only
+  //   Apply & Save commits it. Closing the window with an uncommitted draft
+  //   reverts the FX keys to the snapshot taken when the window opened.
+  const fxSnapshotRef = useRef<Partial<AppSettings>>(pickFxDraft(settings));
+  const fxDirtyRef = useRef(false);
+
+  const updateInstant = (partial: Partial<AppSettings>) => {
     setSaveStatus(null);
+    // Keys shared with the FX draft (e.g. enablePassiveFx from the General
+    // toggle) are folded into the snapshot so a later revert keeps this change.
+    for (const key of Object.keys(fxSnapshotRef.current) as (keyof AppSettings)[]) {
+      if (key in partial) {
+        fxSnapshotRef.current = { ...fxSnapshotRef.current, [key]: partial[key] };
+      }
+    }
+    onUpdateSettings(partial);
+  };
+
+  const updateFxDraft = (partial: Partial<AppSettings>) => {
+    setSaveStatus(null);
+    fxDirtyRef.current = true;
     onUpdateSettings(partial);
   };
 
   const handleSaveAndApply = () => {
+    fxSnapshotRef.current = pickFxDraft(settings);
+    fxDirtyRef.current = false;
     setSaveStatus('Saved & Applied!');
     soundEngine.playToggle(true);
     setTimeout(() => {
@@ -134,8 +173,20 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     }, 3000);
   };
 
+  const handleClose = () => {
+    if (fxDirtyRef.current) {
+      onUpdateSettings(fxSnapshotRef.current);
+    }
+    onClose();
+  };
+
   const handleResetDefaults = () => {
-    updateDraft(DEFAULT_SETTINGS);
+    // Reset is an explicit action available on every tab (including ones with
+    // no Apply & Save button), so it commits both domains immediately instead
+    // of leaving the FX portion as a revertible draft. updateInstant folds the
+    // FX keys into the snapshot, re-baselining it to the defaults.
+    updateInstant({ ...DEFAULT_SETTINGS });
+    fxDirtyRef.current = false;
     setSaveStatus('Reset to Defaults');
     setTimeout(() => setSaveStatus(null), 2500);
   };
@@ -146,6 +197,9 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   });
 
   const activeFile = filteredFiles[selectedCodeIndex] || filteredFiles[0] || NATIVE_SOURCE_FILES[0];
+
+  // Apply & Save only concerns the FX draft domain, so it only shows on those tabs.
+  const isFxTab = activeTab === 'fx-studio' || activeTab === 'fx-designer';
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -177,7 +231,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     if (!['CONTROL', 'SHIFT', 'ALT', 'META'].includes(key)) {
       keys.push(key);
       if (keys.length > 0) {
-        updateDraft({ hotkey: keys.join('+') });
+        updateInstant({ hotkey: keys.join('+') });
         setIsRecordingHotkey(false);
       }
     }
@@ -206,17 +260,19 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 -mr-1">
-            <button
-              onClick={handleSaveAndApply}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow transition-all active:scale-95 mr-2"
-              title="Save and persist current selections"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Apply &amp; Save</span>
-            </button>
+            {isFxTab && (
+              <button
+                onClick={handleSaveAndApply}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow transition-all active:scale-95 mr-2"
+                title="Save and persist the previewed FX selections"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Apply &amp; Save</span>
+              </button>
+            )}
 
-            <button 
-              onClick={onClose}
+            <button
+              onClick={handleClose}
               className="w-8 h-8 rounded hover:bg-red-500/80 hover:text-white flex items-center justify-center text-neutral-400 transition-colors"
             >
               <X className="w-4 h-4" />
@@ -380,7 +436,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         type="checkbox"
                         checked={settings.enabled}
                         onChange={(e) => {
-                          updateDraft({ enabled: e.target.checked });
+                          updateInstant({ enabled: e.target.checked });
                           soundEngine.playToggle(e.target.checked);
                         }}
                         className="sr-only peer"
@@ -401,7 +457,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.enablePassiveFx}
-                        onChange={(e) => updateDraft({ enablePassiveFx: e.target.checked })}
+                        onChange={(e) => updateInstant({ enablePassiveFx: e.target.checked })}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
@@ -435,7 +491,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       {['Ctrl+Shift+F', 'Ctrl+Space', 'Alt+M', 'F1'].map((preset) => (
                         <button
                           key={preset}
-                          onClick={() => updateDraft({ hotkey: preset })}
+                          onClick={() => updateInstant({ hotkey: preset })}
                           className={`px-2 py-0.5 rounded text-[11px] font-mono border transition-colors ${
                             settings.hotkey === preset
                               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
@@ -458,7 +514,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.startWithWindows}
-                        onChange={(e) => updateDraft({ startWithWindows: e.target.checked })}
+                        onChange={(e) => updateInstant({ startWithWindows: e.target.checked })}
                         className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
                       />
                     </div>
@@ -471,7 +527,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.soundFx}
-                        onChange={(e) => updateDraft({ soundFx: e.target.checked })}
+                        onChange={(e) => updateInstant({ soundFx: e.target.checked })}
                         className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
                       />
                     </div>
@@ -531,7 +587,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 <div>
                   <h2 className="text-lg font-bold text-neutral-100">FX Studio &amp; Customizer</h2>
                   <p className="text-xs text-neutral-400 mt-0.5">
-                    Select particle styles, active flare animations, color palettes, and dynamics. Click any item to select and preview.
+                    Select particle styles, active flare animations, color palettes, and dynamics. Click any item to preview it live — Apply &amp; Save keeps it, closing without saving reverts.
                   </p>
                 </div>
 
@@ -575,7 +631,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       return (
                         <button
                           key={item.id}
-                          onClick={() => updateDraft({ passiveFx: item.id })}
+                          onClick={() => updateFxDraft({ passiveFx: item.id })}
                           className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between min-h-[76px] cursor-pointer ${
                             isSelected
                               ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-500/50 shadow-[0_0_18px_rgba(245,158,11,0.25)]'
@@ -626,7 +682,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         <button
                           key={item.id}
                           onClick={() => {
-                            updateDraft({ findMouseFx: item.id });
+                            updateFxDraft({ findMouseFx: item.id });
                             onTriggerFlare();
                           }}
                           className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between min-h-[76px] cursor-pointer ${
@@ -679,7 +735,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       return (
                         <button
                           key={pal.id}
-                          onClick={() => updateDraft({ colorPreset: pal.id })}
+                          onClick={() => updateFxDraft({ colorPreset: pal.id })}
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer ${
                             isSelected
                               ? 'bg-neutral-800 border-white text-white shadow-lg ring-2 ring-white/30 font-bold'
@@ -711,7 +767,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       max="2.0"
                       step="0.1"
                       value={settings.intensity}
-                      onChange={(e) => updateDraft({ intensity: parseFloat(e.target.value) })}
+                      onChange={(e) => updateFxDraft({ intensity: parseFloat(e.target.value) })}
                       className="w-full accent-amber-500 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
@@ -727,7 +783,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       max="10"
                       step="1"
                       value={settings.particleDensity}
-                      onChange={(e) => updateDraft({ particleDensity: parseInt(e.target.value) })}
+                      onChange={(e) => updateFxDraft({ particleDensity: parseInt(e.target.value) })}
                       className="w-full accent-amber-500 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
@@ -743,7 +799,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       max="2.0"
                       step="0.1"
                       value={settings.animationSpeed}
-                      onChange={(e) => updateDraft({ animationSpeed: parseFloat(e.target.value) })}
+                      onChange={(e) => updateFxDraft({ animationSpeed: parseFloat(e.target.value) })}
                       className="w-full accent-amber-500 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
@@ -759,7 +815,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       max="15"
                       step="1"
                       value={settings.minMovementThreshold}
-                      onChange={(e) => updateDraft({ minMovementThreshold: parseInt(e.target.value) })}
+                      onChange={(e) => updateFxDraft({ minMovementThreshold: parseInt(e.target.value) })}
                       className="w-full accent-amber-500 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
@@ -787,7 +843,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
                     <button
                       onClick={() => {
-                        updateDraft({
+                        updateFxDraft({
                           passiveFx: 'fluid-smoke',
                           findMouseFx: 'fluid-vortex-burst',
                           fluidVorticity: 1.8,
@@ -818,7 +874,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         max="3.0"
                         step="0.1"
                         value={settings.fluidVorticity ?? 1.5}
-                        onChange={(e) => updateDraft({ fluidVorticity: parseFloat(e.target.value) })}
+                        onChange={(e) => updateFxDraft({ fluidVorticity: parseFloat(e.target.value) })}
                         className="w-full accent-cyan-400 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
                       />
                     </div>
@@ -835,7 +891,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         max="0.99"
                         step="0.01"
                         value={settings.fluidDissipation ?? 0.96}
-                        onChange={(e) => updateDraft({ fluidDissipation: parseFloat(e.target.value) })}
+                        onChange={(e) => updateFxDraft({ fluidDissipation: parseFloat(e.target.value) })}
                         className="w-full accent-cyan-400 bg-neutral-700 h-1.5 rounded-lg appearance-none cursor-pointer"
                       />
                     </div>
@@ -850,7 +906,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.fluidBloom !== false}
-                        onChange={(e) => updateDraft({ fluidBloom: e.target.checked })}
+                        onChange={(e) => updateFxDraft({ fluidBloom: e.target.checked })}
                         className="rounded bg-neutral-700 border-neutral-600 text-cyan-500 focus:ring-cyan-500 h-4 w-4"
                       />
                     </div>
@@ -863,7 +919,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.fluidRainbowDye === true}
-                        onChange={(e) => updateDraft({ fluidRainbowDye: e.target.checked })}
+                        onChange={(e) => updateFxDraft({ fluidRainbowDye: e.target.checked })}
                         className="rounded bg-neutral-700 border-neutral-600 text-cyan-500 focus:ring-cyan-500 h-4 w-4"
                       />
                     </div>
@@ -879,7 +935,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 <ParticleFxEditor
                   currentActiveConfigId={settings.customFxConfig?.id}
                   onApplyToCursor={(customConfig) => {
-                    updateDraft({
+                    updateFxDraft({
                       passiveFx: 'custom-fx',
                       customFxConfig: customConfig,
                       enablePassiveFx: true,
@@ -912,7 +968,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.idleBurst}
-                        onChange={(e) => updateDraft({ idleBurst: e.target.checked })}
+                        onChange={(e) => updateInstant({ idleBurst: e.target.checked })}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
@@ -931,7 +987,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.monitorCrossingFx}
-                        onChange={(e) => updateDraft({ monitorCrossingFx: e.target.checked })}
+                        onChange={(e) => updateInstant({ monitorCrossingFx: e.target.checked })}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
@@ -950,7 +1006,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.multiMonitorMode}
-                        onChange={(e) => updateDraft({ multiMonitorMode: e.target.checked })}
+                        onChange={(e) => updateInstant({ multiMonitorMode: e.target.checked })}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
@@ -969,7 +1025,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.reducedMotion}
-                        onChange={(e) => updateDraft({ reducedMotion: e.target.checked })}
+                        onChange={(e) => updateInstant({ reducedMotion: e.target.checked })}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
@@ -1013,7 +1069,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       return (
                         <button
                           key={scenario.id}
-                          onClick={() => updateDraft({ desktopBackground: scenario.id })}
+                          onClick={() => updateInstant({ desktopBackground: scenario.id })}
                           className={`p-3 rounded-xl border text-left transition-all cursor-pointer relative ${
                             isSelected
                               ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-500/50 shadow-lg text-white font-semibold'
@@ -1049,7 +1105,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     <input
                       type="checkbox"
                       checked={settings.showDiagnostics}
-                      onChange={(e) => updateDraft({ showDiagnostics: e.target.checked })}
+                      onChange={(e) => updateInstant({ showDiagnostics: e.target.checked })}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
@@ -1384,7 +1440,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.autoCheckUpdates}
-                        onChange={(e) => updateDraft({ autoCheckUpdates: e.target.checked })}
+                        onChange={(e) => updateInstant({ autoCheckUpdates: e.target.checked })}
                         className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
                       />
                     </div>
@@ -1399,7 +1455,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       </label>
                       <select
                         value={settings.checkIntervalHours}
-                        onChange={(e) => updateDraft({ checkIntervalHours: Number(e.target.value) })}
+                        onChange={(e) => updateInstant({ checkIntervalHours: Number(e.target.value) })}
                         className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-1.5 text-xs text-neutral-200 focus:outline-none focus:border-amber-500"
                       >
                         <option value={6}>Every 6 Hours (High Frequency)</option>
@@ -1418,7 +1474,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <input
                         type="checkbox"
                         checked={settings.notifyOnUpdate}
-                        onChange={(e) => updateDraft({ notifyOnUpdate: e.target.checked })}
+                        onChange={(e) => updateInstant({ notifyOnUpdate: e.target.checked })}
                         className="rounded bg-neutral-700 border-neutral-600 text-amber-500 focus:ring-amber-500 h-4 w-4"
                       />
                     </div>
@@ -1486,16 +1542,18 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button
-              onClick={handleSaveAndApply}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Apply &amp; Save</span>
-            </button>
+            {isFxTab && (
+              <button
+                onClick={handleSaveAndApply}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Apply &amp; Save</span>
+              </button>
+            )}
 
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium transition-colors cursor-pointer text-xs"
             >
               Done / Close

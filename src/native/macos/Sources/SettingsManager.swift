@@ -101,6 +101,30 @@ public struct MacFlareSettings: Codable {
     }
 }
 
+extension MacFlareSettings: Equatable {}
+
+public extension MacFlareSettings {
+    /// The FX Studio / FX Designer draft domain: everything those two tabs can
+    /// change. These fields preview live but only commit on Apply & Save; the
+    /// remaining fields (General, Behavior & Monitors) commit the moment their
+    /// control changes.
+    mutating func applyFxFields(from other: MacFlareSettings) {
+        passiveFxEnabled = other.passiveFxEnabled
+        passivePreset = other.passivePreset
+        flarePreset = other.flarePreset
+        colorPreset = other.colorPreset
+        customColorHex = other.customColorHex
+        quickSwatches = other.quickSwatches
+        intensity = other.intensity
+        particleDensity = other.particleDensity
+        animationSpeed = other.animationSpeed
+        movementThreshold = other.movementThreshold
+        fluidVorticity = other.fluidVorticity
+        fluidDissipation = other.fluidDissipation
+        customFxJson = other.customFxJson
+    }
+}
+
 public final class SettingsManager {
     public static let shared = SettingsManager()
     public static let didChangeNotification = Notification.Name("MouseflareSettingsChanged")

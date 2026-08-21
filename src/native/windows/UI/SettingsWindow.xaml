@@ -1222,7 +1222,7 @@
                             <Border Grid.Row="0" Margin="0,0,0,8" Background="#141417" BorderBrush="#27272A" BorderThickness="1" CornerRadius="6" Padding="10,6">
                                 <DockPanel LastChildFill="True">
                                     <Border Width="8" Height="8" CornerRadius="4" Background="#10B981" Margin="0,0,8,0" VerticalAlignment="Center" DockPanel.Dock="Left"/>
-                                    <TextBlock x:Name="txtSaveStatus" Text="Ready. Adjust settings and click Apply &amp; Save." FontSize="11" Foreground="#A1A1AA" FontWeight="Medium" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="txtSaveStatus" Text="Ready. FX changes preview live — click Apply &amp; Save to keep them." FontSize="11" Foreground="#A1A1AA" FontWeight="Medium" VerticalAlignment="Center"/>
                                 </DockPanel>
                             </Border>
 

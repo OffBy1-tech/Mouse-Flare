@@ -264,10 +264,10 @@ namespace Mouseflare
                         _settingsWindow.HotkeyChanged += (combo) => _currentHotkey = combo;
                         _settingsWindow.Closed += (s, e) =>
                         {
+                            // Instant-domain settings were saved as they changed, and
+                            // the window reverts unapplied FX drafts in OnClosing —
+                            // nothing left to persist here
                             _settingsWindow = null;
-                            // Settings apply live as they change; snapshot them on
-                            // close so nothing is lost without an explicit Apply & Save
-                            PersistCurrentSettings();
                         };
                         _settingsWindow.Show();
                     }
@@ -288,10 +288,14 @@ namespace Mouseflare
         /// <summary>Snapshots the live overlay state to settings.json.</summary>
         private void PersistCurrentSettings()
         {
-            if (_overlay != null)
-            {
-                SettingsStore.Save(_overlay.ToSettings(_currentHotkey));
-            }
+            if (_overlay == null) return;
+            // While Settings is open, FX Studio / FX Designer changes are an
+            // unapplied draft — persist the committed FX state instead so a tray
+            // toggle, logoff, or update install can't accidentally save a preview
+            var settings = _settingsWindow != null && _settingsWindow.IsLoaded
+                ? _settingsWindow.ComposeSettingsForPersist()
+                : _overlay.ToSettings(_currentHotkey);
+            SettingsStore.Save(settings);
         }
 
         private static void ApplySettingsToOverlay(MouseflareSettings s, TransparentOverlayWindow overlay)

@@ -123,6 +123,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var customHexPreview: NSView!
     private var quickSwatchButtons: [CardButton] = []
     private var activeColorPicker: ColorPickerPanel?
+    private var fxDesigner: FxDesignerView?
+    private var saveButton: CardButton!
+
+    /// FX Studio / FX Designer values as of the last window open or Apply &
+    /// Save. FX changes preview live but stay a draft until committed — closing
+    /// the window restores this baseline.
+    private var fxBaseline: MacFlareSettings?
 
     private enum PickerTarget {
         case custom
@@ -175,6 +182,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     func show() {
         guard let win = self.window else { return }
+        if !win.isVisible {
+            // A fresh session: everything currently saved becomes the baseline
+            // that closing without Apply & Save falls back to.
+            fxBaseline = SettingsManager.shared.settings
+            fxDesigner?.reloadFromSettings()
+        }
         win.makeKeyAndOrderFront(nil)
         win.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
@@ -182,8 +195,35 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        sender.orderOut(nil)
+        dismiss()
         return false // Non-destructive hide to prevent dealloc transform crash
+    }
+
+    /// The single close funnel: both the title-bar close button (via
+    /// windowShouldClose) and the footer Close button land here.
+    private func dismiss() {
+        revertUnappliedFx()
+        window?.orderOut(nil)
+    }
+
+    /// Discards FX Studio / FX Designer changes never committed with Apply &
+    /// Save, restoring the FX fields captured when the window opened. Safe to
+    /// call at any time — a no-op when nothing drafted.
+    func revertUnappliedFx() {
+        guard let baseline = fxBaseline else { return }
+        var cfg = SettingsManager.shared.settings
+        cfg.applyFxFields(from: baseline)
+        guard cfg != SettingsManager.shared.settings else { return }
+        SettingsManager.shared.settings = cfg
+        syncUIToSettings()
+        fxDesigner?.reloadFromSettings()
+    }
+
+    /// Menu-bar preset picks commit immediately, even while the window is open —
+    /// fold them into the FX baseline so closing the window can't revert them.
+    func noteExternalPassivePresetChange() {
+        fxBaseline?.passivePreset = SettingsManager.shared.settings.passivePreset
+        refreshPresetHighlights()
     }
 
     // MARK: Layout skeleton
@@ -341,6 +381,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func selectTab(_ id: String) {
         activeTab = id
+        // Only FX Studio / FX Designer changes are drafts needing Apply & Save;
+        // the other tabs commit instantly, so the button would mislead there.
+        saveButton.isHidden = !(id == "fx-studio" || id == "fx-designer")
         for (tabId, scroll) in tabs {
             scroll.isHidden = (tabId != id)
         }
@@ -473,7 +516,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let passiveGrid = makePresetGrid(items: Self.passivePresets, cards: &passiveCards) { [weak self] id in
             SettingsManager.shared.settings.passivePreset = id
             self?.refreshPresetHighlights()
-            self?.setStatus("Selected Passive FX: \(Self.formatPresetName(id))")
+            self?.setStatus("Selected Passive FX: \(Self.formatPresetName(id)) • Apply & Save to keep")
         }
         stack.addArrangedSubview(passiveGrid)
         passiveGrid.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -487,7 +530,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             SettingsManager.shared.settings.flarePreset = id
             self?.refreshPresetHighlights()
             (NSApp.delegate as? AppDelegate)?.triggerFindMouse()
-            self?.setStatus("Selected Flare: \(Self.formatPresetName(id)) (Previewing Flare)")
+            self?.setStatus("Selected Flare: \(Self.formatPresetName(id)) (Previewing) • Apply & Save to keep")
         }
         stack.addArrangedSubview(flareGrid)
         flareGrid.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -515,7 +558,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 self?.customHexPreview.layer?.backgroundColor = dotColor.cgColor
                 self?.refreshPresetHighlights()
                 self?.refreshQuickSwatches()
-                self?.setStatus("Color: \(preset.title)")
+                self?.setStatus("Color: \(preset.title) • Apply & Save to keep")
             }
             colorChips[preset.id] = (chip, chipLabel)
             currentRow?.addArrangedSubview(chip)
@@ -638,6 +681,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         designer.onStatus = { [weak self] message in self?.setStatus(message) }
         stack.addArrangedSubview(designer)
         designer.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        fxDesigner = designer
     }
 
     // MARK: Tab: Behavior & Monitors
@@ -709,7 +753,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         statusDot.translatesAutoresizingMaskIntoConstraints = false
         statusDot.widthAnchor.constraint(equalToConstant: 8).isActive = true
         statusDot.heightAnchor.constraint(equalToConstant: 8).isActive = true
-        statusLabel = makeLabel("Ready. Adjust settings and click Apply & Save.", size: 11, weight: .medium, color: Theme.textSecondary)
+        statusLabel = makeLabel("Ready. FX changes preview live — click Apply & Save to keep them.", size: 11, weight: .medium, color: Theme.textSecondary)
         let statusRow = NSStackView(views: [statusDot, statusLabel])
         statusRow.orientation = .horizontal
         statusRow.spacing = 8
@@ -719,18 +763,24 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
         let resetButton = makeFilledButton(title: "Reset Defaults", background: .clear, foreground: Theme.textSecondary, fontSize: 11, height: 32)
         resetButton.onClick = { [weak self] in
+            // Reset is an explicit action available on every tab (including
+            // ones with no Apply & Save button), so it commits immediately:
+            // the baseline is re-anchored to the freshly reset settings.
             SettingsManager.shared.resetToDefaults()
+            self?.fxBaseline = SettingsManager.shared.settings
             self?.syncUIToSettings()
-            self?.setStatus("✓ All Settings Reset to Factory Defaults!")
+            self?.fxDesigner?.reloadFromSettings()
+            self?.setStatus("✓ Settings Reset to Factory Defaults")
         }
-        let saveButton = makeFilledButton(title: "Apply & Save", background: Theme.amber, foreground: Theme.windowBg, fontSize: 12, height: 32, bold: true)
+        saveButton = makeFilledButton(title: "Apply & Save", background: Theme.amber, foreground: Theme.windowBg, fontSize: 12, height: 32, bold: true)
         saveButton.onClick = { [weak self] in
+            self?.fxBaseline = SettingsManager.shared.settings
             SettingsManager.shared.save()
             if SettingsManager.shared.settings.soundFx { NSSound(named: "Tink")?.play() }
-            self?.setStatus("✓ All Selections Saved & Applied to Live Engine!")
+            self?.setStatus("✓ FX Selections Saved & Applied to Live Engine!")
         }
         let closeButton = makeFilledButton(title: "Close", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 12, height: 32)
-        closeButton.onClick = { [weak self] in self?.window?.orderOut(nil) }
+        closeButton.onClick = { [weak self] in self?.dismiss() }
 
         let buttonRow = NSStackView(views: [resetButton, NSView(), saveButton, closeButton])
         buttonRow.orientation = .horizontal
@@ -808,6 +858,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         cfg.idleBurst = switchIdleBurst.state == .on
         cfg.monitorCrossingFx = switchMonitorCrossing.state == .on
         SettingsManager.shared.settings = cfg
+        // Passive FX is also writable from the FX Designer draft; this General
+        // toggle commits instantly, so fold it into the baseline.
+        fxBaseline?.passiveFxEnabled = cfg.passiveFxEnabled
         (NSApp.delegate as? AppDelegate)?.applyStartAtLogin(cfg.startAtLogin)
     }
 
@@ -926,7 +979,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         settings.passivePreset = "custom-fx"
         SettingsManager.shared.settings = settings
         refreshPresetHighlights()
-        setStatus("Imported custom FX: \(config.name)")
+        setStatus("Imported custom FX: \(config.name) • Apply & Save to keep")
     }
 
     private func refreshQuickSwatches() {
