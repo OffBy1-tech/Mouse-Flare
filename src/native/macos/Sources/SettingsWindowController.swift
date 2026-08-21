@@ -197,6 +197,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var statusLabel: NSTextField!
     private var hotkeyButton: CardButton!
     private var hotkeyLabel: NSTextField!
+    private var isRecordingHotkey = false
+    private var hotkeyRecordMonitor: Any?
     private var customHexField: NSTextField!
     private var customHexPreview: NSView!
     private var quickSwatchButtons: [CardButton] = []
@@ -307,8 +309,51 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     /// The single close funnel: both the title-bar close button (via
     /// windowShouldClose) and the footer Close button land here.
     private func dismiss() {
+        stopHotkeyRecording(revertLabel: true)
         revertUnappliedFx()
         window?.orderOut(nil)
+    }
+
+    // MARK: Custom hotkey recording
+
+    private func toggleHotkeyRecording() {
+        isRecordingHotkey ? stopHotkeyRecording(revertLabel: true) : startHotkeyRecording()
+    }
+
+    private func startHotkeyRecording() {
+        isRecordingHotkey = true
+        hotkeyLabel.stringValue = "Press keys…"
+        hotkeyButton.setStyle(background: Theme.controlBg, border: Theme.neonViolet, borderWidth: 1)
+        setStatus("Recording: press the new Find Mouse combination (Esc cancels)")
+        hotkeyRecordMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, self.isRecordingHotkey else { return event }
+            if event.keyCode == 53 { // Escape cancels
+                self.stopHotkeyRecording(revertLabel: true)
+                self.setStatus("Hotkey recording cancelled")
+                return nil
+            }
+            guard let combo = HotkeyCombo(event: event) else {
+                self.setStatus("Add a modifier (⌘ ⌥ ⌃ ⇧) — a bare key would hijack normal typing")
+                return nil
+            }
+            let display = combo.displayString
+            SettingsManager.shared.settings.hotkey = display
+            self.stopHotkeyRecording(revertLabel: false)
+            self.hotkeyLabel.stringValue = display
+            self.setStatus("Hotkey set to \(display)")
+            return nil
+        }
+    }
+
+    private func stopHotkeyRecording(revertLabel: Bool) {
+        if let monitor = hotkeyRecordMonitor {
+            NSEvent.removeMonitor(monitor)
+            hotkeyRecordMonitor = nil
+        }
+        guard isRecordingHotkey else { return }
+        isRecordingHotkey = false
+        if revertLabel { hotkeyLabel.stringValue = SettingsManager.shared.settings.hotkey }
+        hotkeyButton.setStyle(background: Theme.controlBg, border: Theme.amber, borderWidth: 1)
     }
 
     /// Discards FX Studio / FX Designer changes never committed with Apply &
@@ -558,7 +603,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // Hotkey card
         let hotkeyCard = makeCard()
         let hotkeyTitle = makeLabel("Find Mouse Global Hotkey", size: 13, weight: .bold, color: Theme.textPrimary)
-        let hotkeySub = makeLabel("Press this shortcut anywhere in macOS to blast a beacon flare.", size: 11, weight: .regular, color: Theme.textMuted)
+        let hotkeySub = makeLabel("Press this shortcut anywhere in macOS to blast a beacon flare. Click the combo to record your own.", size: 11, weight: .regular, color: Theme.textMuted)
 
         hotkeyButton = CardButton()
         hotkeyButton.setStyle(background: Theme.controlBg, border: Theme.amber, borderWidth: 1)
@@ -571,6 +616,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             hotkeyButton.widthAnchor.constraint(greaterThanOrEqualTo: hotkeyLabel.widthAnchor, constant: 26),
             hotkeyButton.heightAnchor.constraint(equalToConstant: 32)
         ])
+        hotkeyButton.onClick = { [weak self] in self?.toggleHotkeyRecording() }
 
         let titleStack = NSStackView(views: [hotkeyTitle, hotkeySub])
         titleStack.orientation = .vertical
@@ -1314,7 +1360,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let intervalIndex = Self.updateIntervalChoices.firstIndex(of: cfg.updateCheckIntervalHours) ?? 0
         updateIntervalPopup.selectItem(at: intervalIndex)
 
-        hotkeyLabel.stringValue = cfg.hotkey
+        if !isRecordingHotkey { hotkeyLabel.stringValue = cfg.hotkey }
         customHexField.stringValue = cfg.customColorHex
         customHexPreview.layer?.backgroundColor = NSColor(hexString: cfg.customColorHex).cgColor
         refreshQuickSwatches()
