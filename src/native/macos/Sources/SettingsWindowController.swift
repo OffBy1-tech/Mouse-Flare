@@ -1,22 +1,29 @@
 import Cocoa
 
-// MARK: - Shared dark theme (hex values match the Windows build's XAML palette)
+// MARK: - Shared neon theme (hex values mirror the web build's index.css neon layer)
 
 enum Theme {
-    static let windowBg = NSColor(hexString: "#09090B")
-    static let panelBg = NSColor(hexString: "#0C0C0E")
-    static let cardBg = NSColor(hexString: "#18181B")
-    static let cardBorder = NSColor(hexString: "#27272A")
-    static let insetBg = NSColor(hexString: "#141417")
-    static let controlBg = NSColor(hexString: "#27272A")
+    // Deep-space grounds (--neon-ground-0/1/2 on the web)
+    static let windowBg = NSColor(hexString: "#0A0512")
+    static let panelBg = NSColor(hexString: "#0D0719")
+    static let cardBg = NSColor(hexString: "#1A0F2E")
+    static let cardBorder = NSColor(hexString: "#A855F7").withAlphaComponent(0.25)
+    static let insetBg = NSColor(hexString: "#120A20")
+    static let controlBg = NSColor(hexString: "#2A1A45")
     static let textPrimary = NSColor(hexString: "#FAFAFA")
     static let textSecondary = NSColor(hexString: "#A1A1AA")
     static let textMuted = NSColor(hexString: "#71717A")
     static let textFaint = NSColor(hexString: "#52525B")
-    static let amber = NSColor(hexString: "#F59E0B")
-    static let amberBright = NSColor(hexString: "#FBBF24")
-    static let cyan = NSColor(hexString: "#06B6D4")
+    static let amber = NSColor(hexString: "#FFA62E")
+    static let amberBright = NSColor(hexString: "#FFC46B")
+    static let cyan = NSColor(hexString: "#2FD4F5")
     static let emerald = NSColor(hexString: "#10B981")
+    // Neon accents (--neon-violet/blue/magenta on the web)
+    static let neonViolet = NSColor(hexString: "#A855F7")
+    static let neonBlue = NSColor(hexString: "#4F7CFF")
+    static let neonMagenta = NSColor(hexString: "#F043C8")
+    static let neonTextBright = NSColor(hexString: "#E9D5FF")
+    static let neonValue = NSColor(hexString: "#C8A8FF")
 }
 
 // MARK: - Small custom controls
@@ -42,6 +49,44 @@ final class CardButton: NSView {
         layer?.borderWidth = borderWidth
     }
 
+    private var gradientLayer: CAGradientLayer?
+
+    /// Fills the card with a diagonal gradient (pass nil to remove it). The
+    /// gradient sits under the label subviews, so text stays readable.
+    func setGradient(_ colors: [NSColor]?) {
+        guard let colors else {
+            gradientLayer?.removeFromSuperlayer()
+            gradientLayer = nil
+            return
+        }
+        let gradient = gradientLayer ?? {
+            let created = CAGradientLayer()
+            created.masksToBounds = true
+            layer?.insertSublayer(created, at: 0)
+            gradientLayer = created
+            return created
+        }()
+        gradient.colors = colors.map { $0.cgColor }
+        gradient.startPoint = CGPoint(x: 0, y: 0.25)
+        gradient.endPoint = CGPoint(x: 1, y: 0.75)
+        gradient.cornerRadius = layer?.cornerRadius ?? 8
+        gradient.frame = bounds
+    }
+
+    /// Soft outer glow in the given color (pass nil to remove it).
+    func setGlow(_ color: NSColor?, radius: CGFloat = 9, opacity: Float = 0.5) {
+        layer?.masksToBounds = false
+        layer?.shadowColor = color?.cgColor
+        layer?.shadowOpacity = color == nil ? 0 : opacity
+        layer?.shadowRadius = radius
+        layer?.shadowOffset = .zero
+    }
+
+    override func layout() {
+        super.layout()
+        gradientLayer?.frame = bounds
+    }
+
     override func mouseDown(with event: NSEvent) {
         if event.clickCount == 2, let onDoubleClick {
             onDoubleClick()
@@ -58,6 +103,39 @@ final class CardButton: NSView {
 /// NSStackView pinned to the top of a scroll view (AppKit views are bottom-up by default).
 final class FlippedView: NSView {
     override var isFlipped: Bool { true }
+}
+
+/// Click-through overlay that traces the window edge with a 2px
+/// violet→blue→magenta gradient ring — the AppKit translation of the web
+/// build's `.neon-frame` border (the window's own shadow stays system-drawn).
+final class NeonFrameOverlay: NSView {
+    private let gradient = CAGradientLayer()
+    private let ring = CAShapeLayer()
+
+    init() {
+        super.init(frame: .zero)
+        wantsLayer = true
+        gradient.colors = [Theme.neonViolet.cgColor, Theme.neonBlue.cgColor, Theme.neonMagenta.cgColor]
+        gradient.startPoint = CGPoint(x: 0, y: 1)
+        gradient.endPoint = CGPoint(x: 1, y: 0)
+        ring.fillColor = NSColor.clear.cgColor
+        ring.strokeColor = NSColor.black.cgColor
+        ring.lineWidth = 2
+        gradient.mask = ring
+        layer?.addSublayer(gradient)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override func layout() {
+        super.layout()
+        gradient.frame = bounds
+        ring.frame = gradient.bounds
+        // Inset by half the stroke so the ring hugs the window's rounded edge
+        ring.path = CGPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), cornerWidth: 10, cornerHeight: 10, transform: nil)
+    }
 }
 
 // MARK: - Settings window
@@ -299,7 +377,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
         sidebar.addSubview(versionLabel)
 
-        let testFlareButton = makeFilledButton(title: "⚡  Test Flare Now", background: Theme.amber, foreground: Theme.windowBg)
+        let testFlareButton = makeFilledButton(title: "⚡  Test Flare Now", background: .clear, foreground: NSColor(hexString: "#22080F"))
+        applyPrimaryGradient(to: testFlareButton)
         testFlareButton.onClick = { [weak self] in
             (NSApp.delegate as? AppDelegate)?.triggerFindMouse()
             self?.setStatus("⚡ Triggered Find Mouse Flare Shockwave!")
@@ -376,6 +455,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             tabs[id] = scroll
         }
 
+        // Neon edge ring above all content; hitTest returns nil so it never
+        // intercepts clicks.
+        let frameOverlay = NeonFrameOverlay()
+        frameOverlay.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(frameOverlay)
+        NSLayoutConstraint.activate([
+            frameOverlay.topAnchor.constraint(equalTo: contentView.topAnchor),
+            frameOverlay.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            frameOverlay.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            frameOverlay.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
+
         selectTab("fx-studio")
     }
 
@@ -389,12 +480,21 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         for (navId, nav) in navButtons {
             let isActive = navId == id
-            nav.card.setStyle(
-                background: isActive ? Theme.amber.withAlphaComponent(0.14) : .clear,
-                border: isActive ? Theme.amber.withAlphaComponent(0.31) : .clear,
-                borderWidth: isActive ? 1 : 0
-            )
-            nav.label.textColor = isActive ? Theme.amber : Theme.textPrimary
+            if isActive {
+                // Gradient pill with soft glow — the web build's .neon-nav-active
+                nav.card.setStyle(background: .clear, border: Theme.neonViolet.withAlphaComponent(0.9), borderWidth: 1)
+                nav.card.setGradient([
+                    Theme.neonViolet.withAlphaComponent(0.32),
+                    Theme.neonMagenta.withAlphaComponent(0.26)
+                ])
+                nav.card.setGlow(Theme.neonViolet, radius: 8, opacity: 0.45)
+                nav.label.textColor = Theme.neonTextBright
+            } else {
+                nav.card.setGradient(nil)
+                nav.card.setGlow(nil)
+                nav.card.setStyle(background: .clear, border: .clear, borderWidth: 0)
+                nav.label.textColor = Theme.textPrimary
+            }
         }
     }
 
@@ -579,9 +679,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
         customHexField = NSTextField(string: SettingsManager.shared.settings.customColorHex)
         customHexField.font = .systemFont(ofSize: 11)
-        customHexField.backgroundColor = Theme.cardBg
+        customHexField.drawsBackground = false
         customHexField.textColor = Theme.textPrimary
-        customHexField.isBordered = true
+        customHexField.isBordered = false
+        customHexField.wantsLayer = true
+        customHexField.layer?.backgroundColor = Theme.windowBg.cgColor
+        customHexField.layer?.borderColor = Theme.neonViolet.withAlphaComponent(0.35).cgColor
+        customHexField.layer?.borderWidth = 1
+        customHexField.layer?.cornerRadius = 5
         customHexField.translatesAutoresizingMaskIntoConstraints = false
         customHexField.widthAnchor.constraint(equalToConstant: 84).isActive = true
         customHexField.target = self
@@ -596,7 +701,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         for (index, hex) in SettingsManager.shared.settings.quickSwatches.enumerated() {
             let swatch = CardButton()
             swatch.layer?.cornerRadius = 9
-            swatch.setStyle(background: NSColor(hexString: hex), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
+            swatch.setStyle(background: NSColor(hexString: hex), border: Theme.neonViolet.withAlphaComponent(0.3), borderWidth: 1)
             swatch.translatesAutoresizingMaskIntoConstraints = false
             swatch.widthAnchor.constraint(equalToConstant: 18).isActive = true
             swatch.heightAnchor.constraint(equalToConstant: 18).isActive = true
@@ -645,6 +750,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // Fluid dynamics card (cyan accent, mirrors the web build's fluid engine panel)
         let fluidCard = makeCard()
         fluidCard.layer?.borderColor = Theme.cyan.withAlphaComponent(0.45).cgColor
+        fluidCard.setGlow(Theme.cyan, radius: 10, opacity: 0.12)
         let fluidTitle = makeLabel("Fluid Dynamics & Vorticity Engine", size: 13, weight: .bold, color: Theme.textPrimary)
         let fluidSub = makeLabel("Vorticity curl, turbulent smoke diffusion & glowing dye for the fluid presets.", size: 11, weight: .regular, color: Theme.textMuted)
 
@@ -772,7 +878,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             self?.fxDesigner?.reloadFromSettings()
             self?.setStatus("✓ Settings Reset to Factory Defaults")
         }
-        saveButton = makeFilledButton(title: "Apply & Save", background: Theme.amber, foreground: Theme.windowBg, fontSize: 12, height: 32, bold: true)
+        saveButton = makeFilledButton(title: "Apply & Save", background: .clear, foreground: NSColor(hexString: "#22080F"), fontSize: 12, height: 32, bold: true)
+        applyPrimaryGradient(to: saveButton)
         saveButton.onClick = { [weak self] in
             self?.fxBaseline = SettingsManager.shared.settings
             SettingsManager.shared.save()
@@ -822,21 +929,37 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func refreshPresetHighlights() {
         let cfg = SettingsManager.shared.settings
+        // Selected cards become filled glowing gradient pills (the web build's
+        // .neon-selected / .neon-selected-cyan, i.e. the reference's "Mars" row).
         for (id, card) in passiveCards {
             let active = id == cfg.passivePreset
-            card.setStyle(
-                background: active ? Theme.amber.withAlphaComponent(0.16) : Theme.cardBg,
-                border: active ? Theme.amber : Theme.cardBorder,
-                borderWidth: active ? 1.5 : 1
-            )
+            if active {
+                card.setStyle(background: .clear, border: NSColor(hexString: "#BEA0FF").withAlphaComponent(0.9), borderWidth: 1.5)
+                card.setGradient([
+                    Theme.neonBlue.withAlphaComponent(0.78),
+                    Theme.neonViolet.withAlphaComponent(0.66)
+                ])
+                card.setGlow(NSColor(hexString: "#6E5AFF"), radius: 9, opacity: 0.5)
+            } else {
+                card.setGradient(nil)
+                card.setGlow(nil)
+                card.setStyle(background: Theme.cardBg, border: Theme.cardBorder, borderWidth: 1)
+            }
         }
         for (id, card) in flareCards {
             let active = id == cfg.flarePreset
-            card.setStyle(
-                background: active ? Theme.cyan.withAlphaComponent(0.16) : Theme.cardBg,
-                border: active ? Theme.cyan : Theme.cardBorder,
-                borderWidth: active ? 1.5 : 1
-            )
+            if active {
+                card.setStyle(background: .clear, border: NSColor(hexString: "#96E6FF").withAlphaComponent(0.9), borderWidth: 1.5)
+                card.setGradient([
+                    Theme.cyan.withAlphaComponent(0.65),
+                    Theme.neonBlue.withAlphaComponent(0.72)
+                ])
+                card.setGlow(NSColor(hexString: "#3CB4FF"), radius: 9, opacity: 0.5)
+            } else {
+                card.setGradient(nil)
+                card.setGlow(nil)
+                card.setStyle(background: Theme.cardBg, border: Theme.cardBorder, borderWidth: 1)
+            }
         }
         for (id, chip) in colorChips {
             let active = id == cfg.colorPreset
@@ -845,6 +968,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 border: active ? .white : Theme.cardBorder,
                 borderWidth: active ? 1.5 : 1
             )
+            chip.card.setGlow(active ? Theme.neonViolet : nil, radius: 7, opacity: 0.35)
         }
     }
 
@@ -990,7 +1114,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 && cfg.customColorHex.uppercased() == hex.uppercased()
             button.setStyle(
                 background: NSColor(hexString: hex),
-                border: isSelected ? .white : NSColor(hexString: "#3F3F46"),
+                border: isSelected ? .white : Theme.neonViolet.withAlphaComponent(0.3),
                 borderWidth: isSelected ? 2 : 1
             )
         }
@@ -1167,7 +1291,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return slider
     }
 
-    private func makeValueLabel(color: NSColor = Theme.amber) -> NSTextField {
+    private func makeValueLabel(color: NSColor = Theme.neonValue) -> NSTextField {
         let field = makeLabel("", size: 11, weight: .bold, color: color)
         field.alignment = .right
         return field
@@ -1212,6 +1336,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             row.centerYAnchor.constraint(equalTo: card.centerYAnchor)
         ])
         return (card, titleLabel)
+    }
+
+    /// Amber→magenta gradient fill with a warm glow — the web build's
+    /// .neon-btn-primary, used for Apply & Save and Test Flare.
+    private func applyPrimaryGradient(to button: CardButton) {
+        button.setStyle(background: .clear, border: NSColor(hexString: "#FFC88C").withAlphaComponent(0.5), borderWidth: 1)
+        button.setGradient([
+            Theme.amber,
+            NSColor(hexString: "#FF5E62"),
+            Theme.neonMagenta
+        ])
+        button.setGlow(NSColor(hexString: "#FF8C3C"), radius: 8, opacity: 0.45)
     }
 
     private func makeFilledButton(

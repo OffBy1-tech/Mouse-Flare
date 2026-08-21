@@ -157,9 +157,10 @@ namespace Mouseflare.UI
         private void SetNavButtonState(Button btn, bool isActive)
         {
             if (btn == null) return;
-            btn.Background = isActive ? new SolidColorBrush(Color.FromArgb(35, 245, 158, 11)) : Brushes.Transparent;
-            btn.BorderBrush = isActive ? new SolidColorBrush(Color.FromArgb(80, 245, 158, 11)) : Brushes.Transparent;
+            btn.Background = isActive ? NeonTheme.NavActiveFill : Brushes.Transparent;
+            btn.BorderBrush = isActive ? NeonTheme.NavActiveBorder : Brushes.Transparent;
             btn.BorderThickness = isActive ? new Thickness(1) : new Thickness(0);
+            btn.Effect = isActive ? NeonTheme.NavGlow : null;
         }
 
         // General Toggles (instant domain: applied and saved as they change)
@@ -246,15 +247,17 @@ namespace Mouseflare.UI
                 {
                     if (tag == _overlay.PassiveFxStyle)
                     {
-                        btn.BorderBrush = new SolidColorBrush(Color.FromRgb(245, 158, 11));
-                        btn.Background = new SolidColorBrush(Color.FromArgb(40, 245, 158, 11));
+                        btn.BorderBrush = NeonTheme.SelectedBorder;
+                        btn.Background = NeonTheme.SelectedFill;
                         btn.BorderThickness = new Thickness(1.5);
+                        btn.Effect = NeonTheme.SelectedGlow;
                     }
                     else if (tag == _overlay.FlareFxStyle)
                     {
-                        btn.BorderBrush = new SolidColorBrush(Color.FromRgb(6, 182, 212));
-                        btn.Background = new SolidColorBrush(Color.FromArgb(40, 6, 182, 212));
+                        btn.BorderBrush = NeonTheme.SelectedBorderCyan;
+                        btn.Background = NeonTheme.SelectedFillCyan;
                         btn.BorderThickness = new Thickness(1.5);
+                        btn.Effect = NeonTheme.SelectedGlowCyan;
                     }
                     else if (tag == "color-amber" && _overlay.CurrentColor == Color.FromRgb(245, 158, 11))
                     {
@@ -299,15 +302,17 @@ namespace Mouseflare.UI
                 {
                     if (child == selectedBtn)
                     {
-                        child.BorderBrush = isPassive ? new SolidColorBrush(Color.FromRgb(245, 158, 11)) : new SolidColorBrush(Color.FromRgb(6, 182, 212));
-                        child.Background = isPassive ? new SolidColorBrush(Color.FromArgb(40, 245, 158, 11)) : new SolidColorBrush(Color.FromArgb(40, 6, 182, 212));
+                        child.BorderBrush = isPassive ? NeonTheme.SelectedBorder : NeonTheme.SelectedBorderCyan;
+                        child.Background = isPassive ? NeonTheme.SelectedFill : NeonTheme.SelectedFillCyan;
                         child.BorderThickness = new Thickness(1.5);
+                        child.Effect = isPassive ? NeonTheme.SelectedGlow : NeonTheme.SelectedGlowCyan;
                     }
                     else
                     {
-                        child.BorderBrush = new SolidColorBrush(Color.FromRgb(39, 39, 42));
-                        child.Background = new SolidColorBrush(Color.FromRgb(24, 24, 27));
+                        child.BorderBrush = NeonTheme.CardBorder;
+                        child.Background = NeonTheme.CardBackground;
                         child.BorderThickness = new Thickness(1);
+                        child.Effect = null;
                     }
                 }
             }
@@ -323,13 +328,13 @@ namespace Mouseflare.UI
                     if (child == selectedBtn)
                     {
                         child.BorderBrush = Brushes.White;
-                        child.Background = new SolidColorBrush(Color.FromRgb(39, 39, 42));
+                        child.Background = NeonTheme.CardBorder;
                         child.BorderThickness = new Thickness(1.5);
                     }
                     else
                     {
-                        child.BorderBrush = new SolidColorBrush(Color.FromRgb(39, 39, 42));
-                        child.Background = new SolidColorBrush(Color.FromRgb(24, 24, 27));
+                        child.BorderBrush = NeonTheme.CardBorder;
+                        child.Background = NeonTheme.CardBackground;
                         child.BorderThickness = new Thickness(1);
                     }
                 }

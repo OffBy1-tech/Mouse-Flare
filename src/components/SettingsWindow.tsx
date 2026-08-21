@@ -931,19 +931,16 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             {/* TAB 3: BEHAVIOR & MONITORS */}
             {/* TAB: PARTICLE FX DESIGNER */}
             {activeTab === 'fx-designer' && (
-              <div className="h-full flex flex-col -m-6">
-                <ParticleFxEditor
-                  currentActiveConfigId={settings.customFxConfig?.id}
-                  onApplyToCursor={(customConfig) => {
-                    updateFxDraft({
-                      passiveFx: 'custom-fx',
-                      customFxConfig: customConfig,
-                      enablePassiveFx: true,
-                    });
-                    onTriggerFlare();
-                  }}
-                />
-              </div>
+              <ParticleFxEditor
+                currentConfig={settings.customFxConfig}
+                onApplyToCursor={(customConfig) => {
+                  updateFxDraft({
+                    passiveFx: 'custom-fx',
+                    customFxConfig: customConfig,
+                    enablePassiveFx: true,
+                  });
+                }}
+              />
             )}
 
             {activeTab === 'behavior' && (

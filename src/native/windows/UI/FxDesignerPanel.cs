@@ -112,7 +112,7 @@ namespace Mouseflare.UI
                 Apply();
                 _status($"Loaded archetype: {loaded.name} — previewing live on your cursor");
             };
-            _nameBox = new TextBox { Width = 150, FontSize = 11, Margin = new Thickness(8, 0, 0, 0), Background = Hex("#18181B"), Foreground = Hex("#FAFAFA"), BorderBrush = Hex("#3F3F46") };
+            _nameBox = new TextBox { Width = 150, FontSize = 11, Margin = new Thickness(8, 0, 0, 0), Background = Hex("#1A0F2E"), Foreground = Hex("#FAFAFA"), BorderBrush = Hex("#4A2E75") };
             _nameBox.LostFocus += (s, e) => ControlsChanged();
 
             var copy = SmallButton("Copy JSON", () =>
@@ -260,9 +260,9 @@ namespace Mouseflare.UI
                 FontSize = 10,
                 Padding = new Thickness(10, 4, 10, 4),
                 Margin = new Thickness(6, 0, 0, 0),
-                Background = Hex("#27272A"),
+                Background = Hex("#2E1B4A"),
                 Foreground = Hex("#FAFAFA"),
-                BorderBrush = Hex("#3F3F46"),
+                BorderBrush = Hex("#4A2E75"),
                 Cursor = Cursors.Hand,
             };
             button.Click += (s, e) => onClick();
@@ -276,7 +276,7 @@ namespace Mouseflare.UI
             combo.SelectionChanged += (s, e) => ControlsChanged();
             _popups.Add((get, set, combo, values));
             var column = new StackPanel();
-            column.Children.Add(new TextBlock { Text = title, FontSize = 10, Foreground = Hex("#52525B"), FontWeight = FontWeights.Bold });
+            column.Children.Add(new TextBlock { Text = title, FontSize = 10, Foreground = Hex("#6E5F8E"), FontWeight = FontWeights.Bold });
             column.Children.Add(combo);
             return column;
         }
@@ -288,7 +288,7 @@ namespace Mouseflare.UI
                 Width = 18,
                 Height = 18,
                 CornerRadius = new CornerRadius(9),
-                BorderBrush = Hex("#3F3F46"),
+                BorderBrush = Hex("#4A2E75"),
                 BorderThickness = new Thickness(1),
                 Background = Hex(get(_config)),
                 Cursor = Cursors.Hand,
@@ -321,7 +321,7 @@ namespace Mouseflare.UI
         private FrameworkElement SliderColumn((string Title, Func<CustomFxConfig, double> Get, Action<CustomFxConfig, double> Set, double Min, double Max, Func<double, string> Fmt) spec)
         {
             var slider = new Slider { Minimum = spec.Min, Maximum = spec.Max, Value = spec.Get(_config), IsMoveToPointEnabled = true };
-            var valueLabel = new TextBlock { Text = spec.Fmt(spec.Get(_config)), FontSize = 10, Foreground = Hex("#F59E0B"), FontWeight = FontWeights.Bold };
+            var valueLabel = new TextBlock { Text = spec.Fmt(spec.Get(_config)), FontSize = 10, Foreground = Hex("#FFA62E"), FontWeight = FontWeights.Bold };
             slider.ValueChanged += (s, e) => ControlsChanged();
             _sliders.Add((spec.Get, spec.Set, slider, valueLabel, spec.Fmt));
 

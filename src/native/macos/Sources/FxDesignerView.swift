@@ -82,7 +82,7 @@ final class FxDesignerView: NSView {
         for ref in colorChips {
             ref.chip.setStyle(
                 background: NSColor(hexString: config[keyPath: ref.keyPath]),
-                border: NSColor(hexString: "#3F3F46"),
+                border: Theme.neonViolet.withAlphaComponent(0.3),
                 borderWidth: 1
             )
         }
@@ -122,7 +122,13 @@ final class FxDesignerView: NSView {
 
         nameField = NSTextField(string: config.name)
         nameField.font = .systemFont(ofSize: 11)
-        nameField.backgroundColor = Theme.cardBg
+        nameField.drawsBackground = false
+        nameField.isBordered = false
+        nameField.wantsLayer = true
+        nameField.layer?.backgroundColor = Theme.windowBg.cgColor
+        nameField.layer?.borderColor = Theme.neonViolet.withAlphaComponent(0.35).cgColor
+        nameField.layer?.borderWidth = 1
+        nameField.layer?.cornerRadius = 5
         nameField.textColor = Theme.textPrimary
         nameField.translatesAutoresizingMaskIntoConstraints = false
         nameField.widthAnchor.constraint(equalToConstant: 150).isActive = true
@@ -306,7 +312,7 @@ final class FxDesignerView: NSView {
     private func colorChip(_ title: String, keyPath: WritableKeyPath<CustomFxConfig, String>) -> NSView {
         let chip = CardButton()
         chip.layer?.cornerRadius = 9
-        chip.setStyle(background: NSColor(hexString: config[keyPath: keyPath]), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
+        chip.setStyle(background: NSColor(hexString: config[keyPath: keyPath]), border: Theme.neonViolet.withAlphaComponent(0.3), borderWidth: 1)
         chip.translatesAutoresizingMaskIntoConstraints = false
         chip.widthAnchor.constraint(equalToConstant: 18).isActive = true
         chip.heightAnchor.constraint(equalToConstant: 18).isActive = true
@@ -319,17 +325,17 @@ final class FxDesignerView: NSView {
                 swatches: SettingsManager.shared.settings.quickSwatches,
                 onLive: { [weak self] hex in
                     self?.config[keyPath: keyPath] = hex
-                    chip.setStyle(background: NSColor(hexString: hex), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
+                    chip.setStyle(background: NSColor(hexString: hex), border: Theme.neonViolet.withAlphaComponent(0.3), borderWidth: 1)
                     self?.apply()
                 },
                 onDone: { [weak self] hex in
                     self?.config[keyPath: keyPath] = hex
-                    chip.setStyle(background: NSColor(hexString: hex), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
+                    chip.setStyle(background: NSColor(hexString: hex), border: Theme.neonViolet.withAlphaComponent(0.3), borderWidth: 1)
                     self?.apply()
                 },
                 onCancel: { [weak self] in
                     self?.config[keyPath: keyPath] = prior
-                    chip.setStyle(background: NSColor(hexString: prior), border: NSColor(hexString: "#3F3F46"), borderWidth: 1)
+                    chip.setStyle(background: NSColor(hexString: prior), border: Theme.neonViolet.withAlphaComponent(0.3), borderWidth: 1)
                     self?.apply()
                 }
             )
@@ -346,7 +352,7 @@ final class FxDesignerView: NSView {
         let (title, keyPath, min, max, fmt) = spec
         let slider = NSSlider(value: config[keyPath: keyPath], minValue: min, maxValue: max, target: self, action: #selector(controlsChanged))
         slider.isContinuous = true
-        let valueLabel = label(fmt(config[keyPath: keyPath]), size: 10, color: Theme.amber)
+        let valueLabel = label(fmt(config[keyPath: keyPath]), size: 10, color: Theme.neonValue)
         valueLabel.alignment = .right
         sliderRefs.append((keyPath, slider, valueLabel, fmt))
 
