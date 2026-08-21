@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, ColorPreset, FlarePreset, FxPreset } from '../types';
 import { NATIVE_SOURCE_FILES } from '../data/nativeSource';
 import { ParticleFxEditor } from './ParticleFxEditor';
+import { NeonSelect } from './NeonSelect';
 import { downloadWindowsNativeZip, downloadMacNativeZip, downloadCrossPlatformZip } from '../utils/nativeDownloader';
 import {
   CURRENT_BUILD_INFO,
@@ -1450,16 +1451,18 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           {settings.checkIntervalHours === 0 ? 'Manual Only' : `Every ${settings.checkIntervalHours} Hours`}
                         </span>
                       </label>
-                      <select
-                        value={settings.checkIntervalHours}
-                        onChange={(e) => updateInstant({ checkIntervalHours: Number(e.target.value) })}
-                        className="neon-input w-full rounded-lg px-3 py-1.5 text-xs"
-                      >
-                        <option value={6}>Every 6 Hours (High Frequency)</option>
-                        <option value={24}>Every 24 Hours (Daily - Recommended)</option>
-                        <option value={72}>Every 72 Hours (Weekly)</option>
-                        <option value={0}>Manual Checks Only</option>
-                      </select>
+                      <NeonSelect
+                        value={String(settings.checkIntervalHours)}
+                        onChange={(v) => updateInstant({ checkIntervalHours: Number(v) })}
+                        options={[
+                          { value: '6', label: 'Every 6 Hours (High Frequency)' },
+                          { value: '24', label: 'Every 24 Hours (Daily - Recommended)' },
+                          { value: '72', label: 'Every 72 Hours (Weekly)' },
+                          { value: '0', label: 'Manual Checks Only' },
+                        ]}
+                        className="w-full px-3 py-1.5 text-xs"
+                        ariaLabel="Check Frequency"
+                      />
                     </div>
 
                     {/* Notification Alert Toggle */}

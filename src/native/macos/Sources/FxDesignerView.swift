@@ -11,10 +11,10 @@ final class FxDesignerView: NSView {
     private var config: CustomFxConfig
     private var suppressApply = false
 
-    private var presetPopup: NSPopUpButton!
+    private var presetPopup: NeonPopUp!
     private var nameField: NSTextField!
-    private var glowSwitch: NSSwitch!
-    private var popupRefs: [(keyPath: WritableKeyPath<CustomFxConfig, String>, popup: NSPopUpButton, values: [String])] = []
+    private var glowSwitch: NeonSwitch!
+    private var popupRefs: [(keyPath: WritableKeyPath<CustomFxConfig, String>, popup: NeonPopUp, values: [String])] = []
     private var sliderRefs: [(keyPath: WritableKeyPath<CustomFxConfig, Double>, slider: NSSlider, label: NSTextField, fmt: (Double) -> String)] = []
     private var colorChips: [(keyPath: WritableKeyPath<CustomFxConfig, String>, chip: CardButton)] = []
 
@@ -115,7 +115,7 @@ final class FxDesignerView: NSView {
         ])
 
         // Header: archetype picker, name, actions
-        presetPopup = NSPopUpButton()
+        presetPopup = NeonPopUp()
         presetPopup.addItems(withTitles: DefaultFxPresets.archetypes.map { "\($0.name)" })
         presetPopup.target = self
         presetPopup.action = #selector(presetChosen)
@@ -193,7 +193,7 @@ final class FxDesignerView: NSView {
         popupRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
         // Colors + glow
-        glowSwitch = NSSwitch()
+        glowSwitch = NeonSwitch()
         glowSwitch.target = self
         glowSwitch.action = #selector(controlsChanged)
         let colorsRow = NSStackView(views: [
@@ -296,7 +296,7 @@ final class FxDesignerView: NSView {
         values: [String],
         titles: [String]
     ) -> NSView {
-        let popup = NSPopUpButton()
+        let popup = NeonPopUp()
         popup.addItems(withTitles: titles)
         popup.target = self
         popup.action = #selector(controlsChanged)
@@ -350,7 +350,7 @@ final class FxDesignerView: NSView {
 
     private func sliderColumn(_ spec: (String, WritableKeyPath<CustomFxConfig, Double>, Double, Double, (Double) -> String)) -> NSView {
         let (title, keyPath, min, max, fmt) = spec
-        let slider = NSSlider(value: config[keyPath: keyPath], minValue: min, maxValue: max, target: self, action: #selector(controlsChanged))
+        let slider = NeonSlider(value: config[keyPath: keyPath], minValue: min, maxValue: max, target: self, action: #selector(controlsChanged))
         slider.isContinuous = true
         let valueLabel = label(fmt(config[keyPath: keyPath]), size: 10, color: Theme.neonValue)
         valueLabel.alignment = .right

@@ -1,8 +1,9 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { ParticleFxConfig, ParticleShape, BlendMode, EmissionPattern, ColorMode, SizeCurve } from '../types/fxEditor';
+import { ParticleFxConfig } from '../types/fxEditor';
 import { DEFAULT_FX_PRESETS } from '../data/defaultFxPresets';
 import { soundEngine } from '../engine/sound';
 import { Save, Copy, Upload, Trash2 } from 'lucide-react';
+import { NeonSelect } from './NeonSelect';
 
 // The FX Designer mirrors the native designers (macOS FxDesignerView / Windows
 // FxDesignerPanel): archetype + name header, popup row, colors + glow row, and
@@ -51,6 +52,72 @@ const SLIDER_SPECS: { label: string; field: NumberField; min: number; max: numbe
   { label: 'Start Alpha', field: 'startAlpha', min: 0, max: 1, step: 0.01, fmt: pct },
   { label: 'Peak Alpha', field: 'peakAlpha', min: 0, max: 1, step: 0.01, fmt: pct },
   { label: 'End Alpha', field: 'endAlpha', min: 0, max: 1, step: 0.01, fmt: pct },
+];
+
+// Same popups and option lists as the native designers.
+type PopupField = 'emissionPattern' | 'shape' | 'blendMode' | 'colorMode' | 'sizeCurve';
+const POPUP_SPECS: { label: string; field: PopupField; options: { value: string; label: string }[] }[] = [
+  {
+    label: 'Emission',
+    field: 'emissionPattern',
+    options: [
+      { value: 'trail', label: 'Trail' },
+      { value: 'radial-burst', label: 'Radial Burst' },
+      { value: 'vortex-spiral', label: 'Vortex Spiral' },
+      { value: 'fountain', label: 'Fountain' },
+      { value: 'orbit', label: 'Orbit' },
+      { value: 'directional-cone', label: 'Directional Cone' },
+    ],
+  },
+  {
+    label: 'Shape',
+    field: 'shape',
+    options: [
+      { value: 'circle', label: 'Circle' },
+      { value: 'sparkle-star', label: 'Star' },
+      { value: 'glow-disc', label: 'Glow Disc' },
+      { value: 'ring', label: 'Ring' },
+      { value: 'shard-crystal', label: 'Crystal' },
+      { value: 'plasma-orb', label: 'Plasma Orb' },
+      { value: 'smoke-puff', label: 'Smoke' },
+      { value: 'lightning-bolt', label: 'Lightning' },
+      { value: 'bubble', label: 'Bubble' },
+      { value: 'heart', label: 'Heart' },
+      { value: 'sakura-petal', label: 'Petal' },
+      { value: 'diamond', label: 'Diamond' },
+      { value: 'rune', label: 'Rune' },
+    ],
+  },
+  {
+    label: 'Blend',
+    field: 'blendMode',
+    options: [
+      { value: 'source-over', label: 'Normal' },
+      { value: 'lighter', label: 'Additive' },
+      { value: 'screen', label: 'Screen' },
+      { value: 'color-dodge', label: 'Color Dodge' },
+    ],
+  },
+  {
+    label: 'Color Mode',
+    field: 'colorMode',
+    options: [
+      { value: 'single', label: 'Single' },
+      { value: 'gradient-lifetime', label: 'Lifetime Gradient' },
+      { value: 'rainbow-cycle', label: 'Rainbow Cycle' },
+      { value: 'speed-responsive', label: 'Speed Responsive' },
+    ],
+  },
+  {
+    label: 'Size Curve',
+    field: 'sizeCurve',
+    options: [
+      { value: 'linear-shrink', label: 'Linear Shrink' },
+      { value: 'grow-shrink', label: 'Grow-Shrink' },
+      { value: 'constant', label: 'Constant' },
+      { value: 'pop-fade', label: 'Pop & Fade' },
+    ],
+  },
 ];
 
 const HINT = 'Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.';
@@ -181,33 +248,27 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({ currentConfi
       {/* Header: archetype picker, name, actions */}
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-neutral-400">Archetype:</label>
-        <select
+        <NeonSelect
           value={sourcePresetId}
-          onChange={(e) => loadPreset(e.target.value)}
-          className="neon-input text-xs rounded-lg px-2.5 py-1.5 cursor-pointer font-medium"
-        >
-          {sourcePresetId === '' && (
-            <option value="" disabled hidden>
-              Current draft
-            </option>
-          )}
-          <optgroup label="Built-in Archetypes">
-            {DEFAULT_FX_PRESETS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.icon} {p.name}
-              </option>
-            ))}
-          </optgroup>
-          {customPresets.length > 0 && (
-            <optgroup label="My Custom Presets">
-              {customPresets.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.icon} {p.name}
-                </option>
-              ))}
-            </optgroup>
-          )}
-        </select>
+          onChange={loadPreset}
+          groups={[
+            {
+              label: 'Built-in Archetypes',
+              options: DEFAULT_FX_PRESETS.map((p) => ({ value: p.id, label: `${p.icon} ${p.name}` })),
+            },
+            ...(customPresets.length > 0
+              ? [
+                  {
+                    label: 'My Custom Presets',
+                    options: customPresets.map((p) => ({ value: p.id, label: `${p.icon} ${p.name}` })),
+                  },
+                ]
+              : []),
+          ]}
+          placeholder="Current draft"
+          className="text-xs px-2.5 py-1.5 min-w-44"
+          ariaLabel="Archetype"
+        />
 
         <label className="text-neutral-400 ml-1">Name:</label>
         <input
@@ -256,82 +317,18 @@ export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({ currentConfi
 
       {/* Popups: pattern / shape / blend / color mode / size curve */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div>
-          <label className="text-[10px] text-neutral-500 block mb-1">Emission</label>
-          <select
-            value={config.emissionPattern}
-            onChange={(e) => applyEdit({ emissionPattern: e.target.value as EmissionPattern })}
-            className="neon-input w-full rounded-lg px-2 py-1.5 text-[11px] cursor-pointer"
-          >
-            <option value="trail">Trail</option>
-            <option value="radial-burst">Radial Burst</option>
-            <option value="vortex-spiral">Vortex Spiral</option>
-            <option value="fountain">Fountain</option>
-            <option value="orbit">Orbit</option>
-            <option value="directional-cone">Directional Cone</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] text-neutral-500 block mb-1">Shape</label>
-          <select
-            value={config.shape}
-            onChange={(e) => applyEdit({ shape: e.target.value as ParticleShape })}
-            className="neon-input w-full rounded-lg px-2 py-1.5 text-[11px] cursor-pointer"
-          >
-            <option value="circle">Circle</option>
-            <option value="sparkle-star">Star</option>
-            <option value="glow-disc">Glow Disc</option>
-            <option value="ring">Ring</option>
-            <option value="shard-crystal">Crystal</option>
-            <option value="plasma-orb">Plasma Orb</option>
-            <option value="smoke-puff">Smoke</option>
-            <option value="lightning-bolt">Lightning</option>
-            <option value="bubble">Bubble</option>
-            <option value="heart">Heart</option>
-            <option value="sakura-petal">Petal</option>
-            <option value="diamond">Diamond</option>
-            <option value="rune">Rune</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] text-neutral-500 block mb-1">Blend</label>
-          <select
-            value={config.blendMode}
-            onChange={(e) => applyEdit({ blendMode: e.target.value as BlendMode })}
-            className="neon-input w-full rounded-lg px-2 py-1.5 text-[11px] cursor-pointer"
-          >
-            <option value="source-over">Normal</option>
-            <option value="lighter">Additive</option>
-            <option value="screen">Screen</option>
-            <option value="color-dodge">Color Dodge</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] text-neutral-500 block mb-1">Color Mode</label>
-          <select
-            value={config.colorMode}
-            onChange={(e) => applyEdit({ colorMode: e.target.value as ColorMode })}
-            className="neon-input w-full rounded-lg px-2 py-1.5 text-[11px] cursor-pointer"
-          >
-            <option value="single">Single</option>
-            <option value="gradient-lifetime">Lifetime Gradient</option>
-            <option value="rainbow-cycle">Rainbow Cycle</option>
-            <option value="speed-responsive">Speed Responsive</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] text-neutral-500 block mb-1">Size Curve</label>
-          <select
-            value={config.sizeCurve}
-            onChange={(e) => applyEdit({ sizeCurve: e.target.value as SizeCurve })}
-            className="neon-input w-full rounded-lg px-2 py-1.5 text-[11px] cursor-pointer"
-          >
-            <option value="linear-shrink">Linear Shrink</option>
-            <option value="grow-shrink">Grow-Shrink</option>
-            <option value="constant">Constant</option>
-            <option value="pop-fade">Pop &amp; Fade</option>
-          </select>
-        </div>
+        {POPUP_SPECS.map((spec) => (
+          <div key={spec.field}>
+            <label className="text-[10px] text-neutral-500 block mb-1">{spec.label}</label>
+            <NeonSelect
+              value={config[spec.field]}
+              onChange={(v) => applyEdit({ [spec.field]: v } as Partial<ParticleFxConfig>)}
+              options={spec.options}
+              className="w-full px-2 py-1.5 text-[11px]"
+              ariaLabel={spec.label}
+            />
+          </div>
+        ))}
       </div>
 
       {/* Colors + glow */}

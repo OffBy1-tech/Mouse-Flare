@@ -153,11 +153,73 @@ input:checked + .neon-switch {
   box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
 }
 
+/* Custom dropdown (NeonSelect) — mirrors the Windows ComboBox template */
+.neon-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
+}
+.neon-select-trigger:focus-visible {
+  outline: none;
+  border-color: var(--neon-violet);
+  box-shadow: 0 0 0 1px var(--neon-violet), 0 0 10px rgba(168, 85, 247, 0.35);
+}
+.neon-select-trigger[aria-expanded='true'] {
+  border-color: var(--neon-violet);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+.neon-select-trigger[aria-expanded='true'] .neon-select-chevron {
+  transform: rotate(180deg);
+}
+.neon-dropdown {
+  background: linear-gradient(170deg, var(--neon-ground-1), var(--neon-ground-0));
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  border-radius: 10px;
+  box-shadow:
+    0 0 14px rgba(168, 85, 247, 0.35),
+    0 12px 32px rgba(0, 0, 0, 0.6);
+  overflow-y: auto;
+}
+.neon-option {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #d5cde8;
+  cursor: pointer;
+}
+.neon-option-active {
+  background: rgba(168, 85, 247, 0.18);
+  color: #efe9fb;
+}
+.neon-option-selected {
+  border-color: rgba(190, 160, 255, 0.7);
+  background: linear-gradient(115deg, rgba(79, 124, 255, 0.4), rgba(139, 92, 246, 0.38) 60%, rgba(168, 85, 247, 0.34));
+  color: #f4f0ff;
+}
+.neon-option[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+.neon-group-label {
+  color: #7a6f94;
+}
+@keyframes neon-dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .neon-card-hover,
   .neon-btn-primary,
   .neon-nav-active {
     transition: box-shadow 150ms ease, filter 150ms ease;
+  }
+  .neon-select-chevron {
+    transition: transform 150ms ease;
+  }
+  .neon-dropdown {
+    animation: neon-dropdown-in 120ms ease;
   }
 }
 

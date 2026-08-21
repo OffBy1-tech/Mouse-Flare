@@ -214,13 +214,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         case swatch(Int)
     }
 
-    private var switchEnabled: NSSwitch!
-    private var switchPassive: NSSwitch!
-    private var switchStartAtLogin: NSSwitch!
-    private var switchSound: NSSwitch!
-    private var switchAutoUpdate: NSSwitch!
-    private var switchIdleBurst: NSSwitch!
-    private var switchMonitorCrossing: NSSwitch!
+    private var switchEnabled: NeonSwitch!
+    private var switchPassive: NeonSwitch!
+    private var switchStartAtLogin: NeonSwitch!
+    private var switchSound: NeonSwitch!
+    private var switchAutoUpdate: NeonSwitch!
+    private var switchIdleBurst: NeonSwitch!
+    private var switchMonitorCrossing: NeonSwitch!
 
     // Updates tab: labels/buttons that mirror Updater.shared.phase
     private var updatesStatusLabel: NSTextField!
@@ -230,12 +230,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var checkNowLabel: NSTextField!
     private var isCheckingForUpdates = false
 
-    private var sliderIntensity: NSSlider!
-    private var sliderDensity: NSSlider!
-    private var sliderSpeed: NSSlider!
-    private var sliderThreshold: NSSlider!
-    private var sliderVorticity: NSSlider!
-    private var sliderDissipation: NSSlider!
+    private var sliderIntensity: NeonSlider!
+    private var sliderDensity: NeonSlider!
+    private var sliderSpeed: NeonSlider!
+    private var sliderThreshold: NeonSlider!
+    private var sliderVorticity: NeonSlider!
+    private var sliderDissipation: NeonSlider!
     private var valueIntensity: NSTextField!
     private var valueDensity: NSTextField!
     private var valueSpeed: NSTextField!
@@ -526,7 +526,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         stack.addArrangedSubview(sub)
         stack.setCustomSpacing(16, after: sub)
 
-        switchEnabled = NSSwitch()
+        switchEnabled = NeonSwitch()
         switchEnabled.target = self
         switchEnabled.action = #selector(togglesChanged)
         addToggleCard(
@@ -536,7 +536,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             control: switchEnabled
         )
 
-        switchPassive = NSSwitch()
+        switchPassive = NeonSwitch()
         switchPassive.target = self
         switchPassive.action = #selector(togglesChanged)
         addToggleCard(
@@ -596,12 +596,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         hotkeyCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
         // Half-width toggle pair
-        switchStartAtLogin = NSSwitch()
+        switchStartAtLogin = NeonSwitch()
         switchStartAtLogin.target = self
         switchStartAtLogin.action = #selector(togglesChanged)
         let startCard = makeToggleCard(title: "Start with macOS", subtitle: "Launch upon login.", control: switchStartAtLogin)
 
-        switchSound = NSSwitch()
+        switchSound = NeonSwitch()
         switchSound.target = self
         switchSound.action = #selector(togglesChanged)
         let soundCard = makeToggleCard(title: "Beacon Chime", subtitle: "Audio beacon cue.", control: switchSound)
@@ -764,9 +764,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let fluidTitle = makeLabel("Fluid Dynamics & Vorticity Engine", size: 13, weight: .bold, color: Theme.textPrimary)
         let fluidSub = makeLabel("Vorticity curl, turbulent smoke diffusion & glowing dye for the fluid presets.", size: 11, weight: .regular, color: Theme.textMuted)
 
-        sliderVorticity = makeSlider(min: 0.1, max: 2.0)
+        sliderVorticity = makeSlider(min: 0.1, max: 2.0, accent: .cyan)
         valueVorticity = makeValueLabel(color: Theme.cyan)
-        sliderDissipation = makeSlider(min: 0.90, max: 0.99)
+        sliderDissipation = makeSlider(min: 0.90, max: 0.99, accent: .cyan)
         valueDissipation = makeValueLabel(color: Theme.cyan)
 
         let fluidGrid = makeSliderPairRow(
@@ -808,7 +808,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         stack.addArrangedSubview(sub)
         stack.setCustomSpacing(16, after: sub)
 
-        switchIdleBurst = NSSwitch()
+        switchIdleBurst = NeonSwitch()
         switchIdleBurst.target = self
         switchIdleBurst.action = #selector(togglesChanged)
         addToggleCard(
@@ -818,7 +818,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             control: switchIdleBurst
         )
 
-        switchMonitorCrossing = NSSwitch()
+        switchMonitorCrossing = NeonSwitch()
         switchMonitorCrossing.target = self
         switchMonitorCrossing.action = #selector(togglesChanged)
         addToggleCard(
@@ -923,7 +923,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         stack.addArrangedSubview(card)
         card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
-        switchAutoUpdate = NSSwitch()
+        switchAutoUpdate = NeonSwitch()
         switchAutoUpdate.target = self
         switchAutoUpdate.action = #selector(togglesChanged)
         addToggleCard(
@@ -1389,7 +1389,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return card
     }
 
-    private func makeToggleCard(title: String, subtitle: String, control: NSSwitch) -> NSView {
+    private func makeToggleCard(title: String, subtitle: String, control: NeonSwitch) -> NSView {
         let card = makeCard()
         let titleLabel = makeLabel(title, size: 13, weight: .bold, color: Theme.textPrimary)
         let subLabel = makeLabel(subtitle, size: 11, weight: .regular, color: Theme.textMuted)
@@ -1407,7 +1407,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     }
 
     /// Adds a full-width toggle card to a tab stack (width constraint must come after insertion).
-    private func addToggleCard(to stack: NSStackView, title: String, subtitle: String, control: NSSwitch) {
+    private func addToggleCard(to stack: NSStackView, title: String, subtitle: String, control: NeonSwitch) {
         let card = makeToggleCard(title: title, subtitle: subtitle, control: control)
         stack.addArrangedSubview(card)
         card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -1490,9 +1490,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return (chip, chipLabel)
     }
 
-    private func makeSlider(min: Double, max: Double) -> NSSlider {
-        let slider = NSSlider(value: min, minValue: min, maxValue: max, target: self, action: #selector(slidersChanged))
+    private func makeSlider(min: Double, max: Double, accent: NeonSlider.Accent = .violet) -> NeonSlider {
+        let slider = NeonSlider(value: min, minValue: min, maxValue: max, target: self, action: #selector(slidersChanged))
         slider.isContinuous = true
+        slider.accent = accent
         return slider
     }
 
