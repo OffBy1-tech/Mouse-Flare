@@ -1,7 +1,7 @@
 {
   "name": "mouseflare",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "license": "MIT",
   "description": "Interactive web simulator for Mouseflare — a lightweight Windows & macOS utility that makes your mouse cursor impossible to lose with passive trail FX and hotkey-activated Find Mouse flares.",
   "homepage": "https://github.com/OffBy1-tech/Mouse-Flare",
