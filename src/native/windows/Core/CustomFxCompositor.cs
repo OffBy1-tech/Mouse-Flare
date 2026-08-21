@@ -25,6 +25,18 @@ namespace Mouseflare.Core
     /// exact. Blending starts from a transparent buffer, matching the web
     /// canvas, where all four modes degenerate to plain painting against
     /// emptiness and differ only where particles overlap.
+    ///
+    /// Sprite color: sprites are COLORLESS. Color-cycling designs (rainbow
+    /// modes) would otherwise defeat the cache — one rasterization per hue per
+    /// frame melted GDI resources in the field (MILERR_WIN32ERROR out of
+    /// RenderTargetBitmap after a long UI hang). Sprites are rasterized once
+    /// in a marker color (pure red): the shape code draws its tintable parts
+    /// in the particle color (→ the sprite's R channel) and its hard-coded
+    /// white parts (glow-disc core, plasma-orb core, bubble fill/glint) in
+    /// white (→ R == G == B). At stamp time each pixel is recomposed as
+    /// tint * (R - G) + white * G, which reproduces the original rendering
+    /// exactly (source-over inside the rasterizer preserves the decomposition)
+    /// with no color quantization at all.
     /// </summary>
     internal sealed class CustomFxCompositor
     {
@@ -33,12 +45,28 @@ namespace Mouseflare.Core
         private sealed class Sprite
         {
             public int W, H;
-            public byte[] Px = Array.Empty<byte>(); // premultiplied BGRA at full particle alpha
+            public byte[] Px = Array.Empty<byte>(); // premultiplied BGRA, marker-colored, full alpha
         }
 
-        // Key: shape(4b) | sizeBucket(8b) | rgb555(15b) | glow flag(1b) | glowBucket(8b)
+        // Key: shape(4b) | quantized size(9b) | glow flag(1b) | quantized glow radius(9b).
+        // Color deliberately excluded — see the class comment.
         private readonly Dictionary<long, Sprite> _cache = new();
         private const int MaxCacheEntries = 512;
+
+        // Sprites are rasterized in this marker color; see class comment.
+        private static readonly Color MarkerTint = Color.FromRgb(255, 0, 0);
+
+        // Rasterization is the expensive, GDI-touching operation: bound it.
+        private const int MaxSpriteSide = 384;        // device px, hard cap per sprite
+        private const int RasterBudgetPerFrame = 6;   // new sprites per frame
+        private const int TombstoneRetryFrames = 120; // ~2s before retrying a failed sprite
+        private const int MaxSpriteFailures = 5;      // then disable the compositor
+
+        private static readonly Sprite Tombstone = new();
+        private readonly Dictionary<long, int> _tombstoneFrame = new();
+        private int _frame;
+        private int _rasterizedThisFrame;
+        private int _spriteFailures;
 
         private static readonly string[] ShapeNames =
         {
@@ -61,20 +89,19 @@ namespace Mouseflare.Core
         private static bool RotationInvariant(string shape) =>
             shape is "circle" or "glow-disc" or "ring" or "smoke-puff";
 
-        private static long Key(int shapeIdx, int sizeBucket, Color c, bool glow, int glowBucket)
+        private static long Key(int shapeIdx, int sizeQ, bool glow, int glowQ)
         {
             long key = shapeIdx & 0xF;
-            key |= (long)(sizeBucket & 0xFF) << 4;
-            key |= (long)(c.R >> 3) << 12;
-            key |= (long)(c.G >> 3) << 17;
-            key |= (long)(c.B >> 3) << 22;
-            if (glow) key |= 1L << 27;
-            key |= (long)(glowBucket & 0xFF) << 28;
+            key |= (long)(sizeQ & 0x1FF) << 4;
+            if (glow) key |= 1L << 13;
+            key |= (long)(glowQ & 0x1FF) << 14;
             return key;
         }
 
-        private static Color QuantizeColor(Color c) => Color.FromRgb(
-            (byte)((c.R >> 3) << 3), (byte)((c.G >> 3) << 3), (byte)((c.B >> 3) << 3));
+        /// <summary>1px buckets below 32 device px, 4px buckets above — keeps
+        /// small particles smooth while bounding cache cardinality.</summary>
+        private static int QuantizeSize(int v) =>
+            v < 32 ? v : Math.Min(MaxSpriteSide, (v + 2) & ~3);
 
         // ---- Frame state --------------------------------------------------
 
@@ -85,6 +112,7 @@ namespace Mouseflare.Core
             public double X, Y;       // device px, window-relative
             public double Rotation;   // radians
             public byte AlphaFactor;  // particle alpha 0..255
+            public Color Tint;        // exact particle color, applied at blit time
             public bool Rotate;       // false => axis-aligned blit
         }
 
@@ -107,6 +135,8 @@ namespace Mouseflare.Core
 
         public void BeginFrame()
         {
+            _frame++;
+            _rasterizedThisFrame = 0;
             _stamps.Clear();
             _minX = _minY = double.MaxValue;
             _maxX = _maxY = double.MinValue;
@@ -135,12 +165,16 @@ namespace Mouseflare.Core
             if (!double.IsFinite(dpiScale) || dpiScale <= 0) return;
             size = Math.Clamp(size, 0.2, 300);
 
-            var quant = QuantizeColor(color);
-            int sizeBucket = Math.Clamp((int)Math.Round(size * dpiScale), 1, 200);
+            int sizeDev = Math.Clamp((int)Math.Round(size * dpiScale), 1, 200);
+            int sizeQ = QuantizeSize(sizeDev);
             int shapeIdx = ShapeIndex(config.shape);
 
-            var core = GetSprite(Key(shapeIdx, Math.Min(sizeBucket, 255), quant, glow: false, 0),
-                () => RasterizeCore(config.shape, sizeBucket, quant));
+            // A null sprite means the per-frame rasterization budget is spent
+            // or the sprite recently failed to rasterize: skip the particle
+            // this frame — it will be cached (or retried) within a few frames.
+            var core = GetSprite(Key(shapeIdx, sizeQ, glow: false, 0),
+                () => RasterizeCore(config.shape, sizeQ));
+            if (core == null) return;
 
             Sprite? glow = null;
             if (config.glowBloom && config.glowRadius > 0)
@@ -150,10 +184,11 @@ namespace Mouseflare.Core
                 // reaching shape extent + 1.5 * blur. glowRadius comes straight
                 // from user JSON — clamp before it sizes a sprite.
                 double blur = Math.Clamp(config.glowRadius, 0.0, 100.0) * (size / 6.0) * dpiScale;
-                int glowRadius = Math.Clamp((int)Math.Round(sizeBucket * 1.2 + blur * 1.5), 2, 400);
-                int glowBucket = Math.Min(255, (glowRadius + 1) / 2); // 2px buckets
-                glow = GetSprite(Key(shapeIdx, 0, quant, glow: true, glowBucket),
-                    () => RasterizeGlow(glowBucket * 2, quant));
+                int glowRadius = Math.Clamp((int)Math.Round(sizeDev * 1.2 + blur * 1.5), 2, 400);
+                int glowQ = QuantizeSize(glowRadius);
+                glow = GetSprite(Key(shapeIdx, 0, glow: true, glowQ),
+                    () => RasterizeGlow(glowQ));
+                if (glow == null) return;
             }
 
             double dx = x * dpiScale, dy = y * dpiScale;
@@ -175,6 +210,7 @@ namespace Mouseflare.Core
                 Y = dy,
                 Rotation = rotation,
                 AlphaFactor = (byte)Math.Clamp((int)Math.Round(alpha * 255), 0, 255),
+                Tint = color,
                 Rotate = rotation != 0 && !RotationInvariant(config.shape),
             });
         }
@@ -226,15 +262,15 @@ namespace Mouseflare.Core
                 double sx = stamp.X - anchorX, sy = stamp.Y - anchorY;
                 if (stamp.Glow != null)
                 {
-                    BlitAxisAligned(stamp.Glow, sx, sy, stamp.AlphaFactor, blend, usedW, usedH);
+                    BlitAxisAligned(stamp.Glow, sx, sy, stamp.AlphaFactor, blend, stamp.Tint, usedW, usedH);
                 }
                 if (stamp.Rotate)
                 {
-                    BlitRotated(stamp.Core, sx, sy, stamp.Rotation, stamp.AlphaFactor, blend, usedW, usedH);
+                    BlitRotated(stamp.Core, sx, sy, stamp.Rotation, stamp.AlphaFactor, blend, stamp.Tint, usedW, usedH);
                 }
                 else
                 {
-                    BlitAxisAligned(stamp.Core, sx, sy, stamp.AlphaFactor, blend, usedW, usedH);
+                    BlitAxisAligned(stamp.Core, sx, sy, stamp.AlphaFactor, blend, stamp.Tint, usedW, usedH);
                 }
             }
 
@@ -260,43 +296,94 @@ namespace Mouseflare.Core
 
         // ---- Rasterization (sprites reuse the vector shape code) ----------
 
-        private Sprite GetSprite(long key, Func<Sprite> create)
+        /// <summary>
+        /// Cache lookup with bounded rasterization. Returns null when the
+        /// per-frame budget is spent or the sprite is tombstoned after a
+        /// recent failure — callers skip that particle for the frame. After
+        /// MaxSpriteFailures the compositor gives up: the exception propagates
+        /// to the engine's guard, which falls back to plain rendering for the
+        /// session and records the fault in the crash log.
+        /// </summary>
+        private Sprite? GetSprite(long key, Func<Sprite> create)
         {
-            if (_cache.TryGetValue(key, out var sprite)) return sprite;
-            if (_cache.Count >= MaxCacheEntries) _cache.Clear();
-            sprite = create();
+            if (_cache.TryGetValue(key, out var sprite))
+            {
+                if (!ReferenceEquals(sprite, Tombstone)) return sprite;
+                if (_frame - _tombstoneFrame.GetValueOrDefault(key) < TombstoneRetryFrames) return null;
+                _cache.Remove(key);
+                _tombstoneFrame.Remove(key);
+            }
+
+            if (_rasterizedThisFrame >= RasterBudgetPerFrame) return null;
+            if (_cache.Count >= MaxCacheEntries)
+            {
+                _cache.Clear();
+                _tombstoneFrame.Clear();
+            }
+
+            _rasterizedThisFrame++;
+            try
+            {
+                sprite = create();
+            }
+            catch (Exception ex)
+            {
+                _spriteFailures++;
+                _cache[key] = Tombstone;
+                _tombstoneFrame[key] = _frame;
+                if (_spriteFailures == 1)
+                {
+                    CrashLog.Write("CustomFxCompositor sprite rasterization failed (particle skipped, will retry)", ex);
+                }
+                if (_spriteFailures >= MaxSpriteFailures)
+                {
+                    throw new InvalidOperationException(
+                        $"Sprite rasterization failed {_spriteFailures} times; disabling the compositor.", ex);
+                }
+                return null;
+            }
             _cache[key] = sprite;
             return sprite;
         }
 
-        private static Sprite RasterizeCore(string shape, int sizeDevPx, Color color)
+        private static Sprite RasterizeCore(string shape, int sizeDevPx)
         {
             int side = Math.Max(4, (int)Math.Ceiling(sizeDevPx * 1.6 * 2) + 4);
+            double drawSize = sizeDevPx;
+            if (side > MaxSpriteSide)
+            {
+                // Extreme size × DPI: render a proportionally smaller sprite
+                // rather than asking the GDI layer for a giant allocation.
+                drawSize = sizeDevPx * (MaxSpriteSide / (double)side);
+                side = MaxSpriteSide;
+            }
             var visual = new DrawingVisual();
             using (var dc = visual.RenderOpen())
             {
                 dc.PushTransform(new TranslateTransform(side / 2.0, side / 2.0));
-                CustomFxEngine.DrawShapeGeometry(dc, shape, sizeDevPx, color, 255);
+                CustomFxEngine.DrawShapeGeometry(dc, shape, drawSize, MarkerTint, 255);
                 dc.Pop();
             }
             return Render(visual, side);
         }
 
-        private static Sprite RasterizeGlow(int radiusDevPx, Color color)
+        private static Sprite RasterizeGlow(int radiusDevPx)
         {
-            int side = radiusDevPx * 2 + 2;
+            int radius = Math.Min(radiusDevPx, (MaxSpriteSide - 2) / 2);
+            int side = radius * 2 + 2;
             var visual = new DrawingVisual();
             using (var dc = visual.RenderOpen())
             {
                 // Gaussian-ish falloff approximating canvas shadowBlur of the
                 // particle silhouette.
+                var c = MarkerTint;
                 var gradient = new RadialGradientBrush();
-                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(217, color.R, color.G, color.B), 0));
-                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(115, color.R, color.G, color.B), 0.35));
-                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(38, color.R, color.G, color.B), 0.7));
-                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(0, color.R, color.G, color.B), 1));
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(217, c.R, c.G, c.B), 0));
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(115, c.R, c.G, c.B), 0.35));
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(38, c.R, c.G, c.B), 0.7));
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb(0, c.R, c.G, c.B), 1));
                 gradient.Freeze();
-                dc.DrawEllipse(gradient, null, new Point(side / 2.0, side / 2.0), radiusDevPx, radiusDevPx);
+                dc.DrawEllipse(gradient, null, new Point(side / 2.0, side / 2.0), radius, radius);
             }
             return Render(visual, side);
         }
@@ -314,7 +401,8 @@ namespace Mouseflare.Core
         //
         // All pixels are premultiplied BGRA. `alphaFactor` scales the sprite
         // (globalAlpha in the web renderer): premultiplied scaling is a plain
-        // multiply of all four channels.
+        // multiply of all four channels. Tinting happens first — see the
+        // class comment for the marker-color decomposition.
         //
         // Blend operators (verified against W3C compositing-1 in premultiplied
         // form; s = premultiplied source, d = premultiplied destination):
@@ -328,7 +416,7 @@ namespace Mouseflare.Core
         //       ao = as + ab - as*ab.
 
         private unsafe void BlitAxisAligned(Sprite sprite, double cx, double cy,
-                                            byte alphaFactor, int blend, int usedW, int usedH)
+                                            byte alphaFactor, int blend, Color tint, int usedW, int usedH)
         {
             if (alphaFactor == 0) return;
             int left = (int)Math.Round(cx - sprite.W / 2.0);
@@ -338,6 +426,7 @@ namespace Mouseflare.Core
             if (x0 >= x1 || y0 >= y1) return;
 
             int stride = _capW * 4, srcStride = sprite.W * 4;
+            byte tr = tint.R, tg = tint.G, tb = tint.B;
             fixed (byte* bufPtr = _buf, srcPtr = sprite.Px)
             {
                 for (int y = y0; y < y1; y++)
@@ -346,14 +435,14 @@ namespace Mouseflare.Core
                     byte* src = srcPtr + (y - top) * srcStride + (x0 - left) * 4;
                     for (int x = x0; x < x1; x++, dst += 4, src += 4)
                     {
-                        BlendPixel(dst, src, alphaFactor, blend);
+                        BlendPixel(dst, src, alphaFactor, blend, tr, tg, tb);
                     }
                 }
             }
         }
 
         private unsafe void BlitRotated(Sprite sprite, double cx, double cy, double rotation,
-                                        byte alphaFactor, int blend, int usedW, int usedH)
+                                        byte alphaFactor, int blend, Color tint, int usedW, int usedH)
         {
             if (alphaFactor == 0) return;
             double halfDiag = Math.Sqrt(sprite.W * sprite.W + sprite.H * sprite.H) / 2 + 1;
@@ -364,6 +453,7 @@ namespace Mouseflare.Core
             double cos = Math.Cos(-rotation), sin = Math.Sin(-rotation);
             double halfW = sprite.W / 2.0, halfH = sprite.H / 2.0;
             int stride = _capW * 4, srcStride = sprite.W * 4;
+            byte tr = tint.R, tg = tint.G, tb = tint.B;
 
             fixed (byte* bufPtr = _buf, srcPtr = sprite.Px)
             {
@@ -380,19 +470,35 @@ namespace Mouseflare.Core
                         int sx = (int)(relX * cos - relY * sin + halfW);
                         int sy = (int)(relX * sin + relY * cos + halfH);
                         if ((uint)sx >= (uint)sprite.W || (uint)sy >= (uint)sprite.H) continue;
-                        BlendPixel(dst, srcPtr + sy * srcStride + sx * 4, alphaFactor, blend);
+                        BlendPixel(dst, srcPtr + sy * srcStride + sx * 4, alphaFactor, blend, tr, tg, tb);
                     }
                 }
             }
         }
 
-        private static unsafe void BlendPixel(byte* dst, byte* srcPx, byte alphaFactor, int blend)
+        private static unsafe void BlendPixel(byte* dst, byte* srcPx, byte alphaFactor, int blend,
+                                              byte tr, byte tg, byte tb)
         {
+            int spriteA = srcPx[3];
+            if (spriteA == 0) return;
+
+            // Tint: sprites are marker-colored (see class comment). The
+            // tintable component is R - G, the hard-coded-white component is G
+            // (== B); recompose with the exact particle color. All values are
+            // premultiplied, and tintable + white <= R <= A keeps the result
+            // premultiplied-valid.
+            int white = srcPx[1];
+            int tintable = srcPx[2] - white;
+            if (tintable < 0) tintable = 0;
+            int b0 = (tintable * tb + 127) / 255 + white;
+            int g0 = (tintable * tg + 127) / 255 + white;
+            int r0 = (tintable * tr + 127) / 255 + white;
+
             // Scale the premultiplied source by the particle alpha.
-            int sb = (srcPx[0] * alphaFactor + 127) / 255;
-            int sg = (srcPx[1] * alphaFactor + 127) / 255;
-            int sr = (srcPx[2] * alphaFactor + 127) / 255;
-            int sa = (srcPx[3] * alphaFactor + 127) / 255;
+            int sb = (b0 * alphaFactor + 127) / 255;
+            int sg = (g0 * alphaFactor + 127) / 255;
+            int sr = (r0 * alphaFactor + 127) / 255;
+            int sa = (spriteA * alphaFactor + 127) / 255;
             if (sa == 0 && sr == 0 && sg == 0 && sb == 0) return;
 
             switch (blend)
