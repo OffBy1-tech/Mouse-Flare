@@ -406,6 +406,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         win.titlebarAppearsTransparent = true
         win.appearance = NSAppearance(named: .darkAqua)
         win.backgroundColor = Theme.windowBg
+        // Hard guard: Auto Layout must never be able to inflate the window
+        // (long release-note labels once forced it wide offscreen).
+        win.contentMinSize = NSSize(width: 940, height: 680)
+        win.contentMaxSize = NSSize(width: 940, height: 680)
         win.center()
         win.isReleasedWhenClosed = false
         win.level = .floating
@@ -1126,13 +1130,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         ])
 
         updatesHeadlineLabel = makeLabel("", size: 14, weight: .bold, color: Theme.textPrimary)
+        makeCompressible(updatesHeadlineLabel)
 
         updatesStatusLabel = makeLabel("", size: 11, weight: .regular, color: Theme.textMuted)
         updatesStatusLabel.lineBreakMode = .byWordWrapping
         updatesStatusLabel.maximumNumberOfLines = 3
+        makeCompressible(updatesStatusLabel, wrapWidth: 560)
 
         updatesMetaLabel = makeLabel("", size: 10.5, weight: .regular, color: Theme.textMuted)
         updatesMetaLabel.lineBreakMode = .byTruncatingTail
+        makeCompressible(updatesMetaLabel)
 
         let heroText = NSStackView(views: [updatesHeadlineLabel, updatesStatusLabel, updatesMetaLabel])
         heroText.orientation = .vertical
@@ -1189,6 +1196,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         changelogStack.alignment = .leading
         changelogStack.spacing = 6
         changelogFooterLabel = makeLabel("", size: 10.5, weight: .regular, color: Theme.textMuted)
+        makeCompressible(changelogFooterLabel)
         let changelogDivider = makeDivider()
         changelogDivider.heightAnchor.constraint(equalToConstant: 1).isActive = true
         let changelogContent = NSStackView(views: [changelogHeader, changelogStack, NSView(), changelogDivider, changelogFooterLabel])
@@ -1207,6 +1215,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         switchAutoUpdate.action = #selector(togglesChanged)
         let autoTitle = makeLabel("Automatic Background Checks", size: 12, weight: .semibold, color: Theme.textPrimary)
         let autoSub = makeLabel("Periodically query the release feed silently.", size: 10.5, weight: .regular, color: Theme.textMuted)
+        autoSub.lineBreakMode = .byWordWrapping
+        autoSub.maximumNumberOfLines = 0
+        makeCompressible(autoSub, wrapWidth: 240)
         let autoText = NSStackView(views: [autoTitle, autoSub])
         autoText.orientation = .vertical
         autoText.alignment = .leading
@@ -1228,6 +1239,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
         let reqHeader = makeLabel("🛡️ Minimum System Requirements", size: 10.5, weight: .semibold, color: Theme.textSecondary)
         let reqLine = makeLabel("• macOS 13 (Ventura) or later — Apple Silicon & Intel", size: 10.5, weight: .regular, color: Theme.textMuted)
+        reqLine.lineBreakMode = .byWordWrapping
+        reqLine.maximumNumberOfLines = 0
+        makeCompressible(reqLine, wrapWidth: 300)
 
         let cadenceDivider1 = makeDivider()
         cadenceDivider1.heightAnchor.constraint(equalToConstant: 1).isActive = true
@@ -1346,13 +1360,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 info == nil ? "Run a check to fetch the latest release notes." : "No itemized changes — open the release on GitHub for details.",
                 size: 11, weight: .regular, color: Theme.textMuted
             )
+            placeholder.lineBreakMode = .byWordWrapping
+            placeholder.maximumNumberOfLines = 0
+            makeCompressible(placeholder, wrapWidth: 300)
             changelogStack.addArrangedSubview(placeholder)
         } else {
             for bullet in bullets.prefix(6) {
                 let dot = makeLabel("•", size: 11, weight: .bold, color: Theme.amber)
                 let text = makeLabel(bullet, size: 11, weight: .regular, color: Theme.textSecondary)
                 text.lineBreakMode = .byWordWrapping
-                text.maximumNumberOfLines = 2
+                text.maximumNumberOfLines = 0
+                makeCompressible(text, wrapWidth: 300)
                 let row = NSStackView(views: [dot, text])
                 row.orientation = .horizontal
                 row.spacing = 6
@@ -2034,6 +2052,15 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         field.font = .systemFont(ofSize: size, weight: weight)
         field.textColor = color
         return field
+    }
+
+    /// Labels whose text arrives at runtime (release notes, status lines) must
+    /// never widen the fixed-size window: negligible horizontal compression
+    /// resistance lets the surrounding width constraints always win, and a
+    /// bounded preferred width makes multi-line height compute correctly.
+    private func makeCompressible(_ label: NSTextField, wrapWidth: CGFloat? = nil) {
+        label.setContentCompressionResistancePriority(NSLayoutConstraint.Priority(1), for: .horizontal)
+        if let wrapWidth { label.preferredMaxLayoutWidth = wrapWidth }
     }
 
     private func embed(
