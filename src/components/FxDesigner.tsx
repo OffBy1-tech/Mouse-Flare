@@ -10,7 +10,7 @@ import { NeonSelect } from './NeonSelect';
 // a two-column slider grid. Every change previews live on the cursor as an FX
 // draft — Apply & Save commits it, closing the window reverts it.
 
-interface ParticleFxEditorProps {
+interface FxDesignerProps {
   currentConfig?: ParticleFxConfig;
   onApplyToCursor?: (config: ParticleFxConfig) => void;
 }
@@ -122,7 +122,7 @@ const POPUP_SPECS: { label: string; field: PopupField; options: { value: string;
 
 const HINT = 'Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.';
 
-export const ParticleFxEditor: React.FC<ParticleFxEditorProps> = ({ currentConfig, onApplyToCursor }) => {
+export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyToCursor }) => {
   const [customPresets, setCustomPresets] = useState<ParticleFxConfig[]>(() => {
     try {
       const saved = localStorage.getItem('mouseflare_custom_fx_presets');

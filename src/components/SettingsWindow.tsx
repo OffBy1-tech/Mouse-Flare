@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, ColorPreset, FlarePreset, FxPreset } from '../types';
 import { NATIVE_SOURCE_FILES } from '../data/nativeSource';
-import { ParticleFxEditor } from './ParticleFxEditor';
+import { FxDesigner } from './FxDesigner';
 import { NeonSelect } from './NeonSelect';
 import { downloadWindowsNativeZip, downloadMacNativeZip, downloadCrossPlatformZip } from '../utils/nativeDownloader';
 import {
@@ -955,10 +955,9 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
               </div>
             )}
 
-            {/* TAB 3: BEHAVIOR & MONITORS */}
-            {/* TAB: PARTICLE FX DESIGNER */}
+            {/* TAB: FX DESIGNER */}
             {activeTab === 'fx-designer' && (
-              <ParticleFxEditor
+              <FxDesigner
                 currentConfig={settings.customFxConfig}
                 onApplyToCursor={(customConfig) => {
                   updateFxDraft({
