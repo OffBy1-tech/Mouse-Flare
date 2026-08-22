@@ -232,7 +232,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
   const selectedIsCustom = customPresets.some((p) => p.id === sourcePresetId);
 
   return (
-    <div className="space-y-4 text-xs text-neutral-300">
+    <div className="space-y-6 text-xs text-neutral-300">
       <div>
         <h2 className="text-lg font-bold text-neutral-100">FX Designer</h2>
         <p className="text-xs text-neutral-400 mt-0.5">{HINT}</p>
@@ -312,7 +312,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {POPUP_SPECS.map((spec) => (
           <div key={spec.field}>
-            <label className="text-[10px] text-neutral-500 block mb-1">{spec.label}</label>
+            <label className="text-[11px] text-neutral-400 block mb-1">{spec.label}</label>
             <NeonSelect
               value={config[spec.field]}
               onChange={(v) => applyEdit({ [spec.field]: v } as Partial<ParticleFxConfig>)}
@@ -325,7 +325,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
       </div>
 
       {/* Colors + glow */}
-      <div className="p-3.5 rounded-xl neon-card flex flex-wrap items-center gap-4">
+      <div className="p-4 rounded-xl neon-card flex flex-wrap items-center gap-4">
         <span className="text-neutral-400">Colors:</span>
         {(
           [
@@ -357,12 +357,12 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
       </div>
 
       {/* Sliders (two per row) */}
-      <div className="p-3.5 rounded-xl neon-card grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+      <div className="p-4 rounded-xl neon-card grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
         {SLIDER_SPECS.map((spec) => (
-          <div key={spec.field}>
-            <div className="flex justify-between mb-1">
-              <span className="text-neutral-300">{spec.label}</span>
-              <span className="font-mono text-violet-300">{spec.fmt(config[spec.field])}</span>
+          <div key={spec.field} className="space-y-1.5">
+            <div className="flex justify-between text-xs">
+              <span className="text-neutral-300 font-medium">{spec.label}</span>
+              <span className="text-violet-300 font-mono font-bold">{spec.fmt(config[spec.field])}</span>
             </div>
             <input
               type="range"
@@ -371,7 +371,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
               step={spec.step}
               value={config[spec.field]}
               onChange={(e) => applyEdit({ [spec.field]: Number(e.target.value) } as Partial<ParticleFxConfig>)}
-              className="neon-range w-full"
+              className="w-full neon-range bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
             />
           </div>
         ))}
