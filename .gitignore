@@ -8,3 +8,6 @@ coverage/
 .DS_Store
 *.log
 .env*
+
+# Superpowers scratch (progress ledger, task briefs)
+.superpowers/
