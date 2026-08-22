@@ -116,6 +116,16 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
+  // FX Designer statuses (save/load/import feedback) surface in the same
+  // title-bar pill; the timer is cleared so rapid actions don't cut each
+  // other short.
+  const fxStatusTimer = useRef<number | undefined>(undefined);
+  const showFxStatus = (message: string) => {
+    setSaveStatus(message);
+    window.clearTimeout(fxStatusTimer.current);
+    fxStatusTimer.current = window.setTimeout(() => setSaveStatus(null), 3000);
+  };
+
   // Sync initial tab if passed from outside (e.g. clicking notification banner)
   useEffect(() => {
     if (initialTab) {
@@ -966,6 +976,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     enablePassiveFx: true,
                   });
                 }}
+                onStatus={showFxStatus}
               />
             )}
 

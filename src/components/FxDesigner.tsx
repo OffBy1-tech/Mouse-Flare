@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ParticleFxConfig } from '../types/fxEditor';
 import { DEFAULT_FX_PRESETS } from '../data/defaultFxPresets';
 import { soundEngine } from '../engine/sound';
@@ -13,6 +13,7 @@ import { NeonSelect } from './NeonSelect';
 interface FxDesignerProps {
   currentConfig?: ParticleFxConfig;
   onApplyToCursor?: (config: ParticleFxConfig) => void;
+  onStatus?: (message: string) => void;
 }
 
 type NumberField = {
@@ -122,7 +123,7 @@ const POPUP_SPECS: { label: string; field: PopupField; options: { value: string;
 
 const HINT = 'Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.';
 
-export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyToCursor }) => {
+export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyToCursor, onStatus }) => {
   const [customPresets, setCustomPresets] = useState<ParticleFxConfig[]>(() => {
     try {
       const saved = localStorage.getItem('mouseflare_custom_fx_presets');
@@ -142,14 +143,6 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
     allPresets.some((p) => p.id === config.id) ? config.id : ''
   );
 
-  const [status, setStatusText] = useState<string | null>(null);
-  const statusTimer = useRef<number | undefined>(undefined);
-  const setStatus = (message: string) => {
-    setStatusText(message);
-    window.clearTimeout(statusTimer.current);
-    statusTimer.current = window.setTimeout(() => setStatusText(null), 4000);
-  };
-
   const applyEdit = (partial: Partial<ParticleFxConfig>) => {
     const next = { ...config, ...partial };
     setConfig(next);
@@ -166,7 +159,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
     setSourcePresetId(presetId);
     onApplyToCursor?.(next);
     soundEngine.playClick();
-    setStatus(`Loaded archetype: ${found.name} — previewing live on your cursor`);
+    onStatus?.(`Loaded archetype: ${found.name} — previewing live on your cursor`);
   };
 
   const handleSaveToLibrary = () => {
@@ -189,7 +182,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
     setConfig(preset);
     setSourcePresetId(id);
     soundEngine.playClick();
-    setStatus(`Saved "${name}" to your preset library`);
+    onStatus?.(`Saved "${name}" to your preset library`);
   };
 
   const handleDeletePreset = () => {
@@ -202,13 +195,13 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
     } catch (e) {}
     setSourcePresetId('');
     soundEngine.playClick();
-    setStatus(`Deleted "${target.name}" from your preset library`);
+    onStatus?.(`Deleted "${target.name}" from your preset library`);
   };
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(JSON.stringify(config, null, 2));
     soundEngine.playClick();
-    setStatus(`Copied ${config.name} as JSON — importable on any platform`);
+    onStatus?.(`Copied ${config.name} as JSON — importable on any platform`);
   };
 
   const handleImportClipboard = async () => {
@@ -227,12 +220,12 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
         setSourcePresetId('');
         onApplyToCursor?.(next);
         soundEngine.playClick();
-        setStatus(`Imported: ${next.name}`);
+        onStatus?.(`Imported: ${next.name}`);
       } else {
-        setStatus('⚠️ Clipboard does not contain a valid FX Designer config.');
+        onStatus?.('⚠️ Clipboard does not contain a valid FX Designer config.');
       }
     } catch (err) {
-      setStatus('⚠️ Could not read clipboard — copy an FX Designer JSON first.');
+      onStatus?.('⚠️ Could not read clipboard — copy an FX Designer JSON first.');
     }
   };
 
@@ -242,7 +235,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
     <div className="space-y-4 text-xs text-neutral-300">
       <div>
         <h2 className="text-lg font-bold text-neutral-100">FX Designer</h2>
-        <p className="text-xs text-neutral-400 mt-0.5">{status ?? HINT}</p>
+        <p className="text-xs text-neutral-400 mt-0.5">{HINT}</p>
       </div>
 
       {/* Header: archetype picker, name, actions */}
