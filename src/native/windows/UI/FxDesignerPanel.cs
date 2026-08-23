@@ -188,7 +188,7 @@ namespace Mouseflare.UI
 
             // Header: archetype picker, name, actions
             var header = new DockPanel { LastChildFill = false, Margin = new Thickness(0, 0, 0, 4) };
-            _archetypes = new ComboBox { Width = 190, FontSize = 13 };
+            _archetypes = new ComboBox { Width = 190, FontSize = 13, IsTextSearchEnabled = false };
             _archetypes.SelectionChanged += (s, e) =>
             {
                 if (_suppress || _archetypes.SelectedIndex < 0) return;

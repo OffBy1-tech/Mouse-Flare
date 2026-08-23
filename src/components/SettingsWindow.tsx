@@ -156,22 +156,31 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     title: string;
     initial: string;
     prior: string;
+    priorPreset: ColorPreset;
     swatchIndex: number | null;
   } | null>(null);
   const openCustomColorPicker = () =>
-    setColorPicker({ title: 'Custom Color', initial: settings.customColor, prior: settings.customColor, swatchIndex: null });
+    setColorPicker({
+      title: 'Custom Color',
+      initial: settings.customColor,
+      prior: settings.customColor,
+      priorPreset: settings.colorPreset,
+      swatchIndex: null,
+    });
   const beginSwatchEdit = (index: number) =>
     setColorPicker({
       title: `Quick Color ${index + 1}`,
       initial: quickSwatches[index],
       prior: settings.customColor,
+      priorPreset: settings.colorPreset,
       swatchIndex: index,
     });
   const finishColorPicker = (hex: string | null) => {
     if (!colorPicker) return;
     if (hex === null) {
-      // Cancel: restore whatever was applied before the picker opened
-      updateFxDraft({ customColor: colorPicker.prior });
+      // Cancel: restore both the color and the palette selection that were
+      // live before the picker opened (onLive may have flipped to 'custom')
+      updateFxDraft({ customColor: colorPicker.prior, colorPreset: colorPicker.priorPreset });
     } else if (colorPicker.swatchIndex !== null) {
       const next = [...quickSwatches];
       next[colorPicker.swatchIndex] = hex;

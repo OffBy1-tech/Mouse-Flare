@@ -358,7 +358,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
           </label>
         ))}
         <div className="flex-1" />
-        <label className="flex items-center gap-2 cursor-pointer">
+        <div className="flex items-center gap-2">
           <span className="text-neutral-400">Glow Bloom</span>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -369,7 +369,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
           />
             <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
           </label>
-        </label>
+        </div>
       </div>
 
       {/* Sliders (two per row) */}

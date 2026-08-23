@@ -70,6 +70,7 @@ namespace Mouseflare.UI
             chkMonitorCrossing.IsChecked = _overlay.MonitorCrossingFxEnabled;
             chkSoundFx.IsChecked = _overlay.SoundFxEnabled;
             chkStartWithWindows.IsChecked = _overlay.StartWithWindows;
+            txtMinisignCommand.Text = $"minisign -Vm Mouseflare-Windows.zip -P {Core.MinisignVerifier.MouseflarePublicKey}";
             chkAutoUpdates.IsChecked = _overlay.AutoCheckUpdates;
             RefreshUpdatesTab();
 

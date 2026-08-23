@@ -63,6 +63,7 @@ export const NeonColorPicker: React.FC<NeonColorPickerProps> = ({
   onCancel,
 }) => {
   const [hsv, setHsv] = useState(() => hexToHsv(initial));
+  const dirtyRef = useRef(false);
   const hex = hsvToHex(hsv.h, hsv.s, hsv.v);
   const [hexDraft, setHexDraft] = useState(hex);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,6 +73,7 @@ export const NeonColorPicker: React.FC<NeonColorPickerProps> = ({
 
   const setColor = useCallback(
     (next: { h: number; s: number; v: number }) => {
+      dirtyRef.current = true;
       setHsv(next);
       onLive(hsvToHex(next.h, next.s, next.v));
     },
@@ -136,13 +138,15 @@ export const NeonColorPicker: React.FC<NeonColorPickerProps> = ({
       ctx.stroke();
     };
     drawHandle(cx + Math.cos(hueAngle) * hueR, cy + Math.sin(hueAngle) * hueR, `hsl(${hsv.h}, 100%, 50%)`);
-    const sx = cx + (hsv.s * 2 - 1) * DISC_RADIUS;
-    const sy = cy + (1 - hsv.v * 2) * DISC_RADIUS;
-    drawHandle(
-      Math.max(cx - DISC_RADIUS, Math.min(cx + DISC_RADIUS, sx)),
-      Math.max(cy - DISC_RADIUS, Math.min(cy + DISC_RADIUS, sy)),
-      hex
-    );
+    // Radial clamp like the native picker: keep the SV handle on the disc
+    let dx = (hsv.s * 2 - 1) * DISC_RADIUS;
+    let dy = (1 - hsv.v * 2) * DISC_RADIUS;
+    const dist = Math.hypot(dx, dy);
+    if (dist > DISC_RADIUS) {
+      dx = (dx / dist) * DISC_RADIUS;
+      dy = (dy / dist) * DISC_RADIUS;
+    }
+    drawHandle(cx + dx, cy + dy, hex);
   }, [hsv, hex]);
 
   const applyPointer = useCallback(
@@ -238,6 +242,8 @@ export const NeonColorPicker: React.FC<NeonColorPickerProps> = ({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onLostPointerCapture={handlePointerUp}
         />
 
         {/* Hex entry */}
@@ -278,7 +284,7 @@ export const NeonColorPicker: React.FC<NeonColorPickerProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onDone(hex)}
+            onClick={() => onDone(dirtyRef.current ? hex : initial)}
             className="neon-btn-primary px-4 py-2 rounded-xl font-bold cursor-pointer"
           >
             Done

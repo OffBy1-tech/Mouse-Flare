@@ -1293,7 +1293,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         )
         securityBody.lineBreakMode = .byWordWrapping
         securityBody.maximumNumberOfLines = 3
-        let minisignCommand = "minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw"
+        let minisignCommand = "minisign -Vm Mouseflare-macOS.zip -P \(Minisign.mouseflarePublicKey)"
         let commandLabel = makeLabel(minisignCommand, size: 10, weight: .regular, color: Theme.neonValue)
         commandLabel.font = .monospacedSystemFont(ofSize: 10, weight: .regular)
         commandLabel.lineBreakMode = .byCharWrapping
