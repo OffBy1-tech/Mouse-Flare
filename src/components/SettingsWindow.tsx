@@ -598,7 +598,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         { id: 'ink-diffusion', label: 'Ink Diffusion', desc: 'Organic watercolor plumes in water' },
                         { id: 'spark-trail', label: 'Spark Trail', desc: 'Golden kinetic embers with gravity decay' },
                         { id: 'glow-pulse', label: 'Glow Pulse', desc: 'Soft luminous aura around cursor' },
-                        { id: 'comet-trail', label: 'Comet Trail', desc: 'High-speed blazing ribbon tail' },
+                        { id: 'comet-trail', label: 'Comet Tail', desc: 'High-speed blazing ribbon tail' },
                         { id: 'bubbles', label: 'Bubbles', desc: 'Floating translucent glowing orbs' },
                         { id: 'fireflies', label: 'Fireflies', desc: 'Organic bioluminescent drifters' },
                         { id: 'star-dust', label: 'Star Dust', desc: 'Twinkling 4-point celestial stars' },
@@ -852,14 +852,14 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs">
                         <span className="text-neutral-300 font-medium">Vorticity (Curl Spin Strength):</span>
-                        <span className="text-cyan-400 font-mono font-bold">{(settings.fluidVorticity ?? 1.5).toFixed(1)}x</span>
+                        <span className="text-cyan-400 font-mono font-bold">{(settings.fluidVorticity ?? 0.85).toFixed(1)}x</span>
                       </div>
                       <input
                         type="range"
-                        min="0.2"
-                        max="3.0"
+                        min="0.1"
+                        max="2.0"
                         step="0.1"
-                        value={settings.fluidVorticity ?? 1.5}
+                        value={settings.fluidVorticity ?? 0.85}
                         onChange={(e) => updateFxDraft({ fluidVorticity: parseFloat(e.target.value) })}
                         className="w-full neon-range-cyan bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                       />
@@ -1362,7 +1362,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         onChange={(v) => updateInstant({ checkIntervalHours: Number(v) })}
                         options={[
                           { value: '6', label: 'Every 6 Hours (High Frequency)' },
-                          { value: '24', label: 'Every 24 Hours (Daily - Recommended)' },
+                          { value: '24', label: 'Every 24 Hours (Daily)' },
                           { value: '72', label: 'Every 72 Hours (Weekly)' },
                           { value: '0', label: 'Manual Checks Only' },
                         ]}

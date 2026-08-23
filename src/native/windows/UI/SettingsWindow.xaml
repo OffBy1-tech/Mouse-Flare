@@ -1676,7 +1676,7 @@
                                                 </DockPanel>
                                                 <ComboBox x:Name="cmbCheckFrequency" Height="30" FontSize="11" SelectionChanged="OnCheckFrequencyChanged">
                                                     <ComboBoxItem Content="Every 6 Hours (High Frequency)" Tag="6"/>
-                                                    <ComboBoxItem Content="Every 24 Hours (Daily — Recommended)" Tag="24"/>
+                                                    <ComboBoxItem Content="Every 24 Hours (Daily)" Tag="24"/>
                                                     <ComboBoxItem Content="Every 72 Hours (Weekly)" Tag="72"/>
                                                     <ComboBoxItem Content="Manual Checks Only" Tag="0"/>
                                                 </ComboBox>

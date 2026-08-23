@@ -64,7 +64,7 @@ export interface AppSettings {
   multiMonitorMode: boolean;
   desktopBackground: 'windows11-dark' | 'busy-editor' | 'dense-sheets' | 'multitasking' | 'light-workspace';
   // Fluid Simulation Controls (Pavel DoGreat inspired)
-  fluidVorticity: number; // 0.2 to 3.0 (curling force)
+  fluidVorticity: number; // 0.1 to 2.0 (curling force)
   fluidDissipation: number; // 0.90 to 0.99 (smoke trail persistence)
   fluidBloom: boolean; // luminescent glowing dye
   fluidRainbowDye: boolean; // chromatic multi-hue cycling dye

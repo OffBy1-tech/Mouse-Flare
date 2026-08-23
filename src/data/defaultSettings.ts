@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showDiagnostics: true,
   multiMonitorMode: false,
   desktopBackground: 'windows11-dark',
-  fluidVorticity: 1.5,
+  fluidVorticity: 0.85,
   fluidDissipation: 0.96,
   fluidBloom: true,
   fluidRainbowDye: false,
