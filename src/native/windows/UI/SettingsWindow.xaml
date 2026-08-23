@@ -437,7 +437,7 @@
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
-                                <Button Tag="spark-trail" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#FFA62E" BorderThickness="1.5" Cursor="Hand" Click="OnSelectPassivePreset">
+                                <Button Tag="spark-trail" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
@@ -891,7 +891,7 @@
                             <!-- Find Mouse Signature Flares -->
                             <TextBlock Text="Active &quot;Find Mouse&quot; Flare Animation" FontSize="12" FontWeight="Bold" Foreground="#2FD4F5" Margin="0,0,0,8"/>
                             <WrapPanel Margin="0,0,0,14">
-                                <Button Tag="solar-flare" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2FD4F5" BorderThickness="1.5" Cursor="Hand" Click="OnSelectFlarePreset">
+                                <Button Tag="solar-flare" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectFlarePreset">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>
@@ -1057,7 +1057,7 @@
                             <!-- Color Palette Chips -->
                             <TextBlock Text="Color Palette &amp; Glow Signature" FontSize="12" FontWeight="Bold" Foreground="#FAFAFA" Margin="0,0,0,8"/>
                             <WrapPanel Margin="0,0,0,10">
-                                <Button Tag="color-amber" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#FFA62E" BorderThickness="1.5" Cursor="Hand" Click="OnColorAmber">
+                                <Button Tag="color-amber" Width="116" Height="32" Margin="0,0,6,6" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnColorAmber">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Grid>

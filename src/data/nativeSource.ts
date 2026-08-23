@@ -1,4 +1,4 @@
-// The native desktop source shown in the "Native Desktop Apps" tab and bundled
+// The native desktop source bundled
 // into the downloadable zips. Imported straight from src/native/** at build time
 // via Vite glob imports, so the simulator can never drift from the real apps.
 

@@ -106,9 +106,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
   const [saveStatus, setSaveStatus] = useState<string>(READY_STATUS);
 
-  // FX Designer statuses (save/load/import feedback) surface in the same
-  // title-bar pill; the timer is cleared so rapid actions don't cut each
-  // other short.
+  // FX Designer statuses (save/load/import feedback) write to the
+  // persistent footer status line — native model, no auto-clear.
   const showFxStatus = (message: string) => setSaveStatus(message);
 
   // FX Studio shortcut mirroring the native "Import Custom FX" button — the
@@ -375,7 +374,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 </button>
               )}
 
-                            <button
+              <button
                 onClick={() => setActiveTab('updates')}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'updates'
@@ -852,7 +851,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   </div>
                 </div>
 
-                {/* Fluid Simulation Controls (Pavel DoGreat Inspired) */}
+                {/* Fluid Simulation Controls */}
                 <div className="neon-card-cyan p-4 rounded-xl space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
