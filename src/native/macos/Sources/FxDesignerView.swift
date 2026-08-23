@@ -212,7 +212,7 @@ final class FxDesignerView: NSView {
         let saveButton = smallButton("Save") { [weak self] in
             self?.saveToLibrary()
         }
-        deleteButton = smallButtonControl("Delete", titleColor: NSColor(hexString: "#F87171"), border: NSColor(hexString: "#F87171").withAlphaComponent(0.4)) { [weak self] in
+        deleteButton = trashIconButton { [weak self] in
             self?.deleteSelectedPreset()
         }
         deleteButton.isHidden = true
@@ -399,6 +399,41 @@ final class FxDesignerView: NSView {
             inner.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -padding),
         ])
         return card
+    }
+
+    /// Icon-only delete button (lucide trash-2, red) — matches the web designer.
+    private func trashIconButton(action: @escaping () -> Void) -> CardButton {
+        let button = CardButton()
+        button.layer?.cornerRadius = 6
+        button.setStyle(background: NSColor(hexString: "#F87171").withAlphaComponent(0.10), border: NSColor(hexString: "#F87171").withAlphaComponent(0.4), borderWidth: 1)
+        button.toolTip = "Delete this custom preset from your library"
+        if let url = Bundle.module.url(forResource: "trash", withExtension: "svg", subdirectory: "NavIcons"),
+           let image = NSImage(contentsOf: url) {
+            let imageView = NSImageView(image: image)
+            imageView.imageScaling = .scaleProportionallyUpOrDown
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            button.addSubview(imageView)
+            NSLayoutConstraint.activate([
+                imageView.centerXAnchor.constraint(equalTo: button.centerXAnchor),
+                imageView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+                imageView.widthAnchor.constraint(equalToConstant: 13),
+                imageView.heightAnchor.constraint(equalToConstant: 13),
+                button.widthAnchor.constraint(equalToConstant: 30),
+                button.heightAnchor.constraint(equalToConstant: 26),
+            ])
+        } else {
+            let titleLabel = label("Delete", size: 12, color: NSColor(hexString: "#F87171"))
+            titleLabel.translatesAutoresizingMaskIntoConstraints = false
+            button.addSubview(titleLabel)
+            NSLayoutConstraint.activate([
+                titleLabel.centerXAnchor.constraint(equalTo: button.centerXAnchor),
+                titleLabel.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+                button.widthAnchor.constraint(greaterThanOrEqualTo: titleLabel.widthAnchor, constant: 18),
+                button.heightAnchor.constraint(equalToConstant: 26),
+            ])
+        }
+        button.onClick = action
+        return button
     }
 
     private func smallButton(_ title: String, action: @escaping () -> Void) -> CardButton {

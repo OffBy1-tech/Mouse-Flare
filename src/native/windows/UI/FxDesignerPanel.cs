@@ -204,8 +204,7 @@ namespace Mouseflare.UI
             _nameBox.LostFocus += (s, e) => ControlsChanged();
 
             var save = SmallButton("Save", SaveToLibrary);
-            _deleteBtn = SmallButton("Delete", DeleteSelectedPreset);
-            _deleteBtn.Foreground = Hex("#F87171");
+            _deleteBtn = TrashIconButton(DeleteSelectedPreset);
             _deleteBtn.Visibility = Visibility.Collapsed;
             var copy = SmallButton("Copy JSON", () =>
             {
@@ -375,6 +374,39 @@ namespace Mouseflare.UI
             Foreground = Hex("#A1A1AA"),
             VerticalAlignment = VerticalAlignment.Center,
         };
+
+        /// <summary>Icon-only delete button (lucide trash-2, red) — matches the web designer.</summary>
+        private Button TrashIconButton(Action onClick)
+        {
+            var canvas = new Canvas { Width = 24, Height = 24 };
+            string[] trash =
+            {
+                "M10 11v6", "M14 11v6",
+                "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6",
+                "M3 6h18", "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+            };
+            foreach (var d in trash)
+            {
+                canvas.Children.Add(new System.Windows.Shapes.Path
+                {
+                    Data = Geometry.Parse(d),
+                    Stroke = Hex("#F87171"),
+                    StrokeThickness = 2,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
+                    StrokeLineJoin = PenLineJoin.Round,
+                });
+            }
+            var button = new Button
+            {
+                Content = new Viewbox { Width = 12, Height = 12, Child = canvas },
+                Padding = new Thickness(8, 5, 8, 5),
+                Margin = new Thickness(6, 0, 0, 0),
+                ToolTip = "Delete this custom preset from your library",
+            };
+            button.Click += (s, e) => onClick();
+            return button;
+        }
 
         private Button SmallButton(string title, Action onClick)
         {
