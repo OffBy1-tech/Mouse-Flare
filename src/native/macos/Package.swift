@@ -14,7 +14,8 @@ let package = Package(
             name: "Mouseflare",
             path: "Sources",
             resources: [
-                .copy("Resources/app-logo.png")
+                .copy("Resources/app-logo.png"),
+                .copy("Resources/NavIcons")
             ]
         )
     ]

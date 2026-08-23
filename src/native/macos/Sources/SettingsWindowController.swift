@@ -591,16 +591,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         navStack.translatesAutoresizingMaskIntoConstraints = false
         sidebar.addSubview(navStack)
 
-        let navItems: [(id: String, icon: String, title: String)] = [
-            ("general", "🔥", "General"),
-            ("fx-studio", "✨", "FX Studio"),
-            ("fx-designer", "🧪", "FX Designer"),
-            ("behavior", "🎛️", "Behavior & Monitors"),
-            ("diagnostics", "📊", "Diagnostics"),
-            ("updates", "🔄", "Check for Updates")
+        let navItems: [(id: String, icon: String, svg: String, title: String)] = [
+            ("general", "🔥", "nav-general", "General"),
+            ("fx-studio", "✨", "nav-fx-studio", "FX Studio"),
+            ("fx-designer", "🧪", "nav-fx-designer", "FX Designer"),
+            ("behavior", "🎛️", "nav-behavior", "Behavior & Monitors"),
+            ("diagnostics", "📊", "nav-diagnostics", "Diagnostics"),
+            ("updates", "🔄", "nav-updates", "Check for Updates")
         ]
         for item in navItems {
-            let (card, titleField) = makeNavButton(icon: item.icon, title: item.title)
+            let (card, titleField) = makeNavButton(icon: item.icon, svgResource: item.svg, title: item.title)
             card.onClick = { [weak self] in self?.selectTab(item.id) }
             navButtons[item.id] = (card, titleField)
             navStack.addArrangedSubview(card)
@@ -1978,12 +1978,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return row
     }
 
-    private func makeNavButton(icon: String, title: String) -> (CardButton, NSTextField) {
+    private func makeNavButton(icon: String, svgResource: String, title: String) -> (CardButton, NSTextField) {
         let card = CardButton()
         card.layer?.cornerRadius = 7
         card.setStyle(background: .clear, border: .clear, borderWidth: 0)
         card.heightAnchor.constraint(equalToConstant: 38).isActive = true
-        let tile = makeIconTile(emoji: icon, background: Theme.cardBg, size: 20, corner: 4)
+        // Lucide SVG icons (shared with the web build); emoji is the fallback
+        // if the bundled resource ever fails to load.
+        let tile = makeSvgIconTile(resource: svgResource, fallbackEmoji: icon, background: Theme.cardBg, size: 20, corner: 4)
         let titleLabel = makeLabel(title, size: 12, weight: .semibold, color: Theme.textPrimary)
         let row = NSStackView(views: [tile, titleLabel])
         row.orientation = .horizontal
@@ -2049,6 +2051,31 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         imageView.widthAnchor.constraint(equalToConstant: size).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: size).isActive = true
         return imageView
+    }
+
+    private func makeSvgIconTile(resource: String, fallbackEmoji: String, background: NSColor, size: CGFloat, corner: CGFloat) -> NSView {
+        guard let url = Bundle.module.url(forResource: resource, withExtension: "svg", subdirectory: "NavIcons"),
+              let image = NSImage(contentsOf: url) else {
+            return makeIconTile(emoji: fallbackEmoji, background: background, size: size, corner: corner)
+        }
+        let tile = NSView()
+        tile.wantsLayer = true
+        tile.layer?.backgroundColor = background.cgColor
+        tile.layer?.cornerRadius = corner
+        tile.translatesAutoresizingMaskIntoConstraints = false
+        tile.widthAnchor.constraint(equalToConstant: size).isActive = true
+        tile.heightAnchor.constraint(equalToConstant: size).isActive = true
+        let imageView = NSImageView(image: image)
+        imageView.imageScaling = .scaleProportionallyUpOrDown
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        tile.addSubview(imageView)
+        NSLayoutConstraint.activate([
+            imageView.centerXAnchor.constraint(equalTo: tile.centerXAnchor),
+            imageView.centerYAnchor.constraint(equalTo: tile.centerYAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: size * 0.7),
+            imageView.heightAnchor.constraint(equalToConstant: size * 0.7),
+        ])
+        return tile
     }
 
     private func makeIconTile(emoji: String, background: NSColor, size: CGFloat, corner: CGFloat) -> NSView {
