@@ -83,7 +83,7 @@ export const DesktopSimulator: React.FC<DesktopSimulatorProps> = ({
           className="flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-white/10 transition-colors w-20 text-center group"
         >
           <img
-            src="/app-logo.png"
+            src={`${import.meta.env.BASE_URL}app-logo.png`}
             alt="Mouseflare"
             className="w-11 h-11 rounded-xl shadow-lg group-hover:scale-105 transition-transform"
           />
