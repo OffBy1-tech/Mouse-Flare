@@ -165,9 +165,9 @@ final class FxDesignerView: NSView {
     }
 
     private func loadPreset(_ preset: CustomFxConfig) {
-        var loaded = preset
-        loaded.id = "custom-\(Int(Date.timeIntervalSinceReferenceDate))"
-        config = loaded
+        // Keep the preset's own id so reopening the designer re-selects it in
+        // the popup; Save mints a fresh id for anything not from the library.
+        config = preset
         syncControls()
         apply()
         onStatus?("Loaded preset: \(preset.name) — previewing live on your cursor")

@@ -152,9 +152,9 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
   const loadPreset = (presetId: string) => {
     const found = allPresets.find((p) => p.id === presetId);
     if (!found) return;
-    const next: ParticleFxConfig = found.isCustom
-      ? { ...found }
-      : { ...found, id: `custom-${Date.now()}` };
+    // Keep the preset's own id so reopening the designer re-selects it in
+    // the dropdown; Save mints a fresh id for anything not from the library.
+    const next: ParticleFxConfig = { ...found };
     setConfig(next);
     setSourcePresetId(presetId);
     onApplyToCursor?.(next);

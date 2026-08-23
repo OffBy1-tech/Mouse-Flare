@@ -179,9 +179,9 @@ namespace Mouseflare.UI
                 int archetypeCount = DefaultFxPresets.Archetypes.Count;
                 if (index < archetypeCount)
                 {
-                    var loaded = Clone(DefaultFxPresets.Archetypes[index]);
-                    loaded.id = $"custom-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
-                    _config = loaded;
+                    // Keep the preset's own id so reopening the designer
+                    // re-selects it; Save mints a fresh id for non-library drafts
+                    _config = Clone(DefaultFxPresets.Archetypes[index]);
                     _selectedCustomId = null;
                 }
                 else if (index - archetypeCount < _customPresets.Count)
