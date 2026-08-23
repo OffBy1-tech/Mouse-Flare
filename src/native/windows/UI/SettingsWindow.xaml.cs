@@ -79,6 +79,8 @@ namespace Mouseflare.UI
             sliderThreshold.Value = _overlay.MinMovementThreshold;
             sliderVorticity.Value = _overlay.FluidVorticity;
             sliderDissipation.Value = _overlay.FluidDissipation;
+            chkFluidBloom.IsChecked = _overlay.FluidBloom;
+            chkFluidRainbow.IsChecked = _overlay.FluidRainbowDye;
             txtVorticityVal.Text = string.Format("{0:0.0}x", _overlay.FluidVorticity);
             txtDissipationVal.Text = string.Format("{0:0}%", _overlay.FluidDissipation * 100);
             txtSidebarVersion.Text = Core.Updater.Shared.IsDevBuild
@@ -981,6 +983,20 @@ namespace Mouseflare.UI
             if (txtVorticityVal != null) txtVorticityVal.Text = string.Format("{0:0.0}x", sliderVorticity.Value);
         }
 
+        private void OnFluidBloomChanged(object sender, RoutedEventArgs e)
+        {
+            if (_overlay == null || _loading) return;
+            _overlay.FluidBloom = chkFluidBloom.IsChecked == true;
+            SetStatusText("Fluid dye options updated \u2022 Click Apply & Save to keep");
+        }
+
+        private void OnFluidRainbowChanged(object sender, RoutedEventArgs e)
+        {
+            if (_overlay == null || _loading) return;
+            _overlay.FluidRainbowDye = chkFluidRainbow.IsChecked == true;
+            SetStatusText("Fluid dye options updated \u2022 Click Apply & Save to keep");
+        }
+
         private void OnDissipationChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (_overlay != null) _overlay.FluidDissipation = sliderDissipation.Value;
@@ -1146,6 +1162,8 @@ namespace Mouseflare.UI
             settings.MinMovementThreshold = _committedFx.MinMovementThreshold;
             settings.FluidVorticity = _committedFx.FluidVorticity;
             settings.FluidDissipation = _committedFx.FluidDissipation;
+            settings.FluidBloom = _committedFx.FluidBloom;
+            settings.FluidRainbowDye = _committedFx.FluidRainbowDye;
             settings.QuickSwatches = (string[])_committedFx.QuickSwatches.Clone();
             settings.CustomFxJson = _committedFx.CustomFxJson;
             return settings;
@@ -1172,6 +1190,8 @@ namespace Mouseflare.UI
             _overlay.MinMovementThreshold = _committedFx.MinMovementThreshold;
             _overlay.FluidVorticity = _committedFx.FluidVorticity;
             _overlay.FluidDissipation = _committedFx.FluidDissipation;
+            _overlay.FluidBloom = _committedFx.FluidBloom;
+            _overlay.FluidRainbowDye = _committedFx.FluidRainbowDye;
             _overlay.QuickSwatches = (string[])_committedFx.QuickSwatches.Clone();
             _overlay.CustomFxJson = _committedFx.CustomFxJson;
         }

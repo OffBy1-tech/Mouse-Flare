@@ -349,6 +349,8 @@ namespace Mouseflare
             overlay.FluidVorticity = s.FluidVorticity;
             overlay.FluidDissipation = s.FluidDissipation;
             overlay.CustomFxJson = s.CustomFxJson;
+            overlay.FluidBloom = s.FluidBloom;
+            overlay.FluidRainbowDye = s.FluidRainbowDye;
             overlay.CustomFxPresets = s.CustomFxPresets ?? Array.Empty<string>();
             overlay.StartWithWindows = s.StartWithWindows;
             // Re-assert while enabled so the Run entry tracks the current exe path

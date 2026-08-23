@@ -27,6 +27,8 @@ public struct MacFlareSettings: Codable {
     // Fluid engine
     public var fluidVorticity: Double = 0.85
     public var fluidDissipation: Double = 0.96
+    public var fluidBloom: Bool = true
+    public var fluidRainbowDye: Bool = false
 
     // Behavior & monitors
     public var idleBurst: Bool = true
@@ -74,6 +76,8 @@ public struct MacFlareSettings: Codable {
         movementThreshold = try c.decodeIfPresent(Double.self, forKey: .movementThreshold) ?? d.movementThreshold
         fluidVorticity = try c.decodeIfPresent(Double.self, forKey: .fluidVorticity) ?? d.fluidVorticity
         fluidDissipation = try c.decodeIfPresent(Double.self, forKey: .fluidDissipation) ?? d.fluidDissipation
+        fluidBloom = try c.decodeIfPresent(Bool.self, forKey: .fluidBloom) ?? d.fluidBloom
+        fluidRainbowDye = try c.decodeIfPresent(Bool.self, forKey: .fluidRainbowDye) ?? d.fluidRainbowDye
         idleBurst = try c.decodeIfPresent(Bool.self, forKey: .idleBurst) ?? d.idleBurst
         monitorCrossingFx = try c.decodeIfPresent(Bool.self, forKey: .monitorCrossingFx) ?? d.monitorCrossingFx
         soundFx = try c.decodeIfPresent(Bool.self, forKey: .soundFx) ?? d.soundFx
@@ -133,6 +137,8 @@ public extension MacFlareSettings {
         movementThreshold = other.movementThreshold
         fluidVorticity = other.fluidVorticity
         fluidDissipation = other.fluidDissipation
+        fluidBloom = other.fluidBloom
+        fluidRainbowDye = other.fluidRainbowDye
         customFxJson = other.customFxJson
     }
 }

@@ -359,6 +359,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private var switchEnabled: NeonSwitch!
     private var switchPassive: NeonSwitch!
     private var switchStartAtLogin: NeonSwitch!
+    private var switchFluidBloom: NeonSwitch!
+    private var switchFluidRainbow: NeonSwitch!
     private var switchSound: NeonSwitch!
     private var switchAutoUpdate: NeonSwitch!
     private var switchIdleBurst: NeonSwitch!
@@ -993,13 +995,36 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             right: makeSliderColumn(title: "Smoke Persistence (Dissipation)", slider: sliderDissipation, valueLabel: valueDissipation)
         )
 
-        let fluidStack = NSStackView(views: [fluidTitle, fluidSub, fluidGrid])
+        switchFluidBloom = NeonSwitch()
+        switchFluidBloom.target = self
+        switchFluidBloom.action = #selector(fluidTogglesChanged)
+        let bloomRow = makeToggleCard(
+            title: "Luminescent Glowing Bloom",
+            subtitle: "Additive blend mode for intense neon glow",
+            control: switchFluidBloom
+        )
+        switchFluidRainbow = NeonSwitch()
+        switchFluidRainbow.target = self
+        switchFluidRainbow.action = #selector(fluidTogglesChanged)
+        let rainbowRow = makeToggleCard(
+            title: "Chromatic Rainbow Dye Cycle",
+            subtitle: "Cycles vivid spectrum hues as mouse moves",
+            control: switchFluidRainbow
+        )
+        let fluidToggles = NSStackView(views: [bloomRow, rainbowRow])
+        fluidToggles.orientation = .horizontal
+        fluidToggles.spacing = 10
+        fluidToggles.distribution = .fillEqually
+
+        let fluidStack = NSStackView(views: [fluidTitle, fluidSub, fluidGrid, fluidToggles])
         fluidStack.orientation = .vertical
         fluidStack.alignment = .leading
         fluidStack.spacing = 4
         fluidStack.setCustomSpacing(12, after: fluidSub)
         embed(fluidStack, in: fluidCard, padding: 14)
         fluidGrid.widthAnchor.constraint(equalTo: fluidStack.widthAnchor).isActive = true
+        fluidToggles.widthAnchor.constraint(equalTo: fluidStack.widthAnchor).isActive = true
+        fluidStack.setCustomSpacing(12, after: fluidGrid)
         stack.addArrangedSubview(fluidCard)
         fluidCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     }
@@ -1523,6 +1548,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         switchPassive.state = cfg.passiveFxEnabled ? .on : .off
         switchStartAtLogin.state = cfg.startAtLogin ? .on : .off
         switchSound.state = cfg.soundFx ? .on : .off
+        switchFluidBloom.state = cfg.fluidBloom ? .on : .off
+        switchFluidRainbow.state = cfg.fluidRainbowDye ? .on : .off
         switchAutoUpdate.state = cfg.autoCheckUpdates ? .on : .off
         switchIdleBurst.state = cfg.idleBurst ? .on : .off
         switchMonitorCrossing.state = cfg.monitorCrossingFx ? .on : .off
@@ -1607,6 +1634,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // toggle commits instantly, so fold it into the baseline.
         fxBaseline?.passiveFxEnabled = cfg.passiveFxEnabled
         (NSApp.delegate as? AppDelegate)?.applyStartAtLogin(cfg.startAtLogin)
+    }
+
+    /// Fluid dye toggles live in the FX draft domain: they preview live and
+    /// commit on Apply & Save (unlike togglesChanged's instant General set).
+    @objc private func fluidTogglesChanged() {
+        var cfg = SettingsManager.shared.settings
+        cfg.fluidBloom = switchFluidBloom.state == .on
+        cfg.fluidRainbowDye = switchFluidRainbow.state == .on
+        SettingsManager.shared.settings = cfg
+        setStatus("Fluid dye options updated • Apply & Save to keep")
     }
 
     @objc private func slidersChanged() {

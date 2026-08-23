@@ -40,6 +40,8 @@ namespace Mouseflare.UI
         public string[] CustomFxPresets { get; set; } = Array.Empty<string>();
         public double FluidVorticity { get; set; } = 0.85;    // 0.1 .. 2.0 (curl spin strength)
         public double FluidDissipation { get; set; } = 0.96;  // 0.90 .. 0.99 (smoke persistence)
+        public bool FluidBloom { get; set; } = true;          // additive glow halo on fluid dye
+        public bool FluidRainbowDye { get; set; }             // chromatic hue-cycled dye
 
         // Custom FX Designer (passivePreset "custom-fx"): raw designer JSON
         private string? _customFxJson;
@@ -82,6 +84,8 @@ namespace Mouseflare.UI
             CustomFxPresets = CustomFxPresets,
             FluidVorticity = FluidVorticity,
             FluidDissipation = FluidDissipation,
+            FluidBloom = FluidBloom,
+            FluidRainbowDye = FluidRainbowDye,
             Hotkey = hotkey,
         };
 
@@ -548,6 +552,8 @@ namespace Mouseflare.UI
                         Color dyeColor = PassiveFxStyle == "neon-fluid" ? HsvToRgb((_rainbowHue + i * 30) % 360, 0.95, 1.0)
                                        : PassiveFxStyle == "cosmic-vortex" ? (_rand.NextDouble() > 0.5 ? Color.FromRgb(139, 92, 246) : Color.FromRgb(6, 182, 212))
                                        : CurrentColor;
+                        // Chromatic dye cycle overrides the preset dye, like the web engine
+                        if (FluidRainbowDye) dyeColor = HsvToRgb((_rainbowHue + i * 30) % 360, 0.95, 1.0);
                         _particles.Add(new Particle
                         {
                             X = x + (_rand.NextDouble() - 0.5) * 6,
@@ -762,6 +768,14 @@ namespace Mouseflare.UI
                     }
                     else
                     {
+                        if (p.Type == "fluid" && FluidBloom)
+                        {
+                            // WPF has no additive blending: approximate bloom with a
+                            // soft oversized halo behind the dye particle
+                            var halo = new SolidColorBrush(Color.FromArgb((byte)(alpha * 0.35), p.Color.R, p.Color.G, p.Color.B));
+                            halo.Freeze();
+                            dc.DrawEllipse(halo, null, new Point(p.X, p.Y), p.Size * 1.9, p.Size * 1.9);
+                        }
                         dc.DrawEllipse(brush, null, new Point(p.X, p.Y), p.Size, p.Size);
                     }
                 }

@@ -34,6 +34,8 @@ namespace Mouseflare.Core
         public string[] QuickSwatches { get; set; } = { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7", "#EF4444", "#FACC15", "#22C55E" };
         public double FluidVorticity { get; set; } = 0.85;
         public double FluidDissipation { get; set; } = 0.96;
+        public bool FluidBloom { get; set; } = true;
+        public bool FluidRainbowDye { get; set; } = false;
         public string? CustomFxJson { get; set; } = null;
         // FX Designer preset library: each entry is one CustomFxConfig as JSON.
         // Saved instantly (like the web app's localStorage library), never

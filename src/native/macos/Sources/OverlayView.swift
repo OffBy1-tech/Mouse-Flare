@@ -180,7 +180,7 @@ final class OverlayView: NSView {
             let vx = CGFloat(cos(angle)) * forwardVel - CGFloat(sin(angle)) * vortexVel + CGFloat.random(in: -0.4...0.4)
             let vy = CGFloat(sin(angle)) * forwardVel + CGFloat(cos(angle)) * vortexVel + CGFloat.random(in: -0.4...0.4)
 
-            let dyeColor: NSColor
+            var dyeColor: NSColor
             switch cfg.passivePreset {
             case "neon-fluid":
                 let hue = Double((strokeIndex * 7 + index * 30) % 360) / 360.0
@@ -194,6 +194,11 @@ final class OverlayView: NSView {
             default: // fluid-simulation
                 let hue = Double((strokeIndex * 7 + index * 12) % 360) / 360.0
                 dyeColor = NSColor(hue: CGFloat(hue), saturation: 0.9, brightness: 1.0, alpha: 1.0)
+            }
+            if cfg.fluidRainbowDye {
+                // Chromatic dye cycle overrides the preset dye, like the web engine
+                let hue = Double((strokeIndex * 7 + index * 15) % 360) / 360.0
+                dyeColor = NSColor(hue: CGFloat(hue), saturation: 0.95, brightness: 1.0, alpha: 1.0)
             }
 
             return Particle(
@@ -622,8 +627,14 @@ final class OverlayView: NSView {
             customFx.draw(in: context, config: config)
         }
 
-        // Draw particles
+        // Draw particles. Fluid bloom = additive blending on curl-driven
+        // particles (fluid trails + vortex flares), mirroring the web engine.
+        let fluidPresets: Set<String> = ["fluid-simulation", "fluid-smoke", "neon-fluid", "cosmic-vortex", "ink-diffusion"]
+        let bloomActive = cfg.fluidBloom && fluidPresets.contains(cfg.passivePreset)
         for p in particles {
+            let bloom = bloomActive && p.curlRate != 0
+            if bloom { context.setBlendMode(.plusLighter) }
+            defer { if bloom { context.setBlendMode(.normal) } }
             let color = p.color.withAlphaComponent(p.alpha)
             let rect = CGRect(x: p.x - p.size * 0.5, y: p.y - p.size * 0.5, width: p.size, height: p.size)
             switch p.kind {
