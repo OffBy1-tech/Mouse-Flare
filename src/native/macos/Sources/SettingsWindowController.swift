@@ -537,12 +537,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         fxDesigner?.reloadFromSettings()
     }
 
-    /// Menu-bar preset picks commit immediately, even while the window is open —
-    /// fold them into the FX baseline so closing the window can't revert them.
-    func noteExternalPassivePresetChange() {
-        fxBaseline?.passivePreset = SettingsManager.shared.settings.passivePreset
-        refreshPresetHighlights()
-    }
 
     // MARK: Layout skeleton
 

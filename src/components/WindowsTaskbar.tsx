@@ -121,26 +121,6 @@ export const WindowsTaskbar: React.FC<WindowsTaskbarProps> = ({
               </button>
             </div>
 
-            {/* Quick Effect Selection */}
-            <div className="py-1 space-y-0.5">
-              <div className="px-3 py-1 text-[10px] uppercase font-semibold text-neutral-400">Quick FX Mode</div>
-              {(['spark-trail', 'glow-pulse', 'comet-trail', 'star-dust', 'fireflies'] as FxPreset[]).map((fx) => (
-                <button
-                  key={fx}
-                  onClick={() => {
-                    onUpdateSettings({ passiveFx: fx });
-                    setTrayMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-neutral-800 transition-colors text-left capitalize ${
-                    settings.passiveFx === fx ? 'text-amber-400 font-medium bg-amber-500/10' : 'text-neutral-300'
-                  }`}
-                >
-                  <span>{fx.replace('-', ' ')}</span>
-                  {settings.passiveFx === fx && <Check className="w-3.5 h-3.5 text-amber-400" />}
-                </button>
-              ))}
-            </div>
-
             {/* Settings & Extras */}
             <div className="py-1 space-y-0.5">
               <button

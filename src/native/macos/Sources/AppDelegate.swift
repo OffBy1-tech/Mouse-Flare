@@ -190,41 +190,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
-        // Direct FX Presets Submenu — ids shared with the Settings window & the Windows build
-        let presetsMenu = NSMenu()
-        let presets: [(id: String, name: String)] = [
-            ("spark-trail", "✨ Spark Trail"),
-            ("glow-pulse", "💡 Glow Pulse"),
-            ("comet-trail", "☄️ Comet Tail"),
-            ("bubbles", "🫧 Bubbles"),
-            ("fireflies", "🌿 Fireflies"),
-            ("star-dust", "⭐ Star Dust"),
-            ("lightning", "⚡ Lightning Arc"),
-            ("rainbow", "🌈 Rainbow Wave"),
-            ("plasma", "🟣 Plasma Field"),
-            ("matrix-rain", "🟩 Matrix Rain"),
-            ("fire-flame", "🔥 Fire & Flame"),
-            ("neon-cyber", "⚡ Neon Cyber"),
-            ("magic-dust", "✨ Magic Dust"),
-            ("galaxy", "🌌 Galaxy Supernova"),
-            ("minimal-beacon", "🎯 Minimalist Beacon"),
-            ("fluid-simulation", "🌊 Fluid Simulation"),
-            ("fluid-smoke", "💨 Fluid Smoke Swirl"),
-            ("neon-fluid", "🧪 Neon Fluid Dye"),
-            ("cosmic-vortex", "🌌 Cosmic Liquid"),
-            ("ink-diffusion", "🖋️ Ink Diffusion")
-        ]
-        for p in presets {
-            let item = NSMenuItem(title: p.name, action: #selector(selectPresetFromMenu(_:)), keyEquivalent: "")
-            item.representedObject = p.id
-            item.state = (p.id == cfg.passivePreset) ? .on : .off
-            presetsMenu.addItem(item)
-        }
-
-        let presetsParentItem = NSMenuItem(title: "🎨 FX Presets", action: nil, keyEquivalent: "")
-        presetsParentItem.submenu = presetsMenu
-        menu.addItem(presetsParentItem)
-
         // Updater state surfaces at the top of the menu when relevant
         switch Updater.shared.phase {
         case .available(let release):
@@ -255,14 +220,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Quit Mouseflare", action: #selector(quitApp), keyEquivalent: "q"))
 
         statusItem.menu = menu
-    }
-
-    @objc private func selectPresetFromMenu(_ sender: NSMenuItem) {
-        guard let presetId = sender.representedObject as? String else { return }
-        SettingsManager.shared.settings.passivePreset = presetId
-        // Menu-bar picks commit immediately — keep an open Settings window's
-        // draft baseline in agreement so closing it can't revert this choice.
-        settingsWindowController?.noteExternalPassivePresetChange()
     }
 
     private func setupOverlayWindows() {
