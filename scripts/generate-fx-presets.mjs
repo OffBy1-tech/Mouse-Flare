@@ -8,6 +8,8 @@ const DATA = 'data/default-fx-presets.json';
 
 // Match the historical literal format: minified, ", "-separated, ": " after
 // keys, non-ASCII escaped as \uXXXX (so the emoji icons survive any editor).
+// NOTE: keep the -￿ character class as written — retyping it by
+// hand risks the escapes being converted to raw characters by tooling.
 const escapeNonAscii = (s) =>
   s.replace(/[\u007f-\uffff]/g, (ch) => '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0'));
 const presets = JSON.parse(readFileSync(DATA, 'utf8'));
@@ -31,8 +33,8 @@ for (const { file, render } of targets) {
   const src = readFileSync(file, 'utf8');
   const begin = src.indexOf('GENERATED-PRESETS-BEGIN');
   const end = src.indexOf('GENERATED-PRESETS-END');
-  if (begin === -1 || end === -1) {
-    console.error(`${file}: GENERATED-PRESETS markers not found — refusing to write.`);
+  if (begin === -1 || end === -1 || end < begin) {
+    console.error(`${file}: GENERATED-PRESETS markers missing or out of order — refusing to write.`);
     process.exit(2);
   }
   const beginLineEnd = src.indexOf('\n', begin) + 1;
