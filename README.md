@@ -38,7 +38,7 @@ The product is the two native apps below. **[Try the live demo](https://offby1-t
 
 | Path | Component | What it is |
 | :--- | :--- | :--- |
-| 🌐 `src/` | **Showcase Demo** | Showcase demo (React + Vite) — hosted on GitHub Pages; also home of the canonical FX preset data consumed by both native apps. |
+| 🌐 `src/` | **Showcase Demo** | The FX playground, designer, and find-mouse challenge (React + Vite) — hosted on GitHub Pages. |
 | 🪟 `src/native/windows/` | **Windows App** | Native C# / .NET 8 system-tray utility with global hotkeys and transparent overlay. |
 | 🍎 `src/native/macos/` | **macOS App** | Native Swift / AppKit menu bar agent managing overlays across all displays. |
 | 🗂️ `data/` | **Shared FX Presets** | `default-fx-presets.json` — the canonical FX Designer preset library consumed by the web demo and both native apps. |
