@@ -314,7 +314,7 @@ namespace Mouseflare.UI
             int hours = _overlay?.CheckIntervalHours ?? 6;
 
             btnCheckNow.IsEnabled = !updater.IsDevBuild && !_updateCheckInFlight;
-            btnCheckNow.Content = _updateCheckInFlight ? "Validating Release Feed…" : "🔄 Check for Updates";
+            btnCheckNow.Content = _updateCheckInFlight ? "Checking…" : "🔄 Check for Updates";
 
             // Hero card
             bool hasUpdate = available != null && updater.Phase is Core.Updater.UpdatePhase.Available
@@ -1117,7 +1117,7 @@ namespace Mouseflare.UI
                 _committedFx = SnapshotCurrentSettings();
                 Core.SettingsStore.Save(_overlay.ToSettings(_currentHotkey));
             }
-            SetStatusText("✓ All Settings Reset to Factory Defaults & Saved!");
+            SetStatusText("✓ Settings Reset to Factory Defaults");
         }
 
         private void OnSaveAndApply(object sender, RoutedEventArgs e)
@@ -1131,7 +1131,7 @@ namespace Mouseflare.UI
             }
             catch { }
             SetStatusText(saved
-                ? "✓ All Selections Saved & Applied — settings persist across restarts."
+                ? "✓ FX Selections Saved & Applied to Live Engine!"
                 : "⚠️ Applied to live engine, but writing settings.json failed.");
         }
 

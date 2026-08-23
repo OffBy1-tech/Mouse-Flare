@@ -179,7 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 button.title = "✨"
             }
-            button.toolTip = "Mouseflare (macOS) — \(cfg.hotkey) to Find Mouse"
+            button.toolTip = "Mouseflare — \(cfg.hotkey) to Find Mouse"
         }
 
         let menu = NSMenu()

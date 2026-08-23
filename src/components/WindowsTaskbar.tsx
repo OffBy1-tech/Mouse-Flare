@@ -243,7 +243,7 @@ export const WindowsTaskbar: React.FC<WindowsTaskbarProps> = ({
             className={`w-8 h-8 rounded-lg flex items-center justify-center relative transition-all ${
               trayMenuOpen ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'hover:bg-white/10 text-neutral-200'
             }`}
-            title="Mouseflare System Tray (Click or Right-Click for Menu)"
+            title={`Mouseflare \u2014 ${settings.hotkey} to Find Mouse`}
           >
             <img
               src="/app-logo.png"

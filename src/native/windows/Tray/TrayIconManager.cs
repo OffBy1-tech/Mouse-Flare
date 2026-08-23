@@ -19,6 +19,12 @@ namespace Mouseflare.Tray
         private readonly ToolStripSeparator _updateActionSeparator;
         private Action? _updateAction;
 
+        /// <summary>Keeps the tray tooltip in sync with the configured hotkey.</summary>
+        public void UpdateHotkey(string hotkey)
+        {
+            _notifyIcon.Text = $"Mouseflare \u2014 {hotkey} to Find Mouse";
+        }
+
         public TrayIconManager(bool initialEnabled = true)
         {
             Icon appIcon = LoadAppLogoIcon() ?? CreateProceduralFlameIcon();
@@ -26,7 +32,7 @@ namespace Mouseflare.Tray
             _notifyIcon = new NotifyIcon
             {
                 Icon = appIcon,
-                Text = "Mouseflare (Active - Ctrl+Shift+F to Flare)",
+                Text = "Mouseflare \u2014 Ctrl + Shift + F to Find Mouse",
                 Visible = true
             };
 

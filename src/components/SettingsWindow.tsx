@@ -235,7 +235,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   const handleSaveAndApply = () => {
     fxSnapshotRef.current = pickFxDraft(settings);
     fxDirtyRef.current = false;
-    setSaveStatus('Saved & Applied!');
+    setSaveStatus('\u2713 FX Selections Saved & Applied to Live Engine!');
     soundEngine.playToggle(true);
   };
 
@@ -253,7 +253,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     // FX keys into the snapshot, re-baselining it to the defaults.
     updateInstant({ ...DEFAULT_SETTINGS });
     fxDirtyRef.current = false;
-    setSaveStatus('Reset to Defaults');
+    setSaveStatus('\u2713 Settings Reset to Factory Defaults');
   };
 
   // Apply & Save only concerns the FX draft domain, so it only shows on those tabs.
@@ -957,7 +957,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 <div>
                   <h2 className="text-lg font-bold text-neutral-100">Adaptive Behavior &amp; Multi-Monitor</h2>
                   <p className="text-xs text-neutral-400 mt-0.5">
-                    Configure situational response triggers and display boundary detection.
+                    Configure situational triggers and boundary crossing detection.
                   </p>
                 </div>
 
@@ -1090,9 +1090,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   <div>
                     <h2 className="text-lg font-bold text-neutral-100 flex items-center gap-2">
                       <span>Software Updates &amp; Release Feeds</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-mono font-medium">
-                        Feed v2.5.2-Live
-                      </span>
                     </h2>
                     <p className="text-xs text-neutral-400 mt-0.5">
                       Validate current local binary version against verified GitHub/Release metadata and download upgrades.
@@ -1106,7 +1103,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       className="neon-btn-primary flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
-                      <span>{isCheckingUpdates ? 'Validating Release Hash...' : 'Check for Updates'}</span>
+                      <span>{isCheckingUpdates ? 'Checking\u2026' : 'Check for Updates'}</span>
                     </button>
                   </div>
                 </div>
@@ -1256,20 +1253,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         ]}
                         className="w-full px-3 py-1.5 text-xs"
                         ariaLabel="Check Frequency"
-                      />
-                    </div>
-
-                    {/* Notification Alert Toggle */}
-                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                      <div>
-                        <div className="font-semibold text-xs text-neutral-200">In-App Upgrade Notifications</div>
-                        <div className="text-[11px] text-neutral-400">Show notification bar when an update is available.</div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={settings.notifyOnUpdate}
-                        onChange={(e) => updateInstant({ notifyOnUpdate: e.target.checked })}
-                        className="neon-check rounded h-4 w-4"
                       />
                     </div>
 

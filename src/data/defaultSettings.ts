@@ -19,7 +19,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   minMovementThreshold: 2,
   idleBurst: true,
   monitorCrossingFx: true,
-  reducedMotion: false,
   soundFx: true,
   fpsLimit: 60,
   showDiagnostics: true,

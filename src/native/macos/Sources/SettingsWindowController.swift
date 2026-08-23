@@ -1048,7 +1048,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func buildBehaviorTab(into stack: NSStackView) {
         stack.addArrangedSubview(makeLabel("Adaptive Behavior & Multi-Monitor", size: 17, weight: .bold, color: Theme.textPrimary))
-        let sub = makeLabel("Configure situational triggers, boundary crossing detection, and motion accessibility.", size: 11, weight: .regular, color: Theme.textSecondary)
+        let sub = makeLabel("Configure situational triggers and boundary crossing detection.", size: 11, weight: .regular, color: Theme.textSecondary)
         stack.addArrangedSubview(sub)
         stack.setCustomSpacing(16, after: sub)
 

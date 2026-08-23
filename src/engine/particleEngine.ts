@@ -114,7 +114,6 @@ export class ParticleEngine {
     // Movement threshold check
     if (dist < settings.minMovementThreshold) return;
     if (!settings.enablePassiveFx) return;
-    if (settings.reducedMotion) return; // accessibility: no passive particle sprays
 
     const colors = this.getColors(settings);
     const density = Math.max(1, Math.round(settings.particleDensity * (dist / 15)));
@@ -548,30 +547,6 @@ export class ParticleEngine {
     const colors = this.getColors(settings);
     const intensity = settings.intensity;
     const preset = settings.findMouseFx;
-
-    // Accessibility: reduced motion replaces the particle spray with a single
-    // clean, high-contrast locator beacon (two rings, no burst).
-    if (settings.reducedMotion) {
-      this.rings.push({
-        x, y, radius: 6,
-        maxRadius: 110 * intensity,
-        alpha: 1.0,
-        color: '#ffffff',
-        lineWidth: 5,
-        progress: 0,
-        type: 'solar-flare',
-      });
-      this.rings.push({
-        x, y, radius: 6,
-        maxRadius: 80 * intensity,
-        alpha: 1.0,
-        color: colors.primary,
-        lineWidth: 4,
-        progress: -0.1,
-        type: 'solar-flare',
-      });
-      return;
-    }
 
     // Handle Pavel DoGreat style Fluid Vortex Burst
     if (preset === 'fluid-vortex-burst') {

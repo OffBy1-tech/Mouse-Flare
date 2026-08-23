@@ -88,6 +88,7 @@ namespace Mouseflare
 
             // 5. System tray icon
             _tray = new TrayIconManager(_overlay.IsFxEnabled);
+            _tray.UpdateHotkey(_currentHotkey);
             _tray.FindMouseRequested += () =>
             {
                 Dispatcher.InvokeAsync(() =>
@@ -284,7 +285,7 @@ namespace Mouseflare
                     if (_settingsWindow == null || !_settingsWindow.IsLoaded)
                     {
                         _settingsWindow = new SettingsWindow(_overlay, _hotkeyManager, _currentHotkey);
-                        _settingsWindow.HotkeyChanged += (combo) => _currentHotkey = combo;
+                        _settingsWindow.HotkeyChanged += (combo) => { _currentHotkey = combo; _tray?.UpdateHotkey(combo); };
                         _settingsWindow.Closed += (s, e) =>
                         {
                             // Instant-domain settings were saved as they changed, and

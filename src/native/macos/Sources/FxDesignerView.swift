@@ -225,8 +225,11 @@ final class FxDesignerView: NSView {
         }
         let importButton = smallButton("Import Clipboard") { [weak self] in
             guard let self else { return }
-            if let json = NSPasteboard.general.string(forType: .string),
-               let parsed = CustomFxConfig.fromJSON(json) {
+            guard let json = NSPasteboard.general.string(forType: .string), !json.isEmpty else {
+                self.onStatus?("⚠️ Could not read clipboard — copy an FX Designer JSON first.")
+                return
+            }
+            if let parsed = CustomFxConfig.fromJSON(json) {
                 // Fresh id, like the web importer — a pasted config must never
                 // adopt an existing library id and overwrite it on Save
                 var imported = parsed

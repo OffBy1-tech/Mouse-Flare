@@ -216,7 +216,12 @@ namespace Mouseflare.UI
             {
                 string json;
                 try { json = Clipboard.GetText(); } catch { json = ""; }
-                var parsed = string.IsNullOrWhiteSpace(json) ? null : CustomFxConfig.FromJson(json);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    _status("⚠️ Could not read clipboard — copy an FX Designer JSON first.");
+                    return;
+                }
+                var parsed = CustomFxConfig.FromJson(json);
                 if (parsed == null)
                 {
                     _status("⚠️ Clipboard does not contain a valid FX Designer config.");

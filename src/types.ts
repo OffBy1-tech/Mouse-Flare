@@ -58,7 +58,6 @@ export interface AppSettings {
   minMovementThreshold: number; // px
   idleBurst: boolean;
   monitorCrossingFx: boolean;
-  reducedMotion: boolean;
   soundFx: boolean;
   fpsLimit: 60 | 120 | 0; // 0 = uncapped
   showDiagnostics: boolean;
