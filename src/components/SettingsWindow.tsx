@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, ColorPreset, FlarePreset, FxPreset } from '../types';
 import { NATIVE_SOURCE_FILES } from '../data/nativeSource';
 import { FxDesigner } from './FxDesigner';
+import { DEFAULT_FX_PRESETS } from '../data/defaultFxPresets';
 import { NeonSelect } from './NeonSelect';
 import { downloadWindowsNativeZip, downloadMacNativeZip, downloadCrossPlatformZip } from '../utils/nativeDownloader';
 import {
@@ -30,6 +31,7 @@ import {
   Download,
   FolderArchive,
   Save,
+  Upload,
   CheckCircle2,
   Undo2,
   RefreshCw,
@@ -124,6 +126,33 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     setSaveStatus(message);
     window.clearTimeout(fxStatusTimer.current);
     fxStatusTimer.current = window.setTimeout(() => setSaveStatus(null), 3000);
+  };
+
+  // FX Studio shortcut mirroring the native "Import Custom FX" button — the
+  // full editor lives in the FX Designer tab.
+  const handleImportCustomFx = async () => {
+    const invalid = '\u26a0\ufe0f Clipboard does not contain a valid FX Designer config. Use Copy JSON in the FX Designer.';
+    try {
+      const parsed = JSON.parse(await navigator.clipboard.readText());
+      if (!parsed || !parsed.name || !parsed.shape) {
+        showFxStatus(invalid);
+        return;
+      }
+      updateFxDraft({
+        passiveFx: 'custom-fx',
+        customFxConfig: {
+          ...DEFAULT_FX_PRESETS[0],
+          ...parsed,
+          id: `custom-imported-${Date.now()}`,
+          isCustom: true,
+          category: 'custom',
+        },
+        enablePassiveFx: true,
+      });
+      showFxStatus(`Imported custom FX: ${parsed.name} \u2022 Apply & Save to keep`);
+    } catch (err) {
+      showFxStatus(invalid);
+    }
   };
 
   // Sync initial tab if passed from outside (e.g. clicking notification banner)
@@ -611,6 +640,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         { id: 'magic-dust', label: 'Magic Dust', desc: 'Enchanted pastel shimmer sparkles' },
                         { id: 'galaxy', label: 'Galaxy Supernova', desc: 'Deep-space stars & nebula dust' },
                         { id: 'minimal-beacon', label: 'Minimalist Beacon', desc: 'Single subtle tracking dot' },
+                        { id: 'custom-fx', label: 'Custom FX', desc: 'Imported from the FX Designer' },
                       ] as { id: FxPreset; label: string; desc: string }[]
                     ).map((item) => {
                       const isSelected = settings.passiveFx === item.id;
@@ -639,6 +669,15 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       );
                     })}
                   </div>
+
+                  <button
+                    onClick={handleImportCustomFx}
+                    className="mt-2.5 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-200 text-xs font-medium border border-white/10 transition-all cursor-pointer"
+                    title="Import an FX Designer JSON config from your clipboard as the Custom FX preset"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Import Custom FX (JSON from clipboard)</span>
+                  </button>
                 </div>
 
                 {/* Find Mouse Flare Preset Selection */}
