@@ -70,17 +70,34 @@ namespace Mouseflare.UI
         /// library presets. Selects the entry matching <paramref name="selectId"/>
         /// (archetype or custom), or clears the selection for a free draft.
         /// </summary>
+        // Grouped like the web dropdown: header rows are disabled ComboBoxItems.
+        private int ArchetypeRowStart => 1;
+        private int CustomRowStart => DefaultFxPresets.Archetypes.Count + 2;
+
+        private static ComboBoxItem GroupHeader(string title) => new()
+        {
+            Content = title.ToUpperInvariant(),
+            IsEnabled = false,
+            FontSize = 10,
+            FontWeight = FontWeights.Bold,
+            Foreground = Hex("#6E5F8E"),
+        };
+
         private void RebuildPresetMenu(string? selectId)
         {
             _suppress = true;
             _archetypes.Items.Clear();
+            _archetypes.Items.Add(GroupHeader("Built-in Presets"));
             foreach (var preset in DefaultFxPresets.Archetypes) _archetypes.Items.Add(preset.name);
-            foreach (var preset in _customPresets) _archetypes.Items.Add($"★ {preset.name}");
-            int archetypeCount = DefaultFxPresets.Archetypes.Count;
+            if (_customPresets.Count > 0)
+            {
+                _archetypes.Items.Add(GroupHeader("My Custom Presets"));
+                foreach (var preset in _customPresets) _archetypes.Items.Add(preset.name);
+            }
             int custom = selectId == null ? -1 : _customPresets.FindIndex(p => p.id == selectId);
             int archetype = selectId == null ? -1 : DefaultFxPresets.Archetypes.FindIndex(p => p.id == selectId);
-            if (custom >= 0) { _archetypes.SelectedIndex = archetypeCount + custom; _selectedCustomId = selectId; }
-            else if (archetype >= 0) { _archetypes.SelectedIndex = archetype; _selectedCustomId = null; }
+            if (custom >= 0) { _archetypes.SelectedIndex = CustomRowStart + custom; _selectedCustomId = selectId; }
+            else if (archetype >= 0) { _archetypes.SelectedIndex = ArchetypeRowStart + archetype; _selectedCustomId = null; }
             else { _archetypes.SelectedIndex = -1; _selectedCustomId = null; }
             UpdateDeleteVisibility();
             _suppress = false;
@@ -177,17 +194,17 @@ namespace Mouseflare.UI
                 if (_suppress || _archetypes.SelectedIndex < 0) return;
                 int index = _archetypes.SelectedIndex;
                 int archetypeCount = DefaultFxPresets.Archetypes.Count;
-                if (index < archetypeCount)
+                if (index >= ArchetypeRowStart && index < ArchetypeRowStart + archetypeCount)
                 {
                     // Keep the preset's own id so reopening the designer
                     // re-selects it; Save mints a fresh id for non-library drafts
-                    _config = Clone(DefaultFxPresets.Archetypes[index]);
+                    _config = Clone(DefaultFxPresets.Archetypes[index - ArchetypeRowStart]);
                     _selectedCustomId = null;
                 }
-                else if (index - archetypeCount < _customPresets.Count)
+                else if (index >= CustomRowStart && index - CustomRowStart < _customPresets.Count)
                 {
                     // Library presets load keeping their id, so Save overwrites in place
-                    var preset = Clone(_customPresets[index - archetypeCount]);
+                    var preset = Clone(_customPresets[index - CustomRowStart]);
                     _config = preset;
                     _selectedCustomId = preset.id;
                 }

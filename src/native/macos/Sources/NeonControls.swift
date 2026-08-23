@@ -208,6 +208,9 @@ final class NeonSwitch: NSControl {
 /// panel of options — hover wash, gradient pill for the selected item.
 final class NeonPopUp: NSControl {
     private(set) var itemTitles: [String] = []
+    /// Indexes that render as non-selectable section headers (grouped
+    /// dropdowns, matching the web NeonSelect's group labels).
+    private(set) var headerIndexes: Set<Int> = []
     private var selectedIndex: Int = -1
     private var isOpen = false { didSet { needsDisplay = true } }
     private var isHovered = false { didSet { needsDisplay = true } }
@@ -243,13 +246,23 @@ final class NeonPopUp: NSControl {
 
     func addItems(withTitles titles: [String]) {
         itemTitles.append(contentsOf: titles)
-        if selectedIndex == -1 && !itemTitles.isEmpty { selectedIndex = 0 }
+        if selectedIndex == -1, let first = itemTitles.indices.first(where: { !headerIndexes.contains($0) }) {
+            selectedIndex = first
+        }
+        invalidateIntrinsicContentSize()
+        needsDisplay = true
+    }
+
+    func addSectionHeader(_ title: String) {
+        headerIndexes.insert(itemTitles.count)
+        itemTitles.append(title)
         invalidateIntrinsicContentSize()
         needsDisplay = true
     }
 
     func removeAllItems() {
         itemTitles.removeAll()
+        headerIndexes.removeAll()
         selectedIndex = -1
         invalidateIntrinsicContentSize()
         needsDisplay = true
@@ -258,7 +271,7 @@ final class NeonPopUp: NSControl {
     var indexOfSelectedItem: Int { selectedIndex }
 
     func selectItem(at index: Int) {
-        guard index >= -1 && index < itemTitles.count else { return }
+        guard index >= -1 && index < itemTitles.count, !headerIndexes.contains(index) else { return }
         selectedIndex = index
         needsDisplay = true
     }
@@ -371,9 +384,12 @@ final class NeonPopUp: NSControl {
 
         highlightedIndex = selectedIndex
         rowViews = itemTitles.enumerated().map { index, title in
-            let row = PopupRowView(title: title, font: drawFont, isSelected: index == selectedIndex)
-            row.onClick = { [weak self] in self?.commit(index) }
-            row.onHover = { [weak self] in self?.highlight(index) }
+            let isHeader = headerIndexes.contains(index)
+            let row = PopupRowView(title: title, font: drawFont, isSelected: index == selectedIndex, isHeader: isHeader)
+            if !isHeader {
+                row.onClick = { [weak self] in self?.commit(index) }
+                row.onHover = { [weak self] in self?.highlight(index) }
+            }
             return row
         }
 
@@ -496,10 +512,10 @@ final class NeonPopUp: NSControl {
             guard let self, self.isOpen else { return event }
             switch event.keyCode {
             case 125: // down
-                self.highlight(min(self.highlightedIndex + 1, self.itemTitles.count - 1))
+                self.highlight(self.nextSelectable(from: self.highlightedIndex, direction: 1))
                 return nil
             case 126: // up
-                self.highlight(max(self.highlightedIndex - 1, 0))
+                self.highlight(self.nextSelectable(from: self.highlightedIndex, direction: -1))
                 return nil
             case 36, 76: // return / keypad enter
                 if self.highlightedIndex >= 0 { self.commit(self.highlightedIndex) } else { self.close() }
@@ -535,7 +551,18 @@ final class NeonPopUp: NSControl {
         }
     }
 
+    /// Next non-header index in the given direction (stays put at the ends).
+    private func nextSelectable(from index: Int, direction: Int) -> Int {
+        var candidate = index + direction
+        while candidate >= 0 && candidate < itemTitles.count {
+            if !headerIndexes.contains(candidate) { return candidate }
+            candidate += direction
+        }
+        return index
+    }
+
     private func commit(_ index: Int) {
+        guard !headerIndexes.contains(index) else { return }
         selectedIndex = index
         close()
         needsDisplay = true
@@ -568,15 +595,15 @@ private final class PopupRowView: NSView {
     private let isSelected: Bool
     private let gradientLayer = CAGradientLayer()
 
-    init(title: String, font: NSFont, isSelected: Bool) {
-        self.isSelected = isSelected
+    init(title: String, font: NSFont, isSelected: Bool, isHeader: Bool = false) {
+        self.isSelected = isSelected && !isHeader
         super.init(frame: .zero)
         wantsLayer = true
         layer?.cornerRadius = 6
         translatesAutoresizingMaskIntoConstraints = false
         heightAnchor.constraint(equalToConstant: 24).isActive = true
 
-        if isSelected {
+        if self.isSelected {
             gradientLayer.colors = [
                 Theme.neonBlue.withAlphaComponent(0.78).cgColor,
                 Theme.neonViolet.withAlphaComponent(0.7).cgColor,
@@ -589,9 +616,9 @@ private final class PopupRowView: NSView {
             layer?.borderWidth = 1
         }
 
-        let label = NSTextField(labelWithString: title)
-        label.font = font
-        label.textColor = isSelected ? .white : Theme.textPrimary
+        let label = NSTextField(labelWithString: isHeader ? title.uppercased() : title)
+        label.font = isHeader ? .systemFont(ofSize: 9.5, weight: .bold) : font
+        label.textColor = isHeader ? Theme.textMuted : (self.isSelected ? .white : Theme.textPrimary)
         label.lineBreakMode = .byTruncatingTail
         label.translatesAutoresizingMaskIntoConstraints = false
         addSubview(label)

@@ -71,15 +71,24 @@ final class FxDesignerView: NSView {
     /// Rebuilds the archetype popup: built-ins first, then ★-prefixed library
     /// presets. Selects the entry matching `id` (archetype or custom), or
     /// clears the selection for a free-floating draft.
+    // Grouped like the web dropdown: "Built-in Presets" header, archetypes,
+    // then a "My Custom Presets" header + library entries.
+    private var archetypeRowStart: Int { 1 }
+    private var customRowStart: Int { DefaultFxPresets.archetypes.count + 2 }
+
     private func rebuildPresetMenu(selecting id: String?) {
         presetPopup.removeAllItems()
+        presetPopup.addSectionHeader("Built-in Presets")
         presetPopup.addItems(withTitles: DefaultFxPresets.archetypes.map { $0.name })
-        presetPopup.addItems(withTitles: customPresets.map { "★ \($0.name)" })
+        if !customPresets.isEmpty {
+            presetPopup.addSectionHeader("My Custom Presets")
+            presetPopup.addItems(withTitles: customPresets.map { $0.name })
+        }
         if let id, let custom = customPresets.firstIndex(where: { $0.id == id }) {
-            presetPopup.selectItem(at: DefaultFxPresets.archetypes.count + custom)
+            presetPopup.selectItem(at: customRowStart + custom)
             selectedCustomId = id
         } else if let id, let arch = DefaultFxPresets.archetypes.firstIndex(where: { $0.id == id }) {
-            presetPopup.selectItem(at: arch)
+            presetPopup.selectItem(at: archetypeRowStart + arch)
             selectedCustomId = nil
         } else {
             presetPopup.selectItem(at: -1)
@@ -359,12 +368,12 @@ final class FxDesignerView: NSView {
     @objc private func presetChosen() {
         let index = presetPopup.indexOfSelectedItem
         let archetypeCount = DefaultFxPresets.archetypes.count
-        if index >= 0 && index < archetypeCount {
+        if index >= archetypeRowStart && index < archetypeRowStart + archetypeCount {
             selectedCustomId = nil
-            loadPreset(DefaultFxPresets.archetypes[index])
-        } else if index >= archetypeCount && index < archetypeCount + customPresets.count {
+            loadPreset(DefaultFxPresets.archetypes[index - archetypeRowStart])
+        } else if index >= customRowStart && index < customRowStart + customPresets.count {
             // Library presets load keeping their id, so Save overwrites in place
-            let preset = customPresets[index - archetypeCount]
+            let preset = customPresets[index - customRowStart]
             selectedCustomId = preset.id
             config = preset
             syncControls()
