@@ -235,7 +235,9 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
     <div className="space-y-6 text-xs text-neutral-300">
       <div>
         <h2 className="text-lg font-bold text-neutral-100">FX Designer</h2>
-        <p className="text-xs text-neutral-400 mt-0.5">{HINT}</p>
+        <p className="text-xs text-neutral-400 mt-0.5">
+          Design your own particle effect &mdash; it previews live on your cursor and becomes the Custom FX preset.
+        </p>
       </div>
 
       {/* Header: archetype picker, name, actions */}
@@ -307,6 +309,8 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
           <span>Import Clipboard</span>
         </button>
       </div>
+
+      <p className="text-xs text-neutral-500">{HINT}</p>
 
       {/* Popups: pattern / shape / blend / color mode / size curve */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

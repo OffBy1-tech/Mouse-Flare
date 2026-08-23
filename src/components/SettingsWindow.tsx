@@ -339,9 +339,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
         <div className="h-11 bg-[#0a0512]/80 border-b border-violet-500/25 flex items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
             <img src="/app-logo.png" alt="Mouseflare logo" className="w-5 h-5 rounded-md shadow" />
-            <span className="text-xs font-semibold tracking-wide text-neutral-200">
-              Mouseflare Settings &amp; Preferences
-            </span>
+            <span className="text-xs font-semibold tracking-wide text-neutral-200">Mouseflare</span>
+            <span className="text-xs text-neutral-500">&nbsp;&mdash; Settings &amp; FX Studio</span>
             {saveStatus && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-medium flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
@@ -506,7 +505,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 <div>
                   <h2 className="text-lg font-bold text-neutral-100">General Configuration</h2>
                   <p className="text-xs text-neutral-400 mt-0.5">
-                    Control primary startup, hotkeys, and master switches.
+                    Control master switches, global hotkey shortcut, and startup behavior.
                   </p>
                 </div>
 
@@ -557,7 +556,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     <div>
                       <div className="font-semibold text-sm text-neutral-200">Enable Passive Trail FX</div>
                       <div className="text-xs text-neutral-400 mt-0.5">
-                        Renders subtle momentary particles behind the pointer while moving.
+                        Renders particle trails behind pointer while moving.
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -577,7 +576,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       <div>
                         <div className="font-semibold text-sm text-neutral-200">Flare hotkey</div>
                         <div className="text-xs text-neutral-400 mt-0.5">
-                          Press this shortcut anywhere in your OS to trigger the signature flare.
+                          Press this shortcut anywhere in your OS to trigger the signature flare. Click the combo to record your own.
                         </div>
                       </div>
                       <button
@@ -643,7 +642,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-semibold text-neutral-200">
-                      Passive Movement FX (Movement Trail)
+                      Passive Movement FX (Trail Styles)
                     </label>
                     <span className="text-[11px] text-violet-300 font-mono">
                       Selected: <strong className="capitalize">{settings.passiveFx.replace('-', ' ')}</strong>
@@ -653,25 +652,25 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   <div className="grid grid-cols-3 gap-2.5">
                     {(
                       [
-                        { id: 'fluid-simulation', label: 'Fluid Simulation', desc: 'Velocity-based dissipation & Navier-Stokes curl vortices' },
-                        { id: 'fluid-smoke', label: 'Fluid Smoke Swirl', desc: 'Pavel DoGreat style swirling dye vortices' },
-                        { id: 'neon-fluid', label: 'Neon Fluid Dye', desc: 'Ultra-vivid fluorescent luminescent fluid stream' },
-                        { id: 'cosmic-vortex', label: 'Cosmic Liquid', desc: 'Deep galactic vortices with star sparkles' },
-                        { id: 'ink-diffusion', label: 'Ink Diffusion', desc: 'Organic watercolor plumes in water' },
-                        { id: 'spark-trail', label: 'Spark Trail', desc: 'Golden kinetic embers with gravity decay' },
-                        { id: 'glow-pulse', label: 'Glow Pulse', desc: 'Soft luminous aura around cursor' },
-                        { id: 'comet-trail', label: 'Comet Tail', desc: 'High-speed blazing ribbon tail' },
-                        { id: 'bubbles', label: 'Bubbles', desc: 'Floating translucent glowing orbs' },
-                        { id: 'fireflies', label: 'Fireflies', desc: 'Organic bioluminescent drifters' },
-                        { id: 'star-dust', label: 'Star Dust', desc: 'Twinkling 4-point celestial stars' },
-                        { id: 'lightning', label: 'Lightning Arc', desc: 'Electric dynamic micro arcs' },
-                        { id: 'rainbow', label: 'Rainbow Wave', desc: 'Prismatic chromatic color shifts' },
-                        { id: 'plasma', label: 'Plasma Field', desc: 'Ionized energetic vortex rings' },
+                        { id: 'fluid-simulation', label: 'Fluid Simulation', desc: 'Velocity dissipation model' },
+                        { id: 'fluid-smoke', label: 'Fluid Smoke Swirl', desc: 'Billowing dye vortices' },
+                        { id: 'neon-fluid', label: 'Neon Fluid Dye', desc: 'Luminescent fluid glow' },
+                        { id: 'cosmic-vortex', label: 'Cosmic Liquid', desc: 'Galactic chromatic swirls' },
+                        { id: 'ink-diffusion', label: 'Ink Diffusion', desc: 'Organic watercolor plumes' },
+                        { id: 'spark-trail', label: 'Spark Trail', desc: 'Golden kinetic embers' },
+                        { id: 'glow-pulse', label: 'Glow Pulse', desc: 'Soft luminous aura trail' },
+                        { id: 'comet-trail', label: 'Comet Tail', desc: 'Aerodynamic ribbon' },
+                        { id: 'bubbles', label: 'Bubbles', desc: 'Translucent spheres' },
+                        { id: 'fireflies', label: 'Fireflies', desc: 'Organic bioluminescence' },
+                        { id: 'star-dust', label: 'Star Dust', desc: 'Twinkling 4-point stars' },
+                        { id: 'lightning', label: 'Lightning Arc', desc: 'Electric micro plasma' },
+                        { id: 'rainbow', label: 'Rainbow Wave', desc: 'Chromatic color shifts' },
+                        { id: 'plasma', label: 'Plasma Field', desc: 'Ionized energy rings' },
                         { id: 'matrix-rain', label: 'Matrix Rain', desc: 'Cascading green code glyphs' },
-                        { id: 'fire-flame', label: 'Fire & Flame', desc: 'Blazing embers with upward buoyancy' },
-                        { id: 'neon-cyber', label: 'Neon Cyber', desc: 'Electric cyan-magenta arcade pulses' },
-                        { id: 'magic-dust', label: 'Magic Dust', desc: 'Enchanted pastel shimmer sparkles' },
-                        { id: 'galaxy', label: 'Galaxy Supernova', desc: 'Deep-space stars & nebula dust' },
+                        { id: 'fire-flame', label: 'Fire & Flame', desc: 'Blazing buoyant embers' },
+                        { id: 'neon-cyber', label: 'Neon Cyber', desc: 'Electric cyan-magenta pulses' },
+                        { id: 'magic-dust', label: 'Magic Dust', desc: 'Enchanted pastel shimmer' },
+                        { id: 'galaxy', label: 'Galaxy Supernova', desc: 'Deep-space stars & nebula' },
                         { id: 'minimal-beacon', label: 'Minimalist Beacon', desc: 'Single subtle tracking dot' },
                         { id: 'custom-fx', label: 'Custom FX', desc: 'Imported from the FX Designer' },
                       ] as { id: FxPreset; label: string; desc: string }[]
@@ -727,12 +726,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   <div className="grid grid-cols-3 gap-2.5">
                     {(
                       [
-                        { id: 'solar-flare', label: 'Solar Flare', desc: 'Central sunburst with expanding shockwave rings' },
-                        { id: 'fluid-vortex-burst', label: 'Fluid Vortex Burst', desc: 'Pavel DoGreat radial swirling shockwave & dye rays' },
-                        { id: 'sonar-radar', label: 'Sonar Radar', desc: 'Tactical concentric rings & crosshair targeting' },
-                        { id: 'neon-beacon', label: 'Neon Beacon', desc: 'Glowing pillar pulse with high-contrast bloom' },
-                        { id: 'quantum-shockwave', label: 'Quantum Wave', desc: 'Distortion wave & chromatic aberration debris' },
-                        { id: 'supernova', label: 'Supernova', desc: 'Intense flash core & starry explosion burst' },
+                        { id: 'solar-flare', label: 'Solar Flare', desc: 'Concentric shockwaves' },
+                        { id: 'fluid-vortex-burst', label: 'Fluid Vortex Burst', desc: 'Radial dye shockwave' },
+                        { id: 'sonar-radar', label: 'Sonar Radar', desc: 'Radar rings & reticle' },
+                        { id: 'neon-beacon', label: 'Neon Beacon', desc: 'Dual high-contrast rings' },
+                        { id: 'quantum-shockwave', label: 'Quantum Wave', desc: 'Relativistic expanding wave' },
+                        { id: 'supernova', label: 'Supernova', desc: 'Starry flash explosion' },
                       ] as { id: FlarePreset; label: string; desc: string }[]
                     ).map((item) => {
                       const isSelected = settings.findMouseFx === item.id;
@@ -770,7 +769,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-semibold text-neutral-200">
-                      Color Palette &amp; Signature Glow
+                      Color Palette &amp; Glow Signature
                     </label>
                     <span className="text-[11px] text-neutral-400 font-mono">
                       Selected: <strong className="text-violet-300 capitalize">{settings.colorPreset}</strong>
@@ -944,11 +943,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         <Sparkles className="w-3.5 h-3.5 text-white" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-neutral-100 flex items-center gap-2">
+                        <div className="text-xs font-bold text-neutral-100">
                           Fluid Dynamics &amp; Vorticity Engine
-                          <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-mono uppercase tracking-wider font-semibold">
-                            Pavel DoGreat Style
-                          </span>
                         </div>
                         <div className="text-[11px] text-neutral-400">
                           Navier-Stokes vorticity curl, turbulent smoke diffusion &amp; glowing neon dye
@@ -956,24 +952,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        updateFxDraft({
-                          passiveFx: 'fluid-smoke',
-                          findMouseFx: 'fluid-vortex-burst',
-                          fluidVorticity: 1.8,
-                          fluidDissipation: 0.97,
-                          fluidBloom: true,
-                          fluidRainbowDye: true,
-                        });
-                        onTriggerFlare();
-                      }}
-                      className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
-                      title="Activate Pavel DoGreat fluid style preset"
-                    >
-                      <Sparkles className="w-3 h-3 text-cyan-400" />
-                      <span>Quick Test Fluid Burst</span>
-                    </button>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4 pt-1">
