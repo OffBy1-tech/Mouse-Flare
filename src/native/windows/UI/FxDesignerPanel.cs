@@ -21,27 +21,96 @@ namespace Mouseflare.UI
         private readonly TransparentOverlayWindow _overlay;
         private readonly Window _owner;
         private readonly Action<string> _status;
+        private readonly Action _persist;
 
         private CustomFxConfig _config;
         private bool _suppress;
 
         private TextBox _nameBox = null!;
         private CheckBox _glowCheck = null!;
+        private ComboBox _archetypes = null!;
+        private Button _deleteBtn = null!;
+        private readonly List<CustomFxConfig> _customPresets = new();
+        // Library preset currently selected in the popup (null = archetype or
+        // free-floating draft); gates the Delete button, like the web's
+        // selectedIsCustom.
+        private string? _selectedCustomId;
         private readonly List<(Func<CustomFxConfig, string> Get, Action<CustomFxConfig, string> Set, ComboBox Combo, string[] Values)> _popups = new();
         private readonly List<(Func<CustomFxConfig, double> Get, Action<CustomFxConfig, double> Set, Slider Slider, TextBlock Value, Func<double, string> Fmt)> _sliders = new();
         private readonly List<(Func<CustomFxConfig, string> Get, Action<CustomFxConfig, string> Set, Border Chip)> _chips = new();
 
-        public FxDesignerPanel(TransparentOverlayWindow overlay, Window owner, Action<string> status)
+        public FxDesignerPanel(TransparentOverlayWindow overlay, Window owner, Action<string> status, Action persist)
         {
             _overlay = overlay;
             _owner = owner;
             _status = status;
+            _persist = persist;
             _config = (overlay.CustomFxJson != null ? CustomFxConfig.FromJson(overlay.CustomFxJson) : null)
                       ?? Clone(DefaultFxPresets.Archetypes[0]);
+            foreach (var json in overlay.CustomFxPresets)
+            {
+                var parsed = CustomFxConfig.FromJson(json);
+                if (parsed != null) _customPresets.Add(parsed);
+            }
         }
 
         private static CustomFxConfig Clone(CustomFxConfig source) =>
             CustomFxConfig.FromJson(JsonSerializer.Serialize(source)) ?? new CustomFxConfig();
+
+        // ---- Preset library (persisted instantly, like the web localStorage library) ----
+
+        private void PersistLibrary()
+        {
+            _overlay.CustomFxPresets = _customPresets.ConvertAll(p => JsonSerializer.Serialize(p)).ToArray();
+            _persist();
+        }
+
+        /// <summary>
+        /// Rebuilds the archetype popup: built-ins first, then ★-prefixed
+        /// library presets. Selects the entry matching <paramref name="selectId"/>
+        /// (archetype or custom), or clears the selection for a free draft.
+        /// </summary>
+        private void RebuildPresetMenu(string? selectId)
+        {
+            _suppress = true;
+            _archetypes.Items.Clear();
+            foreach (var preset in DefaultFxPresets.Archetypes) _archetypes.Items.Add(preset.name);
+            foreach (var preset in _customPresets) _archetypes.Items.Add($"★ {preset.name}");
+            int archetypeCount = DefaultFxPresets.Archetypes.Count;
+            int custom = selectId == null ? -1 : _customPresets.FindIndex(p => p.id == selectId);
+            int archetype = selectId == null ? -1 : DefaultFxPresets.Archetypes.FindIndex(p => p.id == selectId);
+            if (custom >= 0) { _archetypes.SelectedIndex = archetypeCount + custom; _selectedCustomId = selectId; }
+            else if (archetype >= 0) { _archetypes.SelectedIndex = archetype; _selectedCustomId = null; }
+            else { _archetypes.SelectedIndex = -1; _selectedCustomId = null; }
+            UpdateDeleteVisibility();
+            _suppress = false;
+        }
+
+        private void UpdateDeleteVisibility() =>
+            _deleteBtn.Visibility = _selectedCustomId == null ? Visibility.Collapsed : Visibility.Visible;
+
+        private void SaveToLibrary()
+        {
+            _config.name = string.IsNullOrWhiteSpace(_nameBox.Text) ? "Custom FX" : _nameBox.Text;
+            // Re-saving a library preset overwrites it; anything else gets a new id
+            if (!_customPresets.Exists(p => p.id == _config.id))
+                _config.id = $"custom-{Environment.TickCount64}";
+            _customPresets.RemoveAll(p => p.id == _config.id);
+            _customPresets.Insert(0, Clone(_config));
+            PersistLibrary();
+            RebuildPresetMenu(_config.id);
+            _status($"Saved \"{_config.name}\" to your preset library");
+        }
+
+        private void DeleteSelectedPreset()
+        {
+            var target = _selectedCustomId == null ? null : _customPresets.Find(p => p.id == _selectedCustomId);
+            if (target == null) return;
+            _customPresets.RemoveAll(p => p.id == target.id);
+            PersistLibrary();
+            RebuildPresetMenu(null);
+            _status($"Deleted \"{target.name}\" from your preset library");
+        }
 
         // ---- Apply (live draft preview; committed by the window's Apply & Save) ----
 
@@ -100,21 +169,42 @@ namespace Mouseflare.UI
 
             // Header: archetype picker, name, actions
             var header = new DockPanel { LastChildFill = false, Margin = new Thickness(0, 0, 0, 4) };
-            var archetypes = new ComboBox { Width = 190, FontSize = 11 };
-            foreach (var preset in DefaultFxPresets.Archetypes) archetypes.Items.Add(preset.name);
-            archetypes.SelectionChanged += (s, e) =>
+            _archetypes = new ComboBox { Width = 190, FontSize = 13 };
+            _archetypes.SelectionChanged += (s, e) =>
             {
-                if (_suppress || archetypes.SelectedIndex < 0) return;
-                var loaded = Clone(DefaultFxPresets.Archetypes[archetypes.SelectedIndex]);
-                loaded.id = $"custom-{Environment.TickCount64}";
-                _config = loaded;
+                if (_suppress || _archetypes.SelectedIndex < 0) return;
+                int index = _archetypes.SelectedIndex;
+                int archetypeCount = DefaultFxPresets.Archetypes.Count;
+                if (index < archetypeCount)
+                {
+                    var loaded = Clone(DefaultFxPresets.Archetypes[index]);
+                    loaded.id = $"custom-{Environment.TickCount64}";
+                    _config = loaded;
+                    _selectedCustomId = null;
+                }
+                else if (index - archetypeCount < _customPresets.Count)
+                {
+                    // Library presets load keeping their id, so Save overwrites in place
+                    var preset = Clone(_customPresets[index - archetypeCount]);
+                    _config = preset;
+                    _selectedCustomId = preset.id;
+                }
+                else
+                {
+                    return;
+                }
+                UpdateDeleteVisibility();
                 SyncControls();
                 Apply();
-                _status($"Loaded archetype: {loaded.name} — previewing live on your cursor");
+                _status($"Loaded archetype: {_config.name} — previewing live on your cursor");
             };
-            _nameBox = new TextBox { FontSize = 11, Margin = new Thickness(8, 0, 0, 0), MinWidth = 90 };
+            _nameBox = new TextBox { FontSize = 13, Margin = new Thickness(8, 0, 0, 0), MinWidth = 90 };
             _nameBox.LostFocus += (s, e) => ControlsChanged();
 
+            var save = SmallButton("Save", SaveToLibrary);
+            _deleteBtn = SmallButton("Delete", DeleteSelectedPreset);
+            _deleteBtn.Foreground = Hex("#F87171");
+            _deleteBtn.Visibility = Visibility.Collapsed;
             var copy = SmallButton("Copy JSON", () =>
             {
                 try { Clipboard.SetText(JsonSerializer.Serialize(_config)); } catch { }
@@ -131,6 +221,7 @@ namespace Mouseflare.UI
                     return;
                 }
                 _config = parsed;
+                RebuildPresetMenu(null);
                 SyncControls();
                 Apply();
                 _status($"Imported: {parsed.name}");
@@ -141,9 +232,11 @@ namespace Mouseflare.UI
             header.LastChildFill = true;
             var left = new StackPanel { Orientation = Orientation.Horizontal };
             left.Children.Add(Label("Archetype:"));
-            left.Children.Add(archetypes);
+            left.Children.Add(_archetypes);
             DockPanel.SetDock(left, Dock.Left);
             var right = new StackPanel { Orientation = Orientation.Horizontal };
+            right.Children.Add(save);
+            right.Children.Add(_deleteBtn);
             right.Children.Add(copy);
             right.Children.Add(import);
             DockPanel.SetDock(right, Dock.Right);
@@ -160,7 +253,7 @@ namespace Mouseflare.UI
             root.Children.Add(new TextBlock
             {
                 Text = "Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.",
-                FontSize = 10,
+                FontSize = 12,
                 Foreground = Hex("#71717A"),
                 Margin = new Thickness(0, 0, 0, 10),
             });
@@ -184,8 +277,8 @@ namespace Mouseflare.UI
                 new[] { "Linear Shrink", "Grow-Shrink", "Constant", "Pop & Fade" }));
             root.Children.Add(popupRow);
 
-            // Colors + glow row
-            var colorsRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 12) };
+            // Colors + glow row, in a card like the web designer
+            var colorsRow = new StackPanel { Orientation = Orientation.Horizontal };
             colorsRow.Children.Add(Label("Colors: "));
             colorsRow.Children.Add(ColorChip("Primary", c => c.primaryColor, (c, v) => c.primaryColor = v));
             colorsRow.Children.Add(ColorChip("Secondary", c => c.secondaryColor, (c, v) => c.secondaryColor = v));
@@ -195,7 +288,7 @@ namespace Mouseflare.UI
             _glowCheck.Unchecked += (s, e) => ControlsChanged();
             colorsRow.Children.Add(_glowCheck);
             colorsRow.Children.Add(Label("Glow Bloom"));
-            root.Children.Add(colorsRow);
+            root.Children.Add(Card(colorsRow));
 
             // Sliders (two per row)
             Func<double, string> pct = v => $"{v * 100:0}%";
@@ -232,12 +325,14 @@ namespace Mouseflare.UI
                 ("End Alpha", c => c.endAlpha, (c, v) => c.endAlpha = v, 0, 1, pct),
             };
 
+            // Sliders in a card like the web designer
             var grid = new UniformGrid { Columns = 2 };
             foreach (var spec in specs) grid.Children.Add(SliderColumn(spec));
-            root.Children.Add(grid);
+            root.Children.Add(Card(grid));
 
             // No Apply() here: just visiting the tab must not hijack the live
             // preset — the preview starts with the first actual edit
+            RebuildPresetMenu(_config.id);
             SyncControls();
             return root;
         }
@@ -251,10 +346,22 @@ namespace Mouseflare.UI
             return brush;
         }
 
+        /// <summary>Web neon-card equivalent: rounded bordered container with padding.</summary>
+        private static Border Card(UIElement child) => new()
+        {
+            Background = Hex("#1A0F2E"),
+            BorderBrush = Hex("#2E1B4A"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(14),
+            Margin = new Thickness(0, 0, 0, 12),
+            Child = child,
+        };
+
         private static TextBlock Label(string text) => new()
         {
             Text = text,
-            FontSize = 11,
+            FontSize = 13,
             Foreground = Hex("#A1A1AA"),
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -265,7 +372,7 @@ namespace Mouseflare.UI
             var button = new Button
             {
                 Content = title,
-                FontSize = 10,
+                FontSize = 12,
                 Padding = new Thickness(10, 4, 10, 4),
                 Margin = new Thickness(6, 0, 0, 0),
             };
@@ -275,12 +382,12 @@ namespace Mouseflare.UI
 
         private FrameworkElement PopupColumn(string title, Func<CustomFxConfig, string> get, Action<CustomFxConfig, string> set, string[] values, string[] titles)
         {
-            var combo = new ComboBox { FontSize = 10, Margin = new Thickness(0, 2, 8, 0) };
+            var combo = new ComboBox { FontSize = 12, Margin = new Thickness(0, 2, 8, 0) };
             foreach (var t in titles) combo.Items.Add(t);
             combo.SelectionChanged += (s, e) => ControlsChanged();
             _popups.Add((get, set, combo, values));
             var column = new StackPanel();
-            column.Children.Add(new TextBlock { Text = title, FontSize = 10, Foreground = Hex("#6E5F8E"), FontWeight = FontWeights.Bold });
+            column.Children.Add(new TextBlock { Text = title, FontSize = 12, Foreground = Hex("#6E5F8E"), FontWeight = FontWeights.Bold });
             column.Children.Add(combo);
             return column;
         }
@@ -321,19 +428,19 @@ namespace Mouseflare.UI
             _chips.Add((get, set, chip));
             var wrap = new StackPanel { Orientation = Orientation.Horizontal };
             wrap.Children.Add(chip);
-            wrap.Children.Add(new TextBlock { Text = title, FontSize = 9, Foreground = Hex("#71717A"), VerticalAlignment = VerticalAlignment.Center });
+            wrap.Children.Add(new TextBlock { Text = title, FontSize = 11, Foreground = Hex("#71717A"), VerticalAlignment = VerticalAlignment.Center });
             return wrap;
         }
 
         private FrameworkElement SliderColumn((string Title, Func<CustomFxConfig, double> Get, Action<CustomFxConfig, double> Set, double Min, double Max, Func<double, string> Fmt) spec)
         {
             var slider = new Slider { Minimum = spec.Min, Maximum = spec.Max, Value = spec.Get(_config), IsMoveToPointEnabled = true };
-            var valueLabel = new TextBlock { Text = spec.Fmt(spec.Get(_config)), FontSize = 10, Foreground = Hex("#FFA62E"), FontWeight = FontWeights.Bold };
+            var valueLabel = new TextBlock { Text = spec.Fmt(spec.Get(_config)), FontSize = 12, Foreground = Hex("#FFA62E"), FontWeight = FontWeights.Bold };
             slider.ValueChanged += (s, e) => ControlsChanged();
             _sliders.Add((spec.Get, spec.Set, slider, valueLabel, spec.Fmt));
 
             var headerRow = new DockPanel { LastChildFill = false };
-            var titleLabel = new TextBlock { Text = spec.Title, FontSize = 10, Foreground = Hex("#D4D4D8"), FontWeight = FontWeights.SemiBold };
+            var titleLabel = new TextBlock { Text = spec.Title, FontSize = 12, Foreground = Hex("#D4D4D8"), FontWeight = FontWeights.SemiBold };
             DockPanel.SetDock(titleLabel, Dock.Left);
             DockPanel.SetDock(valueLabel, Dock.Right);
             headerRow.Children.Add(titleLabel);

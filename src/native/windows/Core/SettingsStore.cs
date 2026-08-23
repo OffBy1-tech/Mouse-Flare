@@ -34,6 +34,10 @@ namespace Mouseflare.Core
         public double FluidVorticity { get; set; } = 0.85;
         public double FluidDissipation { get; set; } = 0.96;
         public string? CustomFxJson { get; set; } = null;
+        // FX Designer preset library: each entry is one CustomFxConfig as JSON.
+        // Saved instantly (like the web app's localStorage library), never
+        // reverted with the FX draft domain.
+        public string[] CustomFxPresets { get; set; } = Array.Empty<string>();
     }
 
     public static class SettingsStore

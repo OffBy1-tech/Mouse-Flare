@@ -349,6 +349,7 @@ namespace Mouseflare
             overlay.FluidVorticity = s.FluidVorticity;
             overlay.FluidDissipation = s.FluidDissipation;
             overlay.CustomFxJson = s.CustomFxJson;
+            overlay.CustomFxPresets = s.CustomFxPresets ?? Array.Empty<string>();
             overlay.CurrentColor = ParseHexColor(s.CurrentColorHex, Color.FromRgb(245, 158, 11));
             overlay.SecondaryColor = ParseHexColor(s.SecondaryColorHex, Color.FromRgb(251, 191, 36));
         }

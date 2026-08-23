@@ -45,6 +45,11 @@ public struct MacFlareSettings: Codable {
     // Raw JSON exported by the web FX Designer (passivePreset "custom-fx")
     public var customFxJson: String? = nil
 
+    // FX Designer preset library: each entry is one CustomFxConfig as JSON.
+    // Saved instantly (like the web app's localStorage library) — deliberately
+    // NOT part of applyFxFields, so closing without Apply & Save keeps it.
+    public var customFxPresets: [String] = []
+
     public init() {}
 
     // Tolerant decoding: every field falls back to its default when absent, so
@@ -78,6 +83,7 @@ public struct MacFlareSettings: Codable {
         updateCheckIntervalHours = try c.decodeIfPresent(Int.self, forKey: .updateCheckIntervalHours) ?? d.updateCheckIntervalHours
         lastUpdateCheck = try c.decodeIfPresent(Date.self, forKey: .lastUpdateCheck) ?? d.lastUpdateCheck
         customFxJson = try c.decodeIfPresent(String.self, forKey: .customFxJson) ?? d.customFxJson
+        customFxPresets = try c.decodeIfPresent([String].self, forKey: .customFxPresets) ?? d.customFxPresets
     }
 
     public var primaryColor: NSColor {
