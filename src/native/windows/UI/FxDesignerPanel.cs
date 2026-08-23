@@ -91,10 +91,12 @@ namespace Mouseflare.UI
 
         private void SaveToLibrary()
         {
-            _config.name = string.IsNullOrWhiteSpace(_nameBox.Text) ? "Custom FX" : _nameBox.Text;
-            // Re-saving a library preset overwrites it; anything else gets a new id
-            if (!_customPresets.Exists(p => p.id == _config.id))
-                _config.id = $"custom-{Environment.TickCount64}";
+            _config.name = string.IsNullOrWhiteSpace(_nameBox.Text) ? "Custom FX" : _nameBox.Text.Trim();
+            // Only the preset currently loaded FROM the library overwrites in
+            // place; any other draft mints a new id, even if its id happens to
+            // collide with a library entry (e.g. re-imported Copy JSON output).
+            if (_config.id != _selectedCustomId)
+                _config.id = $"custom-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
             _customPresets.RemoveAll(p => p.id == _config.id);
             _customPresets.Insert(0, Clone(_config));
             PersistLibrary();
@@ -178,7 +180,7 @@ namespace Mouseflare.UI
                 if (index < archetypeCount)
                 {
                     var loaded = Clone(DefaultFxPresets.Archetypes[index]);
-                    loaded.id = $"custom-{Environment.TickCount64}";
+                    loaded.id = $"custom-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
                     _config = loaded;
                     _selectedCustomId = null;
                 }
@@ -220,6 +222,9 @@ namespace Mouseflare.UI
                     _status("⚠️ Clipboard does not contain a valid FX Designer config.");
                     return;
                 }
+                // Fresh id, like the web importer — a pasted config must never
+                // adopt an existing library id and overwrite it on Save
+                parsed.id = $"custom-imported-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
                 _config = parsed;
                 RebuildPresetMenu(null);
                 SyncControls();

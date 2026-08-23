@@ -88,10 +88,13 @@ final class FxDesignerView: NSView {
     }
 
     private func saveToLibrary() {
-        let name = nameField.stringValue.isEmpty ? "Custom FX" : nameField.stringValue
+        let trimmed = nameField.stringValue.trimmingCharacters(in: .whitespaces)
+        let name = trimmed.isEmpty ? "Custom FX" : trimmed
         config.name = name
-        // Re-saving a library preset overwrites it; anything else gets a new id
-        if !customPresets.contains(where: { $0.id == config.id }) {
+        // Only the preset currently loaded FROM the library overwrites in
+        // place; any other draft mints a new id, even if its id happens to
+        // collide with a library entry (e.g. re-imported Copy JSON output).
+        if selectedCustomId != config.id {
             config.id = "custom-\(Int(Date().timeIntervalSince1970 * 1000))"
         }
         customPresets.removeAll { $0.id == config.id }
@@ -224,7 +227,11 @@ final class FxDesignerView: NSView {
             guard let self else { return }
             if let json = NSPasteboard.general.string(forType: .string),
                let parsed = CustomFxConfig.fromJSON(json) {
-                self.config = parsed
+                // Fresh id, like the web importer — a pasted config must never
+                // adopt an existing library id and overwrite it on Save
+                var imported = parsed
+                imported.id = "custom-imported-\(Int(Date().timeIntervalSince1970 * 1000))"
+                self.config = imported
                 self.selectedCustomId = nil
                 self.presetPopup.selectItem(at: -1)
                 self.syncControls()
