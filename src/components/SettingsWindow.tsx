@@ -977,43 +977,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     </label>
                   </div>
 
-                  {/* Multi-Monitor Simulation Mode */}
-                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
-                    <div>
-                      <div className="font-semibold text-sm text-neutral-200">Multi-Monitor Display Arena</div>
-                      <div className="text-xs text-neutral-400 mt-0.5">
-                        Simulates dual 4K/1440p monitors with negative coordinate spaces and seamless border traversal.
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.multiMonitorMode}
-                        onChange={(e) => updateInstant({ multiMonitorMode: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
-                    </label>
-                  </div>
-
-                  {/* Reduced Motion Mode */}
-                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
-                    <div>
-                      <div className="font-semibold text-sm text-neutral-200">Accessibility: Reduced Motion</div>
-                      <div className="text-xs text-neutral-400 mt-0.5">
-                        Replaces particle sprays with a single clean, high-contrast locator beacon.
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.reducedMotion}
-                        onChange={(e) => updateInstant({ reducedMotion: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
-                    </label>
-                  </div>
                 </div>
               </div>
             )}
