@@ -143,6 +143,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Verify preset data is in sync
+        run: node scripts/generate-fx-presets.mjs --check
+
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true

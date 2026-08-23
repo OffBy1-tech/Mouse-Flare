@@ -15,7 +15,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "generate:presets": "node scripts/generate-fx-presets.mjs"
   },
   "dependencies": {
     "jszip": "^3.10.1",
