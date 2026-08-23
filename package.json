@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.7.0",
   "license": "MIT",
-  "description": "Interactive web simulator for Mouseflare — a lightweight Windows & macOS utility that makes your mouse cursor impossible to lose with passive trail FX and hotkey-activated Find Mouse flares.",
+  "description": "Mouseflare — never lose your cursor. Native Windows & macOS apps, with a browser demo of the FX engine.",
   "homepage": "https://github.com/OffBy1-tech/Mouse-Flare",
   "repository": {
     "type": "git",
@@ -19,7 +19,6 @@
     "generate:presets": "node scripts/generate-fx-presets.mjs"
   },
   "dependencies": {
-    "jszip": "^3.10.1",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.1",
@@ -27,7 +26,6 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",
-    "@types/jszip": "^3.4.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.4",
     "tailwindcss": "^4.1.14",

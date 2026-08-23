@@ -18,6 +18,8 @@ Mouseflare is a lightweight desktop utility for **Windows and macOS** that makes
 
 Effects render on a transparent, click-through overlay: they never intercept clicks, steal focus, or slow down mouse movement. Multi-monitor setups — mixed resolutions, mixed DPI scaling, arbitrary arrangements — are a first-class requirement, not an afterthought.
 
+The product is the two native apps below. **[Try the live demo](https://offby1-tech.github.io/Mouse-Flare/)** — the FX engine and designer running in your browser; the real overlay ships in the desktop apps.
+
 ---
 
 ## ⚡ How It Works
@@ -36,9 +38,11 @@ Effects render on a transparent, click-through overlay: they never intercept cli
 
 | Path | Component | What it is |
 | :--- | :--- | :--- |
-| 🌐 `src/` | **Web Simulator** | Interactive simulator (React + Vite + TS) to try effects and play challenges in-browser. |
+| 🌐 `src/` | **Showcase Demo** | Showcase demo (React + Vite) — hosted on GitHub Pages; also home of the canonical FX preset data consumed by both native apps. |
 | 🪟 `src/native/windows/` | **Windows App** | Native C# / .NET 8 system-tray utility with global hotkeys and transparent overlay. |
 | 🍎 `src/native/macos/` | **macOS App** | Native Swift / AppKit menu bar agent managing overlays across all displays. |
+| 🗂️ `data/` | **Shared FX Presets** | `default-fx-presets.json` — the canonical FX Designer preset library consumed by the web demo and both native apps. |
+| ⚙️ `scripts/` | **Preset Generator** | `generate-fx-presets.mjs` — regenerates the native-embedded preset literals from `data/default-fx-presets.json` (`bun run generate:presets`). |
 | 📄 `docs/` | **Documentation** | Contains the full product requirements document (`mouseflare-prd.md`). |
 
 ---
@@ -98,7 +102,7 @@ open Mouseflare.app
 
 ## 🛠️ Developer Setup & Execution
 
-### 🌐 1. Web Simulator
+### 🌐 1. Web Demo
 **Prerequisites:** Node.js or Bun
 ```bash
 git clone https://github.com/OffBy1-tech/Mouse-Flare.git
@@ -106,7 +110,7 @@ cd Mouse-Flare
 npm install    # or: bun install
 npm run dev    # or: bun run dev
 ```
-👉 Open http://localhost:3000 (No API keys required).
+👉 Open http://localhost:3000 (No API keys required). This is the same showcase demo published at [offby1-tech.github.io/Mouse-Flare](https://offby1-tech.github.io/Mouse-Flare/): the FX playground, Effects panel, FX Designer (Copy JSON to import presets into the desktop apps), and the Find Mouse challenge.
 
 ### 🪟 2. Native Windows App
 **Prerequisites:** Windows 10 (1903+) / 11, [.NET 8.0 SDK](https://dotnet.microsoft.com/download)
