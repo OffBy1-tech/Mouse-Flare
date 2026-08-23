@@ -46,7 +46,7 @@ export interface AppSettings {
   enablePassiveFx: boolean;
   passiveFx: FxPreset;
   findMouseFx: FlarePreset;
-  hotkey: string; // static display string for the Flare button and challenge copy — no recording UI in the demo
+  hotkey: string; // static display string for the Flare button — no recording UI in the demo
   intensity: number; // 0.5 to 2.0
   particleDensity: number; // 1 to 10
   trailLength: number; // 10 to 60

@@ -5,7 +5,6 @@ import { soundEngine } from './engine/sound';
 import { OverlayCanvas } from './components/OverlayCanvas';
 import { DesktopSimulator } from './components/DesktopSimulator';
 import { DemoPanel } from './components/DemoPanel';
-import { FindMouseChallengeModal } from './components/FindMouseChallengeModal';
 import { Zap, Maximize2, Minimize2, Download } from 'lucide-react';
 
 import { DEFAULT_SETTINGS } from './data/defaultSettings';
@@ -26,7 +25,6 @@ export default function App() {
     return DEFAULT_SETTINGS;
   });
 
-  const [showChallenge, setShowChallenge] = useState(false);
   const [isFullscreenOverlay, setIsFullscreenOverlay] = useState(false);
 
   // Core Engine instance
@@ -213,17 +211,7 @@ export default function App() {
           settings={settings}
           onUpdateSettings={handleUpdateSettings}
           onTriggerFlare={() => triggerFindMouseFlare()}
-          onLaunchChallenge={() => setShowChallenge(true)}
         />
-
-        {/* Find My Mouse Benchmark Challenge */}
-        {showChallenge && (
-          <FindMouseChallengeModal
-            settings={settings}
-            onTriggerFlare={() => triggerFindMouseFlare()}
-            onClose={() => setShowChallenge(false)}
-          />
-        )}
       </main>
     </div>
   );

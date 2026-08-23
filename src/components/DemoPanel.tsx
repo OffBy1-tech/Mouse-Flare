@@ -4,13 +4,12 @@ import { FxDesigner } from './FxDesigner';
 import { NeonColorPicker } from './NeonColorPicker';
 import { PASSIVE_PRESETS, FLARE_PRESETS, COLOR_PALETTES } from '../data/presetCatalog';
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
-import { Check, ChevronLeft, ChevronRight, Sparkles, Wand2, Trophy, Download } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Sparkles, Wand2, Download } from 'lucide-react';
 
 interface DemoPanelProps {
   settings: AppSettings;
   onUpdateSettings: (partial: Partial<AppSettings>) => void;
   onTriggerFlare: () => void;
-  onLaunchChallenge: () => void;
 }
 
 const READY_STATUS = 'Ready — every change previews live on the playground.';
@@ -20,7 +19,6 @@ export const DemoPanel: React.FC<DemoPanelProps> = ({
   settings,
   onUpdateSettings,
   onTriggerFlare,
-  onLaunchChallenge,
 }) => {
   const [tab, setTab] = useState<'effects' | 'designer'>('effects');
   const [collapsed, setCollapsed] = useState(false);
@@ -304,20 +302,13 @@ export const DemoPanel: React.FC<DemoPanelProps> = ({
         />
       )}
 
-      {/* Footer: status line (persistent, native model) + challenge + downloads */}
+      {/* Footer: status line (persistent, native model) + downloads */}
       <div className="shrink-0 border-t border-violet-500/20">
         <div className="h-9 flex items-center gap-2.5 px-4 text-[11px] text-neutral-400">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
           <span className="truncate">{status}</span>
         </div>
         <div className="p-3 pt-0 space-y-2">
-          <button
-            onClick={onLaunchChallenge}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl neon-btn-primary font-bold text-xs transition-all active:scale-95 cursor-pointer"
-          >
-            <Trophy className="w-3.5 h-3.5" />
-            <span>Find-Mouse Challenge</span>
-          </button>
           <div className="flex items-center gap-2">
             <a
               href={RELEASES_URL}

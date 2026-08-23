@@ -38,7 +38,7 @@ The product is the two native apps below. **[Try the live demo](https://offby1-t
 
 | Path | Component | What it is |
 | :--- | :--- | :--- |
-| 🌐 `src/` | **Showcase Demo** | The FX playground, designer, and find-mouse challenge (React + Vite) — hosted on GitHub Pages. |
+| 🌐 `src/` | **Showcase Demo** | The FX playground and designer (React + Vite) — hosted on GitHub Pages. |
 | 🪟 `src/native/windows/` | **Windows App** | Native C# / .NET 8 system-tray utility with global hotkeys and transparent overlay. |
 | 🍎 `src/native/macos/` | **macOS App** | Native Swift / AppKit menu bar agent managing overlays across all displays. |
 | 🗂️ `data/` | **Shared FX Presets** | `default-fx-presets.json` — the canonical FX Designer preset library consumed by the web demo and both native apps. |
@@ -110,7 +110,7 @@ cd Mouse-Flare
 npm install    # or: bun install
 npm run dev    # or: bun run dev
 ```
-👉 Open http://localhost:3000 (No API keys required). This is the same showcase demo published at [offby1-tech.github.io/Mouse-Flare](https://offby1-tech.github.io/Mouse-Flare/): the FX playground, Effects panel, FX Designer (Copy JSON to import presets into the desktop apps), and the Find Mouse challenge.
+👉 Open http://localhost:3000 (No API keys required). This is the same showcase demo published at [offby1-tech.github.io/Mouse-Flare](https://offby1-tech.github.io/Mouse-Flare/): the FX playground, Effects panel, and FX Designer (Copy JSON to import presets into the desktop apps).
 
 ### 🪟 2. Native Windows App
 **Prerequisites:** Windows 10 (1903+) / 11, [.NET 8.0 SDK](https://dotnet.microsoft.com/download)
