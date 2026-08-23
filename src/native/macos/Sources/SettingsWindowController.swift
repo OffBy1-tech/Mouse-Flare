@@ -581,7 +581,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         sidebarBorder.translatesAutoresizingMaskIntoConstraints = false
         sidebar.addSubview(sidebarBorder)
 
-        let navHeader = makeLabel("NAVIGATION", size: 10, weight: .bold, color: Theme.textFaint)
+        let navHeader = makeLabel("NAVIGATION", size: 10, weight: .bold, color: NSColor(hexString: "#C4B5FD").withAlphaComponent(0.6))
 
         let navStack = NSStackView(views: [navHeader])
         navStack.orientation = .vertical
