@@ -67,8 +67,11 @@ compact right-side demo panel + top bar.
   `AppSettings` key only those surfaces used (hotkey recording, updates
   fields, diagnostics, startWithWindows, soundFx toggle UI, etc. — the
   demo keeps: passiveFx, findMouseFx, colorPreset, customColor,
-  quickSwatches, enablePassiveFx, customFxConfig, fluid keys, intensity /
-  particleDensity / animationSpeed defaults consumed by the engine).
+  quickSwatches, enablePassiveFx, customFxConfig, the fluid keys, and the
+  engine-consumed tuning values intensity / particleDensity /
+  animationSpeed / minMovementThreshold at their defaults; `hotkey` stays
+  as a static display string for the Flare button and challenge copy — no
+  recording UI).
 - localStorage keeps only the demo state + the designer's custom preset
   library (existing `mouseflare_custom_fx_presets` key unchanged).
 
