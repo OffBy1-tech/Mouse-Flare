@@ -574,50 +574,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     </label>
                   </div>
 
-                  {/* Quick Software Updates Card in General Tab */}
-                  <div className="neon-card p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
-                        <RefreshCw className={`w-4 h-4 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-xs text-neutral-200">Software Updates &amp; Build Status</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/5 text-neutral-300 border border-white/10">
-                            v{CURRENT_BUILD_INFO.version}
-                          </span>
-                          {updateResult?.hasUpdate && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold animate-pulse">
-                              v{updateResult.latestVersion} Available
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-neutral-400 mt-0.5">
-                          {updateResult?.hasUpdate
-                            ? `Latest build (v${updateResult.latestVersion}) is ready to download from GitHub Releases.`
-                            : `Current installed version is validated against release feed (checked ${formatTimeAgo(lastCheckTime)}).`}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => handlePerformUpdateCheck()}
-                        disabled={isCheckingUpdates}
-                        className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-200 text-xs font-medium border border-white/10 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? 'animate-spin text-amber-400' : ''}`} />
-                        <span>{isCheckingUpdates ? 'Checking...' : 'Check Now'}</span>
-                      </button>
-
-                      <button
-                        onClick={() => setActiveTab('updates')}
-                        className="neon-btn-primary px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <span>View Release Notes</span>
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
