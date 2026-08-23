@@ -1478,6 +1478,16 @@
 
                             <Border Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
                                 <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkSoundFx" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnSoundFxChanged" Unchecked="OnSoundFxChanged"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Play Sound on Flare" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                        <TextBlock Text="Subtle synth chime on flare trigger." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <Border Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
                                     <CheckBox x:Name="chkPassiveFx" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnPassiveFxChanged" Unchecked="OnPassiveFxChanged"/>
                                     <StackPanel>
                                         <TextBlock Text="Enable Passive Trail FX" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
@@ -1507,7 +1517,7 @@
                                             </Button.Template>
                                         </Button>
                                         <StackPanel>
-                                            <TextBlock Text="Find Mouse Global Hotkey" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
+                                            <TextBlock Text="Flare hotkey" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
                                             <TextBlock Text="Press this shortcut anywhere in Windows to blast a beacon flare." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </DockPanel>
@@ -1521,31 +1531,12 @@
                                 </StackPanel>
                             </Border>
 
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="10"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14">
-                                    <DockPanel LastChildFill="True">
-                                        <CheckBox x:Name="chkStartWithWindows" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True"/>
-                                        <StackPanel>
-                                            <TextBlock Text="Start with Windows" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
-                                            <TextBlock Text="Launch upon login." FontSize="10" Foreground="#71717A" Margin="0,2,0,0"/>
-                                        </StackPanel>
-                                    </DockPanel>
-                                </Border>
-                                <Border Grid.Column="2" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14">
-                                    <DockPanel LastChildFill="True">
-                                        <CheckBox x:Name="chkSoundFx" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnSoundFxChanged" Unchecked="OnSoundFxChanged"/>
-                                        <StackPanel>
-                                            <TextBlock Text="Beacon Chime" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
-                                            <TextBlock Text="Audio beacon cue." FontSize="10" Foreground="#71717A" Margin="0,2,0,0"/>
-                                        </StackPanel>
-                                    </DockPanel>
-                                </Border>
-                            </Grid>
+                            <Border Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+                                <DockPanel LastChildFill="True">
+                                    <CheckBox x:Name="chkStartWithWindows" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True"/>
+                                    <TextBlock Text="Launch on startup" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA" VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </Border>
 
                         </StackPanel>
                     </ScrollViewer>

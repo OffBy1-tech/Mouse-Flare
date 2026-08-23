@@ -762,6 +762,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             control: switchEnabled
         )
 
+        switchSound = NeonSwitch()
+        switchSound.target = self
+        switchSound.action = #selector(togglesChanged)
+        addToggleCard(
+            to: stack,
+            title: "Play Sound on Flare",
+            subtitle: "Subtle synth chime on flare trigger.",
+            control: switchSound
+        )
+
         switchPassive = NeonSwitch()
         switchPassive.target = self
         switchPassive.action = #selector(togglesChanged)
@@ -774,7 +784,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
         // Hotkey card
         let hotkeyCard = makeCard()
-        let hotkeyTitle = makeLabel("Find Mouse Global Hotkey", size: 13, weight: .bold, color: Theme.textPrimary)
+        let hotkeyTitle = makeLabel("Flare hotkey", size: 13, weight: .bold, color: Theme.textPrimary)
         let hotkeySub = makeLabel("Press this shortcut anywhere in macOS to blast a beacon flare. Click the combo to record your own.", size: 11, weight: .regular, color: Theme.textMuted)
 
         hotkeyButton = CardButton()
@@ -822,23 +832,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         stack.addArrangedSubview(hotkeyCard)
         hotkeyCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
-        // Half-width toggle pair
+        // Startup toggle
         switchStartAtLogin = NeonSwitch()
         switchStartAtLogin.target = self
         switchStartAtLogin.action = #selector(togglesChanged)
-        let startCard = makeToggleCard(title: "Start with macOS", subtitle: "Launch upon login.", control: switchStartAtLogin)
-
-        switchSound = NeonSwitch()
-        switchSound.target = self
-        switchSound.action = #selector(togglesChanged)
-        let soundCard = makeToggleCard(title: "Beacon Chime", subtitle: "Audio beacon cue.", control: switchSound)
-
-        let pair = NSStackView(views: [startCard, soundCard])
-        pair.orientation = .horizontal
-        pair.spacing = 10
-        pair.distribution = .fillEqually
-        stack.addArrangedSubview(pair)
-        pair.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        addToggleCard(to: stack, title: "Launch on startup", subtitle: "", control: switchStartAtLogin)
     }
 
     // MARK: Tab: FX Studio
@@ -1819,7 +1817,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let subLabel = makeLabel(subtitle, size: 11, weight: .regular, color: Theme.textMuted)
         subLabel.lineBreakMode = .byWordWrapping
         subLabel.maximumNumberOfLines = 2
-        let textStack = NSStackView(views: [titleLabel, subLabel])
+        // An empty subtitle collapses the card to a single-line row.
+        let textStack = NSStackView(views: subtitle.isEmpty ? [titleLabel] : [titleLabel, subLabel])
         textStack.orientation = .vertical
         textStack.alignment = .leading
         textStack.spacing = 2
