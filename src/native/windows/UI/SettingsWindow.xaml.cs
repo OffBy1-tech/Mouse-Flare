@@ -258,6 +258,19 @@ namespace Mouseflare.UI
                 : "\u26a0\ufe0f Could not update the Windows startup entry.");
         }
 
+        private void OnCopyMinisignCommand(object sender, RoutedEventArgs e)
+        {
+            try { Clipboard.SetText(txtMinisignCommand.Text); } catch { }
+            SetStatusText("Copied minisign verify command");
+        }
+
+        private void OnDownloadChecksums(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                "https://github.com/OffBy1-tech/Mouse-Flare/releases/latest/download/SHA256SUMS.txt")
+            { UseShellExecute = true });
+        }
+
         private void OnAutoUpdatesChanged(object sender, RoutedEventArgs e)
         {
             if (_overlay != null) _overlay.AutoCheckUpdates = chkAutoUpdates.IsChecked == true;

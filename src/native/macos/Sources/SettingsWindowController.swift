@@ -1284,6 +1284,44 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         columnsRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         changelogCard.heightAnchor.constraint(equalTo: cadenceCard.heightAnchor).isActive = true
 
+        // Security & Package Verification — parity with the web Updates tab
+        let securityCard = makeCard()
+        let securityTitle = makeLabel("🛡 SECURITY & PACKAGE VERIFICATION", size: 10.5, weight: .bold, color: Theme.emerald)
+        let securityBody = makeLabel(
+            "Every release ships SHA-256 checksums, and stable releases are additionally minisign-signed. Verify a download against the project's public key:",
+            size: 11, weight: .regular, color: Theme.textSecondary
+        )
+        securityBody.lineBreakMode = .byWordWrapping
+        securityBody.maximumNumberOfLines = 3
+        let minisignCommand = "minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw"
+        let commandLabel = makeLabel(minisignCommand, size: 10, weight: .regular, color: Theme.neonValue)
+        commandLabel.font = .monospacedSystemFont(ofSize: 10, weight: .regular)
+        commandLabel.lineBreakMode = .byCharWrapping
+        commandLabel.maximumNumberOfLines = 2
+        commandLabel.isSelectable = true
+        let copyCommandButton = makeFilledButton(title: "Copy Command", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 11, height: 26)
+        copyCommandButton.onClick = { [weak self] in
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(minisignCommand, forType: .string)
+            self?.setStatus("Copied minisign verify command")
+        }
+        let checksumsButton = makeFilledButton(title: "Download SHA256SUMS.txt", background: Theme.controlBg, foreground: Theme.textPrimary, fontSize: 11, height: 26)
+        checksumsButton.onClick = {
+            NSWorkspace.shared.open(URL(string: "https://github.com/OffBy1-tech/Mouse-Flare/releases/latest/download/SHA256SUMS.txt")!)
+        }
+        let securityButtons = NSStackView(views: [copyCommandButton, checksumsButton, NSView()])
+        securityButtons.orientation = .horizontal
+        securityButtons.spacing = 8
+        let securityContent = NSStackView(views: [securityTitle, securityBody, commandLabel, securityButtons])
+        securityContent.orientation = .vertical
+        securityContent.alignment = .leading
+        securityContent.spacing = 8
+        embed(securityContent, in: securityCard, padding: 14)
+        securityBody.widthAnchor.constraint(equalTo: securityContent.widthAnchor).isActive = true
+        commandLabel.widthAnchor.constraint(equalTo: securityContent.widthAnchor).isActive = true
+        stack.addArrangedSubview(securityCard)
+        securityCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
         refreshUpdatesUI()
     }
 

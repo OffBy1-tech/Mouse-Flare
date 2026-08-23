@@ -173,11 +173,15 @@ namespace Mouseflare
                 var choice = MessageBox.Show(
                     $"Mouseflare v{release.Version} is available (you are running v{updater.CurrentVersion}).\n\n" +
                     "The update is downloaded from GitHub Releases and verified with the project's signing key before installing.\n\n" +
-                    "Install now?",
-                    "Update Available", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                    "Yes installs now \u2022 No opens the release notes \u2022 Cancel for later.",
+                    "Update Available", MessageBoxButton.YesNoCancel, MessageBoxImage.Information);
                 if (choice == MessageBoxResult.Yes)
                 {
                     StartUpdateDownload();
+                }
+                else if (choice == MessageBoxResult.No && !string.IsNullOrEmpty(release.PageUrl))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(release.PageUrl) { UseShellExecute = true });
                 }
             }
             catch (Exception ex)
