@@ -143,32 +143,6 @@ export default function App() {
             </span>
           </div>
 
-          <div className="h-4 w-px bg-neutral-800 hidden sm:block" />
-
-          {/* Quick Scenario Buttons */}
-          <div className="hidden lg:flex items-center gap-1 text-neutral-400">
-            <span className="text-[11px] mr-1">Workspace:</span>
-            {(
-              [
-                { id: 'windows11-dark', label: 'Windows 11' },
-                { id: 'busy-editor', label: 'Code Editor' },
-                { id: 'dense-sheets', label: 'Dense Excel' },
-                { id: 'light-workspace', label: 'Light Theme' },
-              ] as const
-            ).map((s) => (
-              <button
-                key={s.id}
-                onClick={() => handleUpdateSettings({ desktopBackground: s.id })}
-                className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
-                  settings.desktopBackground === s.id
-                    ? 'bg-neutral-800 text-amber-300 font-medium border border-neutral-700'
-                    : 'hover:text-neutral-200 hover:bg-neutral-900'
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="flex items-center gap-2">

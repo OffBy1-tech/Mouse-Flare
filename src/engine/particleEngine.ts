@@ -22,7 +22,6 @@ export class ParticleEngine {
   private lastY = 0;
   private lastTime = 0;
   private lastMoveTime = 0;
-  private lastMonitorId = 1;
   private isIdle = true;
   private globalHue = 0;
   public fluidEngine: FluidSimulationEngine;
@@ -63,8 +62,7 @@ export class ParticleEngine {
   public onMouseMove(
     x: number,
     y: number,
-    settings: AppSettings,
-    monitorId: number = 1
+    settings: AppSettings
   ) {
     if (!settings.enabled) return;
 
@@ -93,12 +91,6 @@ export class ParticleEngine {
     }
 
     this.cursorSpeed = (dist / dt) * 1000; // px per second
-
-    // Check if monitor boundary crossed
-    if (settings.monitorCrossingFx && monitorId !== this.lastMonitorId) {
-      this.spawnMonitorCrossingFx(x, y, settings);
-      this.lastMonitorId = monitorId;
-    }
 
     this.lastMoveTime = now;
     this.lastX = x;
@@ -637,20 +629,6 @@ export class ParticleEngine {
   }
 
   // Monitor crossing FX
-  private spawnMonitorCrossingFx(x: number, y: number, settings: AppSettings) {
-    const colors = this.getColors(settings);
-    this.rings.push({
-      x,
-      y,
-      radius: 4,
-      maxRadius: 45 * settings.intensity,
-      alpha: 0.8,
-      color: colors.primary,
-      lineWidth: 2,
-      progress: 0,
-      type: 'solar-flare',
-    });
-  }
 
   // Update physics & render to HTML5 Canvas
   public updateAndRender(

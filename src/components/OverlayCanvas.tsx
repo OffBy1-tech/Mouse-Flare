@@ -74,10 +74,7 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
       const y = e.clientY - rect.top;
       if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
 
-      // Detect monitor in multi-monitor mode (left half = Monitor 1, right half = Monitor 2)
-      const monitorId = settings.multiMonitorMode && x > rect.width * 0.5 ? 2 : 1;
-
-      engine.onMouseMove(x, y, settings, monitorId);
+      engine.onMouseMove(x, y, settings);
       if (onPositionUpdate) {
         onPositionUpdate(x, y, engine.cursorSpeed);
       }

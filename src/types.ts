@@ -56,11 +56,8 @@ export interface AppSettings {
   quickSwatches: string[]; // 8 user-editable swatches shared with the color pickers
   minMovementThreshold: number; // px
   idleBurst: boolean;
-  monitorCrossingFx: boolean;
   soundFx: boolean;
   fpsLimit: 60 | 120 | 0; // 0 = uncapped
-  multiMonitorMode: boolean;
-  desktopBackground: 'windows11-dark' | 'busy-editor' | 'dense-sheets' | 'multitasking' | 'light-workspace';
   // Fluid Simulation Controls (Pavel DoGreat inspired)
   fluidVorticity: number; // 0.1 to 2.0 (curling force)
   fluidDissipation: number; // 0.90 to 0.99 (smoke trail persistence)
