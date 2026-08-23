@@ -306,20 +306,30 @@ export class CustomFxRenderer {
   ) {
     ctx.save();
     ctx.globalAlpha = p.alpha;
-
-    if (config.glowBloom && config.glowRadius > 0) {
-      ctx.shadowColor = color;
-      ctx.shadowBlur = config.glowRadius * (p.size / 6);
-    }
-
     ctx.translate(p.x, p.y);
     if (p.rotation !== 0) {
       ctx.rotate(p.rotation);
     }
 
-    const s = p.size;
+    if (config.glowBloom && config.glowRadius > 0) {
+      // Glow renders from a pre-baked sprite: per-particle shadowBlur was
+      // the dominant frame cost (~70x slower at high particle counts).
+      // Same technique as the Windows CustomFxCompositor's sprite cache.
+      const sprite = this.getGlowSprite(p.shape, p.size, color, config.glowRadius);
+      const half = sprite.width / 2;
+      ctx.drawImage(sprite, -half, -half);
+    } else {
+      this.paintShape(ctx, p.shape, p.size, color);
+    }
 
-    switch (p.shape) {
+    ctx.restore();
+  }
+
+  /** Paints one particle shape centered at the origin (no glow). */
+  private paintShape(ctx: CanvasRenderingContext2D, shape: string, size: number, color: string) {
+    const s = size;
+
+    switch (shape) {
       case 'circle': {
         ctx.fillStyle = color;
         ctx.beginPath();
@@ -505,8 +515,58 @@ export class CustomFxRenderer {
         break;
       }
     }
+  }
 
-    ctx.restore();
+  // ---- glow sprite cache (quantized by shape / size / blur / color) ----
+
+  private glowSprites = new Map<string, HTMLCanvasElement>();
+
+  /** Quantizes a color string so continuously-varying colors (rainbow hue
+   *  cycling, lifetime gradients) map onto a bounded set of cache keys. */
+  private quantizeColor(color: string): string {
+    const hsl = color.match(/hsla?\(\s*([\d.]+)[,\s]+([\d.]+)%[,\s]+([\d.]+)%/);
+    if (hsl) {
+      const h = Math.round(parseFloat(hsl[1]) / 15) * 15;
+      const sat = Math.round(parseFloat(hsl[2]) / 10) * 10;
+      const lig = Math.round(parseFloat(hsl[3]) / 10) * 10;
+      return `hsl(${h}, ${sat}%, ${lig}%)`;
+    }
+    const hex = color.match(/^#([0-9a-fA-F]{6})$/);
+    if (hex) {
+      const q = (i: number) =>
+        ((parseInt(hex[1].slice(i, i + 2), 16) & 0xf0) | 0x08).toString(16).padStart(2, '0');
+      return `#${q(0)}${q(2)}${q(4)}`;
+    }
+    return color;
+  }
+
+  private getGlowSprite(
+    shape: string,
+    size: number,
+    color: string,
+    glowRadius: number
+  ): HTMLCanvasElement {
+    const sizeQ = Math.max(1, Math.round(size));
+    const blur = Math.max(1, Math.round(glowRadius * (sizeQ / 6)));
+    const colorQ = this.quantizeColor(color);
+    const key = `${shape}|${sizeQ}|${blur}|${colorQ}`;
+    let sprite = this.glowSprites.get(key);
+    if (!sprite) {
+      // Bound the cache; bakes are cheap, so a full reset on overflow is fine
+      if (this.glowSprites.size >= 512) this.glowSprites.clear();
+      const half = Math.ceil(sizeQ * 2.5 + blur * 2);
+      sprite = document.createElement('canvas');
+      sprite.width = sprite.height = half * 2;
+      const sctx = sprite.getContext('2d');
+      if (sctx) {
+        sctx.translate(half, half);
+        sctx.shadowColor = colorQ;
+        sctx.shadowBlur = blur;
+        this.paintShape(sctx, shape, sizeQ, colorQ);
+      }
+      this.glowSprites.set(key, sprite);
+    }
+    return sprite;
   }
 }
 
