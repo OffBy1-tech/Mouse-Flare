@@ -46,11 +46,15 @@ export class ParticleEngine {
   public getColors(settings: AppSettings) {
     if (settings.colorPreset === 'custom' && settings.customColor) {
       const hex = settings.customColor;
+      const r = parseInt(hex.slice(1, 3), 16) || 0;
+      const g = parseInt(hex.slice(3, 5), 16) || 0;
+      const b = parseInt(hex.slice(5, 7), 16) || 0;
+      const lighten = (v: number) => Math.min(255, Math.round(v + (255 - v) * 0.35));
       return {
         primary: hex,
-        secondary: '#ffffff',
-        glow: `${hex}66`,
-        rgb: '255, 200, 100',
+        secondary: `rgb(${lighten(r)}, ${lighten(g)}, ${lighten(b)})`,
+        glow: `rgba(${r}, ${g}, ${b}, 0.4)`,
+        rgb: `${r}, ${g}, ${b}`,
       };
     }
     return COLOR_MAP[settings.colorPreset] || COLOR_MAP.amber;

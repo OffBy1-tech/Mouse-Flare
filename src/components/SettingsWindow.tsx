@@ -64,6 +64,8 @@ const pickFxDraft = (s: AppSettings): Partial<AppSettings> => ({
   passiveFx: s.passiveFx,
   findMouseFx: s.findMouseFx,
   colorPreset: s.colorPreset,
+  customColor: s.customColor,
+  quickSwatches: s.quickSwatches,
   intensity: s.intensity,
   particleDensity: s.particleDensity,
   animationSpeed: s.animationSpeed,
@@ -153,6 +155,36 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     } catch (err) {
       showFxStatus(invalid);
     }
+  };
+
+  // Custom color + editable quick swatches (parity with the native pickers)
+  const quickSwatches = settings.quickSwatches ?? DEFAULT_SETTINGS.quickSwatches;
+  const [hexDraft, setHexDraft] = useState(settings.customColor);
+  useEffect(() => setHexDraft(settings.customColor), [settings.customColor]);
+  const applyHexDraft = () => {
+    const m = hexDraft.trim().match(/^#?([0-9a-fA-F]{6})$/);
+    if (m) {
+      updateFxDraft({ customColor: `#${m[1].toUpperCase()}`, colorPreset: 'custom' });
+    } else {
+      showFxStatus('\u26a0\ufe0f Invalid hex code. Please enter e.g. #FF5500 or #00FFCC');
+      setHexDraft(settings.customColor);
+    }
+  };
+  const editingSwatchRef = useRef(-1);
+  const swatchEditInputRef = useRef<HTMLInputElement>(null);
+  const beginSwatchEdit = (index: number) => {
+    editingSwatchRef.current = index;
+    if (swatchEditInputRef.current) {
+      swatchEditInputRef.current.value = quickSwatches[index];
+      swatchEditInputRef.current.click();
+    }
+  };
+  const commitSwatchEdit = (hex: string) => {
+    const index = editingSwatchRef.current;
+    if (index < 0) return;
+    const next = [...quickSwatches];
+    next[index] = hex.toUpperCase();
+    updateFxDraft({ quickSwatches: next, customColor: next[index], colorPreset: 'custom' });
   };
 
   // Sync initial tab if passed from outside (e.g. clicking notification banner)
@@ -776,6 +808,63 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         </button>
                       );
                     })}
+                    <button
+                      onClick={() => updateFxDraft({ colorPreset: 'custom' })}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer ${
+                        settings.colorPreset === 'custom'
+                          ? 'neon-selected text-white font-bold'
+                          : 'neon-card neon-card-hover text-neutral-300'
+                      }`}
+                    >
+                      <span
+                        className="w-3.5 h-3.5 rounded-full shadow-inner ring-1 ring-white/20"
+                        style={{ backgroundColor: settings.customColor }}
+                      />
+                      <span>Custom Hex</span>
+                      {settings.colorPreset === 'custom' && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                    </button>
+                  </div>
+
+                  {/* Custom color + quick swatches (parity with native) */}
+                  <div className="mt-3 p-3 rounded-xl neon-card flex flex-wrap items-center gap-3 text-xs">
+                    <span className="text-neutral-400">Custom Color:</span>
+                    <input
+                      type="color"
+                      value={settings.customColor}
+                      onChange={(e) => updateFxDraft({ customColor: e.target.value.toUpperCase(), colorPreset: 'custom' })}
+                      className="w-6 h-6 rounded-full border border-white/20 hover:border-white/60 transition-colors cursor-pointer bg-transparent"
+                      title="Click to open the color picker"
+                    />
+                    <input
+                      type="text"
+                      value={hexDraft}
+                      onChange={(e) => setHexDraft(e.target.value)}
+                      onBlur={applyHexDraft}
+                      onKeyDown={(e) => e.key === 'Enter' && applyHexDraft()}
+                      className="neon-input rounded-lg px-2.5 py-1.5 font-mono w-24"
+                      aria-label="Custom color hex"
+                    />
+                    <div className="flex-1" />
+                    <span className="text-neutral-400">Quick:</span>
+                    {quickSwatches.map((hex, i) => (
+                      <button
+                        key={i}
+                        onClick={() => updateFxDraft({ customColor: hex, colorPreset: 'custom' })}
+                        onDoubleClick={() => beginSwatchEdit(i)}
+                        className="w-[18px] h-[18px] rounded-full ring-1 ring-white/20 hover:ring-white/60 transition-shadow cursor-pointer"
+                        style={{ backgroundColor: hex }}
+                        title="Click to use this color \u2022 double-click to edit it"
+                        aria-label={`Quick swatch ${i + 1}: ${hex}`}
+                      />
+                    ))}
+                    <input
+                      ref={swatchEditInputRef}
+                      type="color"
+                      className="sr-only"
+                      onChange={(e) => commitSwatchEdit(e.target.value)}
+                      aria-hidden="true"
+                      tabIndex={-1}
+                    />
                   </div>
                 </div>
 

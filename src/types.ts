@@ -54,6 +54,7 @@ export interface AppSettings {
   animationSpeed: number; // 0.5 to 2.0
   colorPreset: ColorPreset;
   customColor: string;
+  quickSwatches: string[]; // 8 user-editable swatches shared with the color pickers
   minMovementThreshold: number; // px
   idleBurst: boolean;
   monitorCrossingFx: boolean;

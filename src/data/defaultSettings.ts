@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   animationSpeed: 1.0,
   colorPreset: 'amber',
   customColor: '#f59e0b',
+  quickSwatches: ['#FF007F', '#3B82F6', '#14B8A6', '#F97316', '#A855F7', '#EF4444', '#FACC15', '#22C55E'],
   minMovementThreshold: 2,
   idleBurst: true,
   monitorCrossingFx: true,
