@@ -4,7 +4,7 @@ import { FxDesigner } from './FxDesigner';
 import { NeonColorPicker } from './NeonColorPicker';
 import { PASSIVE_PRESETS, FLARE_PRESETS, COLOR_PALETTES } from '../data/presetCatalog';
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
-import { Check, ChevronLeft, ChevronRight, Sparkles, Wand2, Download } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Sparkles, Wand2 } from 'lucide-react';
 
 interface DemoPanelProps {
   settings: AppSettings;
@@ -13,8 +13,6 @@ interface DemoPanelProps {
 }
 
 const READY_STATUS = 'Ready — every change previews live on the playground.';
-const RELEASES_URL = 'https://github.com/OffBy1-tech/Mouse-Flare/releases/latest';
-
 export const DemoPanel: React.FC<DemoPanelProps> = ({
   settings,
   onUpdateSettings,
@@ -302,33 +300,11 @@ export const DemoPanel: React.FC<DemoPanelProps> = ({
         />
       )}
 
-      {/* Footer: status line (persistent, native model) + downloads */}
+      {/* Footer: status line (persistent, native model) */}
       <div className="shrink-0 border-t border-violet-500/20">
         <div className="h-9 flex items-center gap-2.5 px-4 text-[11px] text-neutral-400">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
           <span className="truncate">{status}</span>
-        </div>
-        <div className="p-3 pt-0 space-y-2">
-          <div className="flex items-center gap-2">
-            <a
-              href={RELEASES_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-200 text-[11px] font-medium border border-white/10 transition-all"
-            >
-              <Download className="w-3 h-3" />
-              Download for macOS
-            </a>
-            <a
-              href={RELEASES_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-200 text-[11px] font-medium border border-white/10 transition-all"
-            >
-              <Download className="w-3 h-3" />
-              Download for Windows
-            </a>
-          </div>
         </div>
       </div>
     </div>
