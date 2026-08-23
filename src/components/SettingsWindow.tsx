@@ -912,12 +912,15 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         <div className="font-semibold text-xs text-neutral-200">Luminescent Glowing Bloom</div>
                         <div className="text-[10px] text-neutral-400">Additive blend mode for intense neon glow</div>
                       </div>
-                      <input
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
                         type="checkbox"
                         checked={settings.fluidBloom !== false}
                         onChange={(e) => updateFxDraft({ fluidBloom: e.target.checked })}
-                        className="neon-check-cyan rounded h-4 w-4"
+                        className="sr-only peer"
                       />
+                        <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+                      </label>
                     </div>
 
                     <div className="flex items-center justify-between p-2.5 rounded-lg neon-card">
@@ -925,12 +928,15 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         <div className="font-semibold text-xs text-neutral-200">Chromatic Rainbow Dye Cycle</div>
                         <div className="text-[10px] text-neutral-400">Cycles vivid spectrum hues as mouse moves</div>
                       </div>
-                      <input
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
                         type="checkbox"
                         checked={settings.fluidRainbowDye === true}
                         onChange={(e) => updateFxDraft({ fluidRainbowDye: e.target.checked })}
-                        className="neon-check-cyan rounded h-4 w-4"
+                        className="sr-only peer"
                       />
+                        <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -1226,12 +1232,15 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         <div className="font-semibold text-xs text-neutral-200">Automatic Background Checks</div>
                         <div className="text-[11px] text-neutral-400">Periodically query release manifest silently.</div>
                       </div>
-                      <input
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
                         type="checkbox"
                         checked={settings.autoCheckUpdates}
                         onChange={(e) => updateInstant({ autoCheckUpdates: e.target.checked })}
-                        className="neon-check rounded h-4 w-4"
+                        className="sr-only peer"
                       />
+                        <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+                      </label>
                     </div>
 
                     {/* Frequency */}

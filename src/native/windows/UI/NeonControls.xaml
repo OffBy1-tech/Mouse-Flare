@@ -281,29 +281,28 @@
         <Setter Property="FocusVisualStyle" Value="{StaticResource NeonFocusVisual}"/>
         <Setter Property="Template">
             <Setter.Value>
+                <!-- NeonSwitch: sliding pill toggle, mirroring the macOS
+                     NeonSwitch and the web .neon-switch (STY-1 parity). -->
                 <ControlTemplate TargetType="{x:Type CheckBox}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="Transparent">
-                        <Border x:Name="chkBox" Width="20" Height="20" CornerRadius="5" Background="#1A0F2E" BorderBrush="#4A2E75" BorderThickness="1.5" VerticalAlignment="Center" SnapsToDevicePixels="True">
-                            <Path x:Name="chkCheck"
-                                  Data="M 4 10 L 8 14 L 15 5"
-                                  Stroke="#FFFFFF" StrokeThickness="2"
-                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
-                                  Stretch="None" Visibility="Collapsed"/>
+                        <Border x:Name="track" Width="38" Height="20" CornerRadius="10" Background="#1A0F2E" BorderBrush="#4A2E75" BorderThickness="1.5" VerticalAlignment="Center" SnapsToDevicePixels="True">
+                            <Ellipse x:Name="knob" Width="13" Height="13" Fill="#FAFAFA" HorizontalAlignment="Left" Margin="2,0,0,0"/>
                         </Border>
                         <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
                     </StackPanel>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="chkBox" Property="Background" Value="{StaticResource NeonCheckFill}"/>
-                            <Setter TargetName="chkBox" Property="BorderBrush" Value="#BEA0FF"/>
-                            <Setter TargetName="chkBox" Property="Effect" Value="{StaticResource NeonCheckGlow}"/>
-                            <Setter TargetName="chkCheck" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="track" Property="Background" Value="{StaticResource NeonCheckFill}"/>
+                            <Setter TargetName="track" Property="BorderBrush" Value="#BEA0FF"/>
+                            <Setter TargetName="track" Property="Effect" Value="{StaticResource NeonCheckGlow}"/>
+                            <Setter TargetName="knob" Property="HorizontalAlignment" Value="Right"/>
+                            <Setter TargetName="knob" Property="Margin" Value="0,0,2,0"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="chkBox" Property="BorderBrush" Value="#A855F7"/>
+                            <Setter TargetName="track" Property="BorderBrush" Value="#A855F7"/>
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="chkBox" Property="BorderBrush" Value="#A855F7"/>
+                            <Setter TargetName="track" Property="BorderBrush" Value="#A855F7"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5"/>
