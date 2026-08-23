@@ -4,6 +4,7 @@ import { DEFAULT_FX_PRESETS } from '../data/defaultFxPresets';
 import { soundEngine } from '../engine/sound';
 import { Save, Copy, Upload, Trash2 } from 'lucide-react';
 import { NeonSelect } from './NeonSelect';
+import { NeonColorPicker } from './NeonColorPicker';
 
 // The FX Designer mirrors the native designers (macOS FxDesignerView / Windows
 // FxDesignerPanel): archetype + name header, popup row, colors + glow row, and
@@ -14,6 +15,7 @@ interface FxDesignerProps {
   currentConfig?: ParticleFxConfig;
   onApplyToCursor?: (config: ParticleFxConfig) => void;
   onStatus?: (message: string) => void;
+  quickSwatches?: string[];
 }
 
 type NumberField = {
@@ -123,7 +125,7 @@ const POPUP_SPECS: { label: string; field: PopupField; options: { value: string;
 
 const HINT = 'Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.';
 
-export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyToCursor, onStatus }) => {
+export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyToCursor, onStatus, quickSwatches }) => {
   const [customPresets, setCustomPresets] = useState<ParticleFxConfig[]>(() => {
     try {
       const saved = localStorage.getItem('mouseflare_custom_fx_presets');
@@ -230,6 +232,11 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
   };
 
   const selectedIsCustom = customPresets.some((p) => p.id === sourcePresetId);
+
+  // Native-style color picker (shared NeonColorPicker); cancel restores the
+  // color the chip had when the picker opened.
+  type ColorField = 'primaryColor' | 'secondaryColor' | 'accentColor';
+  const [picker, setPicker] = useState<{ field: ColorField; label: string; prior: string } | null>(null);
 
   return (
     <div className="space-y-6 text-xs text-neutral-300">
@@ -339,11 +346,13 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
           ] as const
         ).map((c) => (
           <label key={c.field} className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="color"
-              value={config[c.field]}
-              onChange={(e) => applyEdit({ [c.field]: e.target.value })}
-              className="w-5 h-5 rounded-full border border-white/20 hover:border-white/60 transition-colors cursor-pointer bg-transparent"
+            <button
+              type="button"
+              onClick={() => setPicker({ field: c.field, label: c.label, prior: config[c.field] })}
+              className="w-5 h-5 rounded-full border border-white/20 hover:border-white/60 transition-colors cursor-pointer"
+              style={{ backgroundColor: config[c.field] }}
+              title="Click to open the color picker"
+              aria-label={`${c.label} color`}
             />
             <span className="text-[11px] text-neutral-400">{c.label}</span>
           </label>
@@ -383,6 +392,23 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
           </div>
         ))}
       </div>
+
+      {picker && (
+        <NeonColorPicker
+          title={`${picker.label} Color`}
+          initial={picker.prior}
+          swatches={quickSwatches ?? []}
+          onLive={(hex) => applyEdit({ [picker.field]: hex })}
+          onDone={(hex) => {
+            applyEdit({ [picker.field]: hex });
+            setPicker(null);
+          }}
+          onCancel={() => {
+            applyEdit({ [picker.field]: picker.prior });
+            setPicker(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, ColorPreset, FlarePreset, FxPreset } from '../types';
 import { FxDesigner } from './FxDesigner';
+import { NeonColorPicker } from './NeonColorPicker';
 import { DEFAULT_FX_PRESETS } from '../data/defaultFxPresets';
 import { NeonSelect } from './NeonSelect';
 import {
@@ -150,22 +151,35 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
       setHexDraft(settings.customColor);
     }
   };
-  const editingSwatchRef = useRef(-1);
-  const swatchEditInputRef = useRef<HTMLInputElement>(null);
-  const beginSwatchEdit = (index: number) => {
-    editingSwatchRef.current = index;
-    if (swatchEditInputRef.current) {
-      swatchEditInputRef.current.value = quickSwatches[index];
-      swatchEditInputRef.current.click();
+  // Native-style color picker for the custom color and quick-swatch edits.
+  const [colorPicker, setColorPicker] = useState<{
+    title: string;
+    initial: string;
+    prior: string;
+    swatchIndex: number | null;
+  } | null>(null);
+  const openCustomColorPicker = () =>
+    setColorPicker({ title: 'Custom Color', initial: settings.customColor, prior: settings.customColor, swatchIndex: null });
+  const beginSwatchEdit = (index: number) =>
+    setColorPicker({
+      title: `Quick Color ${index + 1}`,
+      initial: quickSwatches[index],
+      prior: settings.customColor,
+      swatchIndex: index,
+    });
+  const finishColorPicker = (hex: string | null) => {
+    if (!colorPicker) return;
+    if (hex === null) {
+      // Cancel: restore whatever was applied before the picker opened
+      updateFxDraft({ customColor: colorPicker.prior });
+    } else if (colorPicker.swatchIndex !== null) {
+      const next = [...quickSwatches];
+      next[colorPicker.swatchIndex] = hex;
+      updateFxDraft({ quickSwatches: next, customColor: hex, colorPreset: 'custom' });
+    } else {
+      updateFxDraft({ customColor: hex, colorPreset: 'custom' });
     }
-  };
-  const commitSwatchEdit = (hex: string) => {
-    const index = editingSwatchRef.current;
-    if (index < 0) return;
-    const next = [...quickSwatches];
-    next[index] = hex.toUpperCase();
-    editingSwatchRef.current = -1;
-    updateFxDraft({ quickSwatches: next, customColor: next[index], colorPreset: 'custom' });
+    setColorPicker(null);
   };
 
   // Sync initial tab if passed from outside (e.g. clicking notification banner)
@@ -744,12 +758,13 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   {/* Custom color + quick swatches (parity with native) */}
                   <div className="mt-3 p-3 rounded-xl neon-card flex flex-wrap items-center gap-3 text-xs">
                     <span className="text-neutral-400">Custom Color:</span>
-                    <input
-                      type="color"
-                      value={settings.customColor}
-                      onChange={(e) => updateFxDraft({ customColor: e.target.value.toUpperCase(), colorPreset: 'custom' })}
-                      className="w-6 h-6 rounded-full border border-white/20 hover:border-white/60 transition-colors cursor-pointer bg-transparent"
+                    <button
+                      type="button"
+                      onClick={openCustomColorPicker}
+                      className="w-6 h-6 rounded-full border border-white/20 hover:border-white/60 transition-colors cursor-pointer"
+                      style={{ backgroundColor: settings.customColor }}
                       title="Click to open the color picker"
+                      aria-label="Custom color"
                     />
                     <input
                       type="text"
@@ -773,14 +788,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                         aria-label={`Quick swatch ${i + 1}: ${hex}`}
                       />
                     ))}
-                    <input
-                      ref={swatchEditInputRef}
-                      type="color"
-                      className="sr-only"
-                      onChange={(e) => commitSwatchEdit(e.target.value)}
-                      aria-hidden="true"
-                      tabIndex={-1}
-                    />
                   </div>
                 </div>
 
@@ -955,6 +962,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   });
                 }}
                 onStatus={showFxStatus}
+                quickSwatches={quickSwatches}
               />
             )}
 
@@ -1317,6 +1325,17 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             )}
           </div>
         </div>
+
+        {colorPicker && (
+          <NeonColorPicker
+            title={colorPicker.title}
+            initial={colorPicker.initial}
+            swatches={quickSwatches}
+            onLive={(hex) => updateFxDraft({ customColor: hex, colorPreset: 'custom' })}
+            onDone={(hex) => finishColorPicker(hex)}
+            onCancel={() => finishColorPicker(null)}
+          />
+        )}
 
         {/* Status bar + footer (native status model) */}
         <div className="h-9 bg-[#0a0512]/70 border-t border-violet-500/20 flex items-center gap-2.5 px-6 text-xs text-neutral-400 shrink-0">
