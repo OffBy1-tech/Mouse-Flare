@@ -2,6 +2,45 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.7.0 (2026-08-23)
+
+Stable release v0.7.0 (commit de67f1b37814e2a132dbb31392c41db2e01fc281).
+
+## What's new
+
+Mouseflare 0.7.0 — FX Designer preset library
+
+### ✨ Added
+- **FX Designer preset library, now on all three platforms**: Save stores your current design as a reusable preset (shown with a ★ in the Preset dropdown) and a Delete button removes it — the native macOS and Windows designers previously had no way to save at all. The library persists instantly and survives closing the window without Apply & Save.
+
+### 🎨 Changed
+- Native FX Designers restyled to match the web designer: the colors/glow row and the slider grid sit in card containers, and all designer text is 2pt larger.
+- "Archetype" is now "Preset" throughout the FX Designer on every platform.
+- General tab reworded and regrouped on all platforms: "Launch on startup" (was "Start with OS"), "Play Sound on Flare" (was "Acoustic Beacon Chime", now directly under the master switch), and "Flare hotkey" (was "Find Mouse Global Hotkey").
+- Web settings brought in line with the native apps: FX Studio header/subtext now match, the duplicate title-bar Apply & Save is gone (the footer button remains), "Done / Close" is now "Close", and web-only cards were removed (Software Updates in General; Multi-Monitor Display Arena and Reduced Motion in Behavior).
+- Web FX Designer finished its styling pass (#2): spacing, labels, and sliders match the other settings tabs, and its status messages surface in the settings title-bar pill like everything else.
+
+### 🐛 Fixed
+- FX Designer: reopening the settings window no longer shows a blank Preset dropdown — the preset you applied is re-selected.
+- FX Designer: Save can no longer silently overwrite an existing saved preset via re-imported JSON — imported configs always get a fresh identity, and overwriting only happens on the preset actually loaded from the library.
+
+
+## Verify your download
+
+```
+88dbffdd7dd4631b859ecdd2dac9e49cde57d748d06c5db2f908fba236be8ca8  Mouseflare-macOS.zip
+02fb9be257d08f3d597779f19a01cc787cbc4b36e148684bb6f3b804280e90ca  Mouseflare-Windows.zip
+```
+
+Artifacts are minisign-signed ([public key](https://github.com/OffBy1-tech/Mouse-Flare/blob/main/minisign.pub)):
+
+```
+minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw
+```
+
+- **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
+- **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 ## Mouseflare v0.6.5 (2026-08-21)
 
 ## Mouseflare 0.6.5 — True ClearType on Windows
