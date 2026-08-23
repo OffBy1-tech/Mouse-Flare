@@ -43,11 +43,10 @@ export type ColorPreset =
 
 export interface AppSettings {
   enabled: boolean;
-  startWithWindows: boolean;
   enablePassiveFx: boolean;
   passiveFx: FxPreset;
   findMouseFx: FlarePreset;
-  hotkey: string;
+  hotkey: string; // static display string for the Flare button and challenge copy — no recording UI in the demo
   intensity: number; // 0.5 to 2.0
   particleDensity: number; // 1 to 10
   trailLength: number; // 10 to 60
@@ -60,7 +59,6 @@ export interface AppSettings {
   monitorCrossingFx: boolean;
   soundFx: boolean;
   fpsLimit: 60 | 120 | 0; // 0 = uncapped
-  showDiagnostics: boolean;
   multiMonitorMode: boolean;
   desktopBackground: 'windows11-dark' | 'busy-editor' | 'dense-sheets' | 'multitasking' | 'light-workspace';
   // Fluid Simulation Controls (Pavel DoGreat inspired)
@@ -68,11 +66,6 @@ export interface AppSettings {
   fluidDissipation: number; // 0.90 to 0.99 (smoke trail persistence)
   fluidBloom: boolean; // luminescent glowing dye
   fluidRainbowDye: boolean; // chromatic multi-hue cycling dye
-  // Updates & Release Validation
-  autoCheckUpdates: boolean;
-  checkIntervalHours: number; // 6, 24, 72, or 0 for manual
-  notifyOnUpdate: boolean;
-  lastCheckedTimestamp?: number;
   // Custom Particle FX Designer
   customFxConfig?: ParticleFxConfig;
 }

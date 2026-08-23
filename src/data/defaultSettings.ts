@@ -4,7 +4,6 @@ import { AppSettings } from '../types';
 // install (App.tsx) and by Settings > Reset Defaults, so the two can't drift.
 export const DEFAULT_SETTINGS: AppSettings = {
   enabled: true,
-  startWithWindows: false,
   enablePassiveFx: true,
   passiveFx: 'spark-trail',
   findMouseFx: 'solar-flare',
@@ -21,15 +20,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   monitorCrossingFx: true,
   soundFx: true,
   fpsLimit: 60,
-  showDiagnostics: true,
   multiMonitorMode: false,
   desktopBackground: 'windows11-dark',
   fluidVorticity: 0.85,
   fluidDissipation: 0.96,
   fluidBloom: true,
   fluidRainbowDye: false,
-  autoCheckUpdates: true,
-  checkIntervalHours: 24,
-  notifyOnUpdate: true,
-  lastCheckedTimestamp: Date.now() - 1000 * 60 * 60 * 12, // 12 hours ago
 };

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
 import { ParticleEngine } from '../engine/particleEngine';
-import { Activity, Cpu, HardDrive, Monitor } from 'lucide-react';
 
 interface OverlayCanvasProps {
   settings: AppSettings;
@@ -16,9 +15,6 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const lastFpsTime = useRef(performance.now());
-  const frameCount = useRef(0);
-  const currentFps = useRef(60);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,14 +46,6 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
         return;
       }
       lastRenderTime = time;
-
-      frameCount.current++;
-      if (time - lastFpsTime.current >= 500) {
-        currentFps.current = Math.round((frameCount.current * 1000) / (time - lastFpsTime.current));
-        frameCount.current = 0;
-        lastFpsTime.current = time;
-        engine.fps = currentFps.current;
-      }
 
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
@@ -109,56 +97,6 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
         className="w-full h-full block"
         style={{ pointerEvents: 'none' }}
       />
-
-      {/* Floating Real-time HUD Diagnostics */}
-      {settings.showDiagnostics && (
-        <div className="absolute top-4 right-4 z-50 pointer-events-auto bg-neutral-900/90 backdrop-blur-md border border-neutral-700/60 rounded-xl p-3 shadow-2xl text-xs font-mono text-neutral-300 w-64 transition-all">
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-neutral-800">
-            <span className="flex items-center gap-1.5 font-semibold text-neutral-100">
-              <Activity className="w-3.5 h-3.5 text-amber-400" />
-              Mouseflare Telemetry
-            </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              {currentFps.current} FPS
-            </span>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-neutral-400">
-              <span>Active Particles:</span>
-              <span className="text-neutral-200 font-medium">{engine.particleCount}</span>
-            </div>
-            <div className="flex justify-between items-center text-neutral-400">
-              <span>Render Latency:</span>
-              <span className="text-neutral-200 font-medium">{engine.drawLatencyMs} ms</span>
-            </div>
-            <div className="flex justify-between items-center text-neutral-400">
-              <span>Cursor Velocity:</span>
-              <span className="text-neutral-200 font-medium">{Math.round(engine.cursorSpeed)} px/s</span>
-            </div>
-            <div className="flex justify-between items-center text-neutral-400">
-              <span className="flex items-center gap-1">
-                <Cpu className="w-3 h-3 text-neutral-500" /> Host CPU Overhead:
-              </span>
-              <span className="text-emerald-400 font-medium">&lt; 0.1% (Idle)</span>
-            </div>
-            <div className="flex justify-between items-center text-neutral-400">
-              <span className="flex items-center gap-1">
-                <HardDrive className="w-3 h-3 text-neutral-500" /> Working Set:
-              </span>
-              <span className="text-neutral-200 font-medium">8.4 MB</span>
-            </div>
-            <div className="flex justify-between items-center text-neutral-400">
-              <span className="flex items-center gap-1">
-                <Monitor className="w-3 h-3 text-neutral-500" /> Monitor Context:
-              </span>
-              <span className="text-amber-400 font-medium">
-                {settings.multiMonitorMode ? 'Dual Display (DPI 100%)' : 'Primary Display'}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
