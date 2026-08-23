@@ -1104,6 +1104,8 @@ namespace Mouseflare.UI
                 _overlay.AutoCheckUpdates = true;
                 _overlay.FluidVorticity = 0.85;
                 _overlay.FluidDissipation = 0.96;
+            _overlay.FluidBloom = true;
+            _overlay.FluidRainbowDye = false;
             }
             _loading = true;
             LoadCurrentSettings();

@@ -4,7 +4,7 @@ import { AppSettings } from '../types';
 // install (App.tsx) and by Settings > Reset Defaults, so the two can't drift.
 export const DEFAULT_SETTINGS: AppSettings = {
   enabled: true,
-  startWithWindows: true,
+  startWithWindows: false,
   enablePassiveFx: true,
   passiveFx: 'spark-trail',
   findMouseFx: 'solar-flare',

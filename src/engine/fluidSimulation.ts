@@ -73,7 +73,7 @@ export class FluidSimulationEngine {
     this.rainbowHue = (this.rainbowHue + dist * 0.4) % 360;
     const intensity = settings.intensity || 1.0;
     const speedMultiplier = settings.animationSpeed || 1.0;
-    const vorticityBase = (settings.fluidVorticity ?? 1.5);
+    const vorticityBase = (settings.fluidVorticity ?? 0.85);
     const dissipation = settings.fluidDissipation ?? 0.96;
 
     // Splat count scales smoothly with distance

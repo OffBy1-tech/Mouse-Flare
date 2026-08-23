@@ -184,6 +184,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     if (index < 0) return;
     const next = [...quickSwatches];
     next[index] = hex.toUpperCase();
+    editingSwatchRef.current = -1;
     updateFxDraft({ quickSwatches: next, customColor: next[index], colorPreset: 'custom' });
   };
 

@@ -42,7 +42,12 @@ export default function App() {
   const [settings, setSettings] = useState<AppSettings>(() => {
     try {
       const saved = localStorage.getItem('mouseflare_settings');
-      if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      if (saved) {
+        const merged = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        // The vorticity range shrank in 0.7.x (0.2–3.0 → 0.1–2.0); clamp legacy values
+        merged.fluidVorticity = Math.min(2.0, Math.max(0.1, merged.fluidVorticity ?? 0.85));
+        return merged;
+      }
     } catch (e) {}
     return DEFAULT_SETTINGS;
   });

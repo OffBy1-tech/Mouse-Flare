@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppSettings, FxPreset, FlarePreset } from '../types';
+import { AppSettings, FlarePreset } from '../types';
 import { 
   Settings as SettingsIcon,
   Check, 
