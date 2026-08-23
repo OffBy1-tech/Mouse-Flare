@@ -159,7 +159,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
     setSourcePresetId(presetId);
     onApplyToCursor?.(next);
     soundEngine.playClick();
-    onStatus?.(`Loaded archetype: ${found.name} — previewing live on your cursor`);
+    onStatus?.(`Loaded preset: ${found.name} — previewing live on your cursor`);
   };
 
   const handleSaveToLibrary = () => {
@@ -240,13 +240,13 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
 
       {/* Header: archetype picker, name, actions */}
       <div className="flex flex-wrap items-center gap-2">
-        <label className="text-neutral-400">Archetype:</label>
+        <label className="text-neutral-400">Preset:</label>
         <NeonSelect
           value={sourcePresetId}
           onChange={loadPreset}
           groups={[
             {
-              label: 'Built-in Archetypes',
+              label: 'Built-in Presets',
               options: DEFAULT_FX_PRESETS.map((p) => ({ value: p.id, label: `${p.icon} ${p.name}` })),
             },
             ...(customPresets.length > 0
@@ -260,7 +260,7 @@ export const FxDesigner: React.FC<FxDesignerProps> = ({ currentConfig, onApplyTo
           ]}
           placeholder="Current draft"
           className="text-xs px-2.5 py-1.5 min-w-44"
-          ariaLabel="Archetype"
+          ariaLabel="Preset"
         />
 
         <label className="text-neutral-400 ml-1">Name:</label>

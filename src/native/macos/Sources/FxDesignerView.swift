@@ -170,7 +170,7 @@ final class FxDesignerView: NSView {
         config = loaded
         syncControls()
         apply()
-        onStatus?("Loaded archetype: \(preset.name) — previewing live on your cursor")
+        onStatus?("Loaded preset: \(preset.name) — previewing live on your cursor")
     }
 
     // MARK: UI
@@ -243,7 +243,7 @@ final class FxDesignerView: NSView {
         }
 
         let headerRow = NSStackView(views: [
-            label("Archetype:", size: 13, color: Theme.textSecondary), presetPopup,
+            label("Preset:", size: 13, color: Theme.textSecondary), presetPopup,
             label("Name:", size: 13, color: Theme.textSecondary), nameField,
             NSView(), saveButton, deleteButton, copyButton, importButton,
         ])
@@ -366,7 +366,7 @@ final class FxDesignerView: NSView {
             config = preset
             syncControls()
             apply()
-            onStatus?("Loaded archetype: \(preset.name) — previewing live on your cursor")
+            onStatus?("Loaded preset: \(preset.name) — previewing live on your cursor")
         }
     }
 

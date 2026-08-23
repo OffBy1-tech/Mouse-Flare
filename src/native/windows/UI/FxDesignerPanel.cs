@@ -198,7 +198,7 @@ namespace Mouseflare.UI
                 UpdateDeleteVisibility();
                 SyncControls();
                 Apply();
-                _status($"Loaded archetype: {_config.name} — previewing live on your cursor");
+                _status($"Loaded preset: {_config.name} — previewing live on your cursor");
             };
             _nameBox = new TextBox { FontSize = 13, Margin = new Thickness(8, 0, 0, 0), MinWidth = 90 };
             _nameBox.LostFocus += (s, e) => ControlsChanged();
@@ -236,7 +236,7 @@ namespace Mouseflare.UI
             // left so nothing clips at narrow widths
             header.LastChildFill = true;
             var left = new StackPanel { Orientation = Orientation.Horizontal };
-            left.Children.Add(Label("Archetype:"));
+            left.Children.Add(Label("Preset:"));
             left.Children.Add(_archetypes);
             DockPanel.SetDock(left, Dock.Left);
             var right = new StackPanel { Orientation = Orientation.Horizontal };
