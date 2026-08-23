@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, ColorPreset, FlarePreset, FxPreset } from '../types';
-import { NATIVE_SOURCE_FILES } from '../data/nativeSource';
 import { FxDesigner } from './FxDesigner';
 import { DEFAULT_FX_PRESETS } from '../data/defaultFxPresets';
 import { NeonSelect } from './NeonSelect';
-import { downloadWindowsNativeZip, downloadMacNativeZip, downloadCrossPlatformZip } from '../utils/nativeDownloader';
 import {
   CURRENT_BUILD_INFO,
   checkNativeBuildUpdates,
@@ -17,30 +15,20 @@ import {
   Flame, 
   Sparkles, 
   Sliders, 
-  Monitor, 
   Activity, 
-  Code2, 
   Check, 
-  Copy, 
   X, 
-  Minus, 
-  Square,
   Zap, 
   RotateCcw,
   Palette,
   Download,
-  FolderArchive,
   Save,
   Upload,
   CheckCircle2,
-  Undo2,
   RefreshCw,
   ArrowUpCircle,
   ShieldCheck,
   Clock,
-  ExternalLink,
-  Cpu,
-  AlertCircle,
   FileCheck2,
   Bell
 } from 'lucide-react';
@@ -54,7 +42,11 @@ interface SettingsWindowProps {
   initialTab?: TabType;
 }
 
-export type TabType = 'general' | 'fx-studio' | 'fx-designer' | 'behavior' | 'diagnostics' | 'native-code' | 'updates';
+export type TabType = 'general' | 'fx-studio' | 'fx-designer' | 'behavior' | 'diagnostics' | 'updates';
+
+// Native status model: one persistent footer status line, overwritten by
+// every action (no auto-clear), idling on this ready text.
+const READY_STATUS = 'Ready. FX changes preview live \u2014 click Apply & Save to keep them.';
 
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
 
@@ -86,9 +78,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   initialTab,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'fx-studio');
-  const [platformFilter, setPlatformFilter] = useState<'all' | 'windows' | 'macos'>('all');
-  const [selectedCodeIndex, setSelectedCodeIndex] = useState(0);
-  const [copiedCode, setCopiedCode] = useState(false);
   const [copiedChecksum, setCopiedChecksum] = useState<string | null>(null);
   const [isRecordingHotkey, setIsRecordingHotkey] = useState(false);
 
@@ -105,30 +94,22 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
       setActiveTab('diagnostics');
       soundEngine.playToggle(true);
       setSaveStatus('Diagnostics unlocked');
-      setTimeout(() => setSaveStatus(null), 2500);
     } else if (versionClicksRef.current >= 3) {
       setSaveStatus(`${remaining} more ${remaining === 1 ? 'click' : 'clicks'} to unlock Diagnostics`);
-      setTimeout(() => setSaveStatus(null), 2000);
     }
   };
-  const [downloadingType, setDownloadingType] = useState<'windows' | 'macos' | 'universal' | null>(null);
 
   // Update check states
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
   const [lastCheckTime, setLastCheckTime] = useState<number>(() => settings.lastCheckedTimestamp || Date.now() - 1000 * 60 * 60 * 4);
 
-  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<string>(READY_STATUS);
 
   // FX Designer statuses (save/load/import feedback) surface in the same
   // title-bar pill; the timer is cleared so rapid actions don't cut each
   // other short.
-  const fxStatusTimer = useRef<number | undefined>(undefined);
-  const showFxStatus = (message: string) => {
-    setSaveStatus(message);
-    window.clearTimeout(fxStatusTimer.current);
-    fxStatusTimer.current = window.setTimeout(() => setSaveStatus(null), 3000);
-  };
+  const showFxStatus = (message: string) => setSaveStatus(message);
 
   // FX Studio shortcut mirroring the native "Import Custom FX" button — the
   // full editor lives in the FX Designer tab.
@@ -237,7 +218,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   const fxDirtyRef = useRef(false);
 
   const updateInstant = (partial: Partial<AppSettings>) => {
-    setSaveStatus(null);
     // Keys shared with the FX draft (e.g. enablePassiveFx from the General
     // toggle) are folded into the snapshot so a later revert keeps this change.
     for (const key of Object.keys(fxSnapshotRef.current) as (keyof AppSettings)[]) {
@@ -249,7 +229,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
   };
 
   const updateFxDraft = (partial: Partial<AppSettings>) => {
-    setSaveStatus(null);
     fxDirtyRef.current = true;
     onUpdateSettings(partial);
   };
@@ -259,9 +238,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     fxDirtyRef.current = false;
     setSaveStatus('Saved & Applied!');
     soundEngine.playToggle(true);
-    setTimeout(() => {
-      setSaveStatus(null);
-    }, 3000);
   };
 
   const handleClose = () => {
@@ -279,35 +255,10 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
     updateInstant({ ...DEFAULT_SETTINGS });
     fxDirtyRef.current = false;
     setSaveStatus('Reset to Defaults');
-    setTimeout(() => setSaveStatus(null), 2500);
   };
-
-  const filteredFiles = NATIVE_SOURCE_FILES.filter((f) => {
-    if (platformFilter === 'all') return true;
-    return f.platform === platformFilter;
-  });
-
-  const activeFile = filteredFiles[selectedCodeIndex] || filteredFiles[0] || NATIVE_SOURCE_FILES[0];
 
   // Apply & Save only concerns the FX draft domain, so it only shows on those tabs.
   const isFxTab = activeTab === 'fx-studio' || activeTab === 'fx-designer';
-
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
-  };
-
-  const handleDownload = async (type: 'windows' | 'macos' | 'universal') => {
-    setDownloadingType(type);
-    try {
-      if (type === 'windows') await downloadWindowsNativeZip();
-      else if (type === 'macos') await downloadMacNativeZip();
-      else await downloadCrossPlatformZip();
-    } finally {
-      setDownloadingType(null);
-    }
-  };
 
   const handleKeyDownHotkey = (e: React.KeyboardEvent) => {
     if (!isRecordingHotkey) return;
@@ -341,12 +292,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             <img src="/app-logo.png" alt="Mouseflare logo" className="w-5 h-5 rounded-md shadow" />
             <span className="text-xs font-semibold tracking-wide text-neutral-200">Mouseflare</span>
             <span className="text-xs text-neutral-500">&nbsp;&mdash; Settings &amp; FX Studio</span>
-            {saveStatus && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-medium flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" />
-                {saveStatus}
-              </span>
-            )}
           </div>
 
           <div className="flex items-center gap-1.5 -mr-1">
@@ -394,19 +339,14 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
               <button
                 onClick={() => setActiveTab('fx-designer')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'fx-designer'
                     ? 'neon-nav-active font-semibold'
                     : 'text-violet-100/70 hover:bg-violet-400/10'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <Sliders className="w-4 h-4 text-amber-400" />
-                  <span>FX Designer</span>
-                </div>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 font-bold border border-fuchsia-500/40">
-                  NEW
-                </span>
+                <Sliders className="w-4 h-4 text-amber-400" />
+                <span>FX Designer</span>
               </button>
 
               <button
@@ -435,39 +375,16 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 </button>
               )}
 
-              <button
-                onClick={() => setActiveTab('native-code')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                  activeTab === 'native-code'
-                    ? 'neon-nav-active font-semibold'
-                    : 'text-violet-100/70 hover:bg-violet-400/10'
-                }`}
-              >
-                <Code2 className="w-4 h-4 text-blue-400" />
-                <span>Native Desktop Apps</span>
-              </button>
-
-              <button
+                            <button
                 onClick={() => setActiveTab('updates')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   activeTab === 'updates'
                     ? 'neon-nav-active font-semibold'
                     : 'text-violet-100/70 hover:bg-violet-400/10'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <RefreshCw className={`w-4 h-4 text-amber-400 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
-                  <span>Check for Updates</span>
-                </div>
-                {updateResult?.hasUpdate ? (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/30 text-amber-300 font-bold border border-amber-500/50 animate-pulse">
-                    v{updateResult.latestVersion}
-                  </span>
-                ) : (
-                  <span className="text-[9px] text-neutral-400">
-                    v{CURRENT_BUILD_INFO.version}
-                  </span>
-                )}
+                <RefreshCw className={`w-4 h-4 text-amber-400 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
+                <span>Check for Updates</span>
               </button>
             </div>
 
@@ -487,13 +404,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                 <span>Test Flare Now</span>
               </button>
 
-              <button
-                onClick={handleResetDefaults}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-violet-200/60 hover:text-violet-100 text-[11px] transition-all"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span>Reset Defaults</span>
-              </button>
             </div>
           </div>
 
@@ -679,7 +589,10 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       return (
                         <button
                           key={item.id}
-                          onClick={() => updateFxDraft({ passiveFx: item.id })}
+                          onClick={() => {
+                            updateFxDraft({ passiveFx: item.id });
+                            setSaveStatus(`Selected Passive FX: ${item.label} \u2022 Apply & Save to keep`);
+                          }}
                           className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between min-h-[76px] cursor-pointer ${
                             isSelected
                               ? 'neon-selected'
@@ -741,6 +654,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                           onClick={() => {
                             updateFxDraft({ findMouseFx: item.id });
                             onTriggerFlare();
+                            setSaveStatus(`Selected Flare: ${item.label} (Previewing) \u2022 Apply & Save to keep`);
                           }}
                           className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between min-h-[76px] cursor-pointer ${
                             isSelected
@@ -792,7 +706,10 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                       return (
                         <button
                           key={pal.id}
-                          onClick={() => updateFxDraft({ colorPreset: pal.id })}
+                          onClick={() => {
+                            updateFxDraft({ colorPreset: pal.id });
+                            setSaveStatus(`Color: ${pal.label} \u2022 Apply & Save to keep`);
+                          }}
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer ${
                             isSelected
                               ? 'neon-selected text-white font-bold'
@@ -1167,141 +1084,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
               </div>
             )}
 
-            {/* TAB 5: NATIVE DESKTOP APPS (WINDOWS & MACOS) */}
-            {activeTab === 'native-code' && (
-              <div className="space-y-4">
-                {/* Platform Download Cards */}
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {/* Windows Native Card */}
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-blue-950/40 to-[#120a20] border border-blue-500/30 shadow-lg flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40">
-                          Windows 10 / 11
-                        </span>
-                        <span className="text-[11px] text-neutral-400">.NET 8 WPF / Direct2D</span>
-                      </div>
-                      <h3 className="text-sm font-bold text-neutral-100">Windows System Tray App</h3>
-                      <p className="text-xs text-neutral-300 mt-1">
-                        Includes custom flame tray icon, live Settings Window (<code className="text-amber-400 font-mono">SettingsWindow.xaml</code>), and 1-click <code className="text-amber-400 font-mono">build.bat</code>.
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => handleDownload('windows')}
-                      disabled={downloadingType !== null}
-                      className="mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow transition-all active:scale-95 w-full cursor-pointer"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>{downloadingType === 'windows' ? 'Packaging Windows ZIP...' : 'Download Windows App (.zip)'}</span>
-                    </button>
-                  </div>
-
-                  {/* macOS Native Card */}
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-purple-950/40 to-[#120a20] border border-purple-500/30 shadow-lg flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
-                          macOS (Universal)
-                        </span>
-                        <span className="text-[11px] text-neutral-400">Swift 5.9 / AppKit</span>
-                      </div>
-                      <h3 className="text-sm font-bold text-neutral-100">macOS Menu Bar App</h3>
-                      <p className="text-xs text-neutral-300 mt-1">
-                        Native status bar menu item, transparent floating overlay window across displays, global hotkey (⌘+Shift+F), and <code className="text-amber-400 font-mono">build.sh</code>.
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => handleDownload('macos')}
-                      disabled={downloadingType !== null}
-                      className="mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow transition-all active:scale-95 w-full cursor-pointer"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>{downloadingType === 'macos' ? 'Packaging macOS ZIP...' : 'Download macOS App (.zip)'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Filter and Copy Header */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-neutral-400 mr-1">Platform:</span>
-                    {(
-                      [
-                        { id: 'all', label: 'All Files' },
-                        { id: 'windows', label: 'Windows (C#)' },
-                        { id: 'macos', label: 'macOS (Swift)' },
-                      ] as const
-                    ).map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => {
-                          setPlatformFilter(p.id);
-                          setSelectedCodeIndex(0);
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                          platformFilter === p.id
-                            ? 'bg-violet-500/15 text-violet-300 border border-violet-400/40 font-semibold'
-                            : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleDownload('universal')}
-                      disabled={downloadingType !== null}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-violet-300 border border-violet-400/40 text-xs font-medium transition-all cursor-pointer"
-                      title="Download cross-platform package containing both Windows and macOS source code"
-                    >
-                      <FolderArchive className="w-3.5 h-3.5" />
-                      <span>{downloadingType === 'universal' ? 'Packaging...' : 'Download Both (.zip)'}</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleCopyCode(activeFile.code)}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 text-neutral-200 border border-white/10 hover:bg-white/10 text-xs font-medium transition-all cursor-pointer"
-                    >
-                      {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedCode ? 'Copied File!' : 'Copy Code'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* File Tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-white/10">
-                  {filteredFiles.map((file, idx) => (
-                    <button
-                      key={file.name}
-                      onClick={() => setSelectedCodeIndex(idx)}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
-                        activeFile.name === file.name
-                          ? 'bg-violet-500/15 text-violet-300 border border-violet-400/40 font-semibold'
-                          : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
-                      }`}
-                    >
-                      {file.name}
-                    </button>
-                  ))}
-                </div>
-
-                {/* File description */}
-                <div className="text-xs text-neutral-400 font-mono bg-[#0a0512]/70 p-2.5 rounded-lg border border-white/10">
-                  <span className="text-neutral-200 font-semibold">Path: </span>
-                  {activeFile.path} — {activeFile.description}
-                </div>
-
-                {/* Code Viewer */}
-                <div className="bg-[#0a0512] rounded-xl p-4 border border-white/10 font-mono text-xs text-neutral-300 overflow-x-auto max-h-[220px] leading-relaxed">
-                  <pre>{activeFile.code}</pre>
-                </div>
-              </div>
-            )}
-
             {/* TAB 6: SOFTWARE UPDATES & RELEASE VALIDATION */}
             {activeTab === 'updates' && (
               <div className="space-y-6">
@@ -1545,14 +1327,19 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="h-14 bg-[#0a0512]/85 border-t border-violet-500/20 flex items-center justify-between px-6 text-xs text-neutral-400">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Mouseflare Engine: <strong className="text-neutral-200">60+ FPS Ready</strong></span>
-            </div>
-          </div>
+        {/* Status bar + footer (native status model) */}
+        <div className="h-9 bg-[#0a0512]/70 border-t border-violet-500/20 flex items-center gap-2.5 px-6 text-xs text-neutral-400 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+          <span className="truncate">{saveStatus}</span>
+        </div>
+        <div className="h-14 bg-[#0a0512]/85 border-t border-violet-500/20 flex items-center justify-between px-6 text-xs text-neutral-400 shrink-0">
+          <button
+            onClick={handleResetDefaults}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-violet-200/60 hover:text-violet-100 hover:bg-white/5 transition-all cursor-pointer"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Reset Defaults</span>
+          </button>
 
           <div className="flex items-center gap-2.5">
             {isFxTab && (
