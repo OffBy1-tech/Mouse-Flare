@@ -289,17 +289,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 -mr-1">
-            {isFxTab && (
-              <button
-                onClick={handleSaveAndApply}
-                className="neon-btn-primary flex items-center gap-1.5 px-3 py-1 rounded-lg font-bold text-xs transition-all active:scale-95 mr-2"
-                title="Save and persist the previewed FX selections"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>Apply &amp; Save</span>
-              </button>
-            )}
-
             <button
               onClick={handleClose}
               className="w-8 h-8 rounded hover:bg-red-500/80 hover:text-white flex items-center justify-center text-neutral-400 transition-colors"
@@ -582,9 +571,9 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
             {activeTab === 'fx-studio' && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-bold text-neutral-100">FX Studio &amp; Customizer</h2>
+                  <h2 className="text-lg font-bold text-neutral-100">FX Studio &amp; Particle Customizer</h2>
                   <p className="text-xs text-neutral-400 mt-0.5">
-                    Select particle styles, active flare animations, color palettes, and dynamics. Click any item to preview it live — Apply &amp; Save keeps it, closing without saving reverts.
+                    Configure movement trails, signature flare shockwaves, color palettes, and physics.
                   </p>
                 </div>
 
@@ -1510,7 +1499,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
               onClick={handleClose}
               className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-violet-100 font-medium transition-colors cursor-pointer text-xs"
             >
-              Done / Close
+              Close
             </button>
           </div>
         </div>
