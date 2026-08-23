@@ -350,6 +350,9 @@ namespace Mouseflare
             overlay.FluidDissipation = s.FluidDissipation;
             overlay.CustomFxJson = s.CustomFxJson;
             overlay.CustomFxPresets = s.CustomFxPresets ?? Array.Empty<string>();
+            overlay.StartWithWindows = s.StartWithWindows;
+            // Re-assert while enabled so the Run entry tracks the current exe path
+            if (s.StartWithWindows) StartupRegistration.Apply(true);
             overlay.CurrentColor = ParseHexColor(s.CurrentColorHex, Color.FromRgb(245, 158, 11));
             overlay.SecondaryColor = ParseHexColor(s.SecondaryColorHex, Color.FromRgb(251, 191, 36));
         }

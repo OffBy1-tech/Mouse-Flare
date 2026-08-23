@@ -69,6 +69,7 @@ namespace Mouseflare.UI
             chkIdleBurst.IsChecked = _overlay.IdleBurstEnabled;
             chkMonitorCrossing.IsChecked = _overlay.MonitorCrossingFxEnabled;
             chkSoundFx.IsChecked = _overlay.SoundFxEnabled;
+            chkStartWithWindows.IsChecked = _overlay.StartWithWindows;
             chkAutoUpdates.IsChecked = _overlay.AutoCheckUpdates;
             RefreshUpdatesTab();
 
@@ -241,6 +242,18 @@ namespace Mouseflare.UI
         {
             if (_overlay != null) _overlay.SoundFxEnabled = chkSoundFx.IsChecked == true;
             PersistInstantSettings();
+        }
+
+        private void OnStartWithWindowsChanged(object sender, RoutedEventArgs e)
+        {
+            if (_overlay == null || _loading) return;
+            bool on = chkStartWithWindows.IsChecked == true;
+            _overlay.StartWithWindows = on;
+            bool ok = Core.StartupRegistration.Apply(on);
+            PersistInstantSettings();
+            SetStatusText(ok
+                ? (on ? "Mouseflare will launch on startup." : "Launch on startup disabled.")
+                : "\u26a0\ufe0f Could not update the Windows startup entry.");
         }
 
         private void OnAutoUpdatesChanged(object sender, RoutedEventArgs e)

@@ -26,6 +26,7 @@ namespace Mouseflare.Core
         public bool IdleBurstEnabled { get; set; } = true;
         public bool MonitorCrossingFxEnabled { get; set; } = true;
         public bool SoundFxEnabled { get; set; } = true;
+        public bool StartWithWindows { get; set; } = false;
         public string Hotkey { get; set; } = "Ctrl + Shift + F";
         public bool AutoCheckUpdates { get; set; } = true;
         public int CheckIntervalHours { get; set; } = 6;

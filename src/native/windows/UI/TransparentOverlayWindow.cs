@@ -34,6 +34,7 @@ namespace Mouseflare.UI
         public static readonly string[] DefaultQuickSwatches =
             { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7", "#EF4444", "#FACC15", "#22C55E" };
         public string[] QuickSwatches { get; set; } = (string[])DefaultQuickSwatches.Clone();
+        public bool StartWithWindows { get; set; }
 
         /// <summary>FX Designer preset library (CustomFxConfig JSON per entry).</summary>
         public string[] CustomFxPresets { get; set; } = Array.Empty<string>();
@@ -72,6 +73,7 @@ namespace Mouseflare.UI
             IdleBurstEnabled = IdleBurstEnabled,
             MonitorCrossingFxEnabled = MonitorCrossingFxEnabled,
             SoundFxEnabled = SoundFxEnabled,
+            StartWithWindows = StartWithWindows,
             AutoCheckUpdates = AutoCheckUpdates,
             CheckIntervalHours = CheckIntervalHours,
             LastCheckedUtc = Core.Updater.Shared.LastCheckedUtc,
