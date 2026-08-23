@@ -279,11 +279,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     // Preset catalogs — ids shared verbatim with the Windows build
     private static let passivePresets: [(id: String, icon: String, title: String, subtitle: String)] = [
         ("fluid-simulation", "🌊", "Fluid Simulation", "Velocity dissipation model"),
-        ("spark-trail", "✨", "Spark Trail", "Golden kinetic embers"),
         ("fluid-smoke", "💨", "Fluid Smoke Swirl", "Billowing dye vortices"),
         ("neon-fluid", "🧪", "Neon Fluid Dye", "Luminescent fluid glow"),
         ("cosmic-vortex", "🌌", "Cosmic Liquid", "Galactic chromatic swirls"),
         ("ink-diffusion", "🖋️", "Ink Diffusion", "Organic watercolor plumes"),
+        ("spark-trail", "✨", "Spark Trail", "Golden kinetic embers"),
         ("glow-pulse", "💡", "Glow Pulse", "Soft luminous aura trail"),
         ("comet-trail", "☄️", "Comet Tail", "Aerodynamic ribbon"),
         ("bubbles", "🫧", "Bubbles", "Translucent spheres"),
@@ -774,7 +774,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         addToggleCard(
             to: stack,
             title: "Enable Passive Trail FX",
-            subtitle: "Renders subtle momentary particle trails behind pointer while moving.",
+            subtitle: "Renders particle trails behind pointer while moving.",
             control: switchPassive
         )
 
@@ -856,7 +856,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         stack.addArrangedSubview(importFxButton)
         stack.setCustomSpacing(14, after: importFxButton)
 
-        stack.addArrangedSubview(makeLabel("Find Mouse Signature Flare Animations", size: 12, weight: .bold, color: Theme.cyan))
+        stack.addArrangedSubview(makeLabel("Active \"Find Mouse\" Flare Animation", size: 12, weight: .bold, color: Theme.cyan))
         let flareGrid = makePresetGrid(items: Self.flarePresets, cards: &flareCards) { [weak self] id in
             SettingsManager.shared.settings.flarePreset = id
             self?.refreshPresetHighlights()
@@ -965,7 +965,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             ),
             makeSliderPairRow(
                 left: makeSliderColumn(title: "Animation Speed", slider: sliderSpeed, valueLabel: valueSpeed),
-                right: makeSliderColumn(title: "Movement Threshold", slider: sliderThreshold, valueLabel: valueThreshold)
+                right: makeSliderColumn(title: "Min Movement Threshold", slider: sliderThreshold, valueLabel: valueThreshold)
             )
         ])
         physicsGrid.orientation = .vertical

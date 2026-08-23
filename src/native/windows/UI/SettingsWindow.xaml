@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:Mouseflare.UI"
-        Title="Mouseflare — Settings" Height="640" Width="870"
+        Title="Mouseflare — Settings &amp; FX Studio" Height="680" Width="940"
         Icon="/Assets/app-logo.png"
         WindowStyle="None" Background="#0A0512"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
@@ -266,7 +266,7 @@
                                                 <Border Width="20" Height="20" CornerRadius="4" Background="#1A0F2E" Margin="0,0,8,0">
                                                     <TextBlock Text="🔄" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
-                                                <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
+                                                <TextBlock Text="Check for Updates" FontWeight="SemiBold" FontSize="12" Foreground="#FAFAFA"/>
                                             </StackPanel>
                                         </Border>
                                             <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="7" Opacity="0" IsHitTestVisible="False"/>
@@ -329,32 +329,6 @@
                                     </Button.Template>
                                 </Button>
 
-                                <Button Tag="spark-trail" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#FFA62E" BorderThickness="1.5" Cursor="Hand" Click="OnSelectPassivePreset">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="{x:Type Button}">
-                                            <Grid>
-                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
-                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
-                                                        <Path Data="M 14,3 L 16,11 L 24,14 L 16,17 L 14,25 L 12,17 L 4,14 L 12,11 Z" Fill="#FFA62E" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
-                                                    </Border>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Spark Trail" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
-                                                        <TextBlock Text="Golden kinetic embers" FontSize="9" Foreground="#A1A1AA"/>
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
-                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
-                                            </Grid>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
 
                                 <Button Tag="fluid-smoke" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" Cursor="Hand" Click="OnSelectPassivePreset">
                                     <Button.Template>
@@ -368,7 +342,7 @@
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="Fluid Smoke Swirl" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
-                                                        <TextBlock Text="Pavel DoGreat billowing dye" FontSize="9" Foreground="#A1A1AA"/>
+                                                        <TextBlock Text="Billowing dye vortices" FontSize="9" Foreground="#A1A1AA"/>
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
@@ -450,6 +424,32 @@
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="Ink Diffusion" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
                                                         <TextBlock Text="Organic watercolor plumes" FontSize="9" Foreground="#A1A1AA"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                                <Border x:Name="hoverWash" Background="{StaticResource NeonHoverWash}" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="hoverWash" Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                <Button Tag="spark-trail" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#FFA62E" BorderThickness="1.5" Cursor="Hand" Click="OnSelectPassivePreset">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
+                                            <Border x:Name="glowHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True"/>
+                                            <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="8,6">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="30" Height="30" CornerRadius="6" Background="#2A200B" Margin="0,0,8,0">
+                                                        <Path Data="M 14,3 L 16,11 L 24,14 L 16,17 L 14,25 L 12,17 L 4,14 L 12,11 Z" Fill="#FFA62E" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="14" Height="14"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Spark Trail" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
+                                                        <TextBlock Text="Golden kinetic embers" FontSize="9" Foreground="#A1A1AA"/>
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
@@ -889,7 +889,7 @@
                             </Button>
 
                             <!-- Find Mouse Signature Flares -->
-                            <TextBlock Text="Find Mouse Signature Flare Animations" FontSize="12" FontWeight="Bold" Foreground="#2FD4F5" Margin="0,0,0,8"/>
+                            <TextBlock Text="Active &quot;Find Mouse&quot; Flare Animation" FontSize="12" FontWeight="Bold" Foreground="#2FD4F5" Margin="0,0,0,8"/>
                             <WrapPanel Margin="0,0,0,14">
                                 <Button Tag="solar-flare" Width="195" Height="52" Margin="0,0,8,8" Background="#1A0F2E" BorderBrush="#2FD4F5" BorderThickness="1.5" Cursor="Hand" Click="OnSelectFlarePreset">
                                     <Button.Template>
@@ -930,7 +930,7 @@
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="Fluid Vortex Burst" FontWeight="Bold" FontSize="11" Foreground="#FAFAFA"/>
-                                                        <TextBlock Text="Pavel DoGreat dye shockwave" FontSize="9" Foreground="#A1A1AA"/>
+                                                        <TextBlock Text="Radial dye shockwave" FontSize="9" Foreground="#A1A1AA"/>
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
@@ -1408,7 +1408,7 @@
 
                                     <StackPanel Grid.Row="1" Grid.Column="2">
                                         <DockPanel LastChildFill="False">
-                                            <TextBlock Text="Movement Threshold" FontSize="11" FontWeight="SemiBold" Foreground="#D4D4D8"/>
+                                            <TextBlock Text="Min Movement Threshold" FontSize="11" FontWeight="SemiBold" Foreground="#D4D4D8"/>
                                             <TextBlock x:Name="txtThresholdVal" DockPanel.Dock="Right" Text="2 px" FontSize="11" Foreground="#FFA62E" FontWeight="Bold"/>
                                         </DockPanel>
                                         <Slider x:Name="sliderThreshold" Minimum="0" Maximum="15" Value="2" ValueChanged="OnThresholdChanged" Margin="0,4,0,0"/>
@@ -1517,7 +1517,7 @@
                                     <CheckBox x:Name="chkPassiveFx" DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="True" Checked="OnPassiveFxChanged" Unchecked="OnPassiveFxChanged"/>
                                     <StackPanel>
                                         <TextBlock Text="Enable Passive Trail FX" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
-                                        <TextBlock Text="Renders subtle momentary particle trails behind pointer while moving." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                        <TextBlock Text="Renders particle trails behind pointer while moving." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
@@ -1544,7 +1544,7 @@
                                         </Button>
                                         <StackPanel>
                                             <TextBlock Text="Flare hotkey" FontWeight="Bold" FontSize="13" Foreground="#FAFAFA"/>
-                                            <TextBlock Text="Press this shortcut anywhere in Windows to blast a beacon flare." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                            <TextBlock Text="Press this shortcut anywhere in Windows to blast a beacon flare. Click the combo to record your own." FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </DockPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
