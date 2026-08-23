@@ -167,7 +167,7 @@ namespace Mouseflare.UI
             if (tab == "fx-designer" && fxDesignerHost.Content == null && _overlay != null)
             {
                 // Built lazily: 24 sliders + popups only materialize when opened
-                fxDesignerHost.Content = new FxDesignerPanel(_overlay, this, SetStatusText).Build();
+                fxDesignerHost.Content = new FxDesignerPanel(_overlay, this, SetStatusText, PersistInstantSettings).Build();
             }
             tabBehavior.Visibility = tab == "behavior" ? Visibility.Visible : Visibility.Collapsed;
             tabDiagnostics.Visibility = tab == "diagnostics" ? Visibility.Visible : Visibility.Collapsed;

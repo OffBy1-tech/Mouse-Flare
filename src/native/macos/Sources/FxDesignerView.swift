@@ -4,26 +4,39 @@ import Cocoa
 /// web simulator's designer, editing a CustomFxConfig with LIVE preview — every
 /// change applies to the cursor immediately (the overlay draws above this
 /// window). The result becomes the "custom-fx" preset once committed with
-/// Apply & Save; closing the window first reverts the preview.
+/// Apply & Save; closing the window first reverts the preview. Save adds the
+/// current config to a persistent preset library (customFxPresets), which
+/// appears in the archetype popup after the built-ins, marked with ★.
 final class FxDesignerView: NSView {
     var onStatus: ((String) -> Void)?
 
     private var config: CustomFxConfig
+    private var customPresets: [CustomFxConfig] = []
     private var suppressApply = false
 
     private var presetPopup: NeonPopUp!
     private var nameField: NSTextField!
     private var glowSwitch: NeonSwitch!
+    private var deleteButton: CardButton!
     private var popupRefs: [(keyPath: WritableKeyPath<CustomFxConfig, String>, popup: NeonPopUp, values: [String])] = []
     private var sliderRefs: [(keyPath: WritableKeyPath<CustomFxConfig, Double>, slider: NSSlider, label: NSTextField, fmt: (Double) -> String)] = []
     private var colorChips: [(keyPath: WritableKeyPath<CustomFxConfig, String>, chip: CardButton)] = []
 
+    /// The library preset currently selected in the popup (nil = an archetype
+    /// or a free-floating draft). Gates the Delete button, like the web's
+    /// selectedIsCustom.
+    private var selectedCustomId: String? {
+        didSet { deleteButton?.isHidden = selectedCustomId == nil }
+    }
+
     init() {
         let saved = SettingsManager.shared.settings.customFxJson.flatMap(CustomFxConfig.fromJSON)
         config = saved ?? DefaultFxPresets.archetypes.first ?? CustomFxConfig()
+        customPresets = Self.loadLibrary()
         super.init(frame: .zero)
         buildUI()
         syncControls()
+        rebuildPresetMenu(selecting: config.id)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -34,7 +47,69 @@ final class FxDesignerView: NSView {
     func reloadFromSettings() {
         let saved = SettingsManager.shared.settings.customFxJson.flatMap(CustomFxConfig.fromJSON)
         config = saved ?? DefaultFxPresets.archetypes.first ?? CustomFxConfig()
+        customPresets = Self.loadLibrary()
         syncControls()
+        rebuildPresetMenu(selecting: config.id)
+    }
+
+    // MARK: Preset library (persisted instantly, like the web localStorage library)
+
+    private static func loadLibrary() -> [CustomFxConfig] {
+        SettingsManager.shared.settings.customFxPresets.compactMap(CustomFxConfig.fromJSON)
+    }
+
+    private func persistLibrary() {
+        let jsons = customPresets.compactMap { preset -> String? in
+            guard let data = try? JSONEncoder().encode(preset) else { return nil }
+            return String(data: data, encoding: .utf8)
+        }
+        var settings = SettingsManager.shared.settings
+        settings.customFxPresets = jsons
+        SettingsManager.shared.settings = settings
+    }
+
+    /// Rebuilds the archetype popup: built-ins first, then ★-prefixed library
+    /// presets. Selects the entry matching `id` (archetype or custom), or
+    /// clears the selection for a free-floating draft.
+    private func rebuildPresetMenu(selecting id: String?) {
+        presetPopup.removeAllItems()
+        presetPopup.addItems(withTitles: DefaultFxPresets.archetypes.map { $0.name })
+        presetPopup.addItems(withTitles: customPresets.map { "★ \($0.name)" })
+        if let id, let custom = customPresets.firstIndex(where: { $0.id == id }) {
+            presetPopup.selectItem(at: DefaultFxPresets.archetypes.count + custom)
+            selectedCustomId = id
+        } else if let id, let arch = DefaultFxPresets.archetypes.firstIndex(where: { $0.id == id }) {
+            presetPopup.selectItem(at: arch)
+            selectedCustomId = nil
+        } else {
+            presetPopup.selectItem(at: -1)
+            selectedCustomId = nil
+        }
+    }
+
+    private func saveToLibrary() {
+        let trimmed = nameField.stringValue.trimmingCharacters(in: .whitespaces)
+        let name = trimmed.isEmpty ? "Custom FX" : trimmed
+        config.name = name
+        // Only the preset currently loaded FROM the library overwrites in
+        // place; any other draft mints a new id, even if its id happens to
+        // collide with a library entry (e.g. re-imported Copy JSON output).
+        if selectedCustomId != config.id {
+            config.id = "custom-\(Int(Date().timeIntervalSince1970 * 1000))"
+        }
+        customPresets.removeAll { $0.id == config.id }
+        customPresets.insert(config, at: 0)
+        persistLibrary()
+        rebuildPresetMenu(selecting: config.id)
+        onStatus?("Saved \"\(name)\" to your preset library")
+    }
+
+    private func deleteSelectedPreset() {
+        guard let id = selectedCustomId, let target = customPresets.first(where: { $0.id == id }) else { return }
+        customPresets.removeAll { $0.id == id }
+        persistLibrary()
+        rebuildPresetMenu(selecting: nil)
+        onStatus?("Deleted \"\(target.name)\" from your preset library")
     }
 
     // MARK: Apply (live preview + persistence)
@@ -116,12 +191,11 @@ final class FxDesignerView: NSView {
 
         // Header: archetype picker, name, actions
         presetPopup = NeonPopUp()
-        presetPopup.addItems(withTitles: DefaultFxPresets.archetypes.map { "\($0.name)" })
         presetPopup.target = self
         presetPopup.action = #selector(presetChosen)
 
         nameField = NSTextField(string: config.name)
-        nameField.font = .systemFont(ofSize: 11)
+        nameField.font = .systemFont(ofSize: 13)
         nameField.drawsBackground = false
         nameField.isBordered = false
         nameField.wantsLayer = true
@@ -135,6 +209,13 @@ final class FxDesignerView: NSView {
         nameField.target = self
         nameField.action = #selector(controlsChanged)
 
+        let saveButton = smallButton("Save") { [weak self] in
+            self?.saveToLibrary()
+        }
+        deleteButton = smallButtonControl("Delete", titleColor: NSColor(hexString: "#F87171"), border: NSColor(hexString: "#F87171").withAlphaComponent(0.4)) { [weak self] in
+            self?.deleteSelectedPreset()
+        }
+        deleteButton.isHidden = true
         let copyButton = smallButton("Copy JSON") { [weak self] in
             guard let self, let data = try? JSONEncoder().encode(self.config),
                   let json = String(data: data, encoding: .utf8) else { return }
@@ -146,7 +227,13 @@ final class FxDesignerView: NSView {
             guard let self else { return }
             if let json = NSPasteboard.general.string(forType: .string),
                let parsed = CustomFxConfig.fromJSON(json) {
-                self.config = parsed
+                // Fresh id, like the web importer — a pasted config must never
+                // adopt an existing library id and overwrite it on Save
+                var imported = parsed
+                imported.id = "custom-imported-\(Int(Date().timeIntervalSince1970 * 1000))"
+                self.config = imported
+                self.selectedCustomId = nil
+                self.presetPopup.selectItem(at: -1)
                 self.syncControls()
                 self.apply()
                 self.onStatus?("Imported: \(parsed.name)")
@@ -156,16 +243,16 @@ final class FxDesignerView: NSView {
         }
 
         let headerRow = NSStackView(views: [
-            label("Archetype:", size: 11, color: Theme.textSecondary), presetPopup,
-            label("Name:", size: 11, color: Theme.textSecondary), nameField,
-            NSView(), copyButton, importButton,
+            label("Archetype:", size: 13, color: Theme.textSecondary), presetPopup,
+            label("Name:", size: 13, color: Theme.textSecondary), nameField,
+            NSView(), saveButton, deleteButton, copyButton, importButton,
         ])
         headerRow.orientation = .horizontal
         headerRow.spacing = 8
         stack.addArrangedSubview(headerRow)
         headerRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
-        let hint = label("Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.", size: 10, color: Theme.textMuted)
+        let hint = label("Every change previews live on your cursor — click Apply & Save to keep it as the Custom FX preset.", size: 12, color: Theme.textMuted)
         stack.addArrangedSubview(hint)
 
         // Popups: pattern / shape / blend / color mode / size curve
@@ -192,25 +279,26 @@ final class FxDesignerView: NSView {
         stack.addArrangedSubview(popupRow)
         popupRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
-        // Colors + glow
+        // Colors + glow, in a card like the web designer
         glowSwitch = NeonSwitch()
         glowSwitch.target = self
         glowSwitch.action = #selector(controlsChanged)
         let colorsRow = NSStackView(views: [
-            label("Colors:", size: 11, color: Theme.textSecondary),
+            label("Colors:", size: 13, color: Theme.textSecondary),
             colorChip("Primary", keyPath: \.primaryColor),
             colorChip("Secondary", keyPath: \.secondaryColor),
             colorChip("Accent", keyPath: \.accentColor),
             NSView(),
-            label("Glow Bloom", size: 11, color: Theme.textSecondary),
+            label("Glow Bloom", size: 13, color: Theme.textSecondary),
             glowSwitch,
         ])
         colorsRow.orientation = .horizontal
         colorsRow.spacing = 10
-        stack.addArrangedSubview(colorsRow)
-        colorsRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        let colorsCard = card(wrapping: colorsRow)
+        stack.addArrangedSubview(colorsCard)
+        colorsCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
-        // Sliders (two per row)
+        // Sliders (two per row), in a card like the web designer
         let pct: (Double) -> String = { String(format: "%.0f%%", $0 * 100) }
         let one: (Double) -> String = { String(format: "%.1f", $0) }
         let whole: (Double) -> String = { String(format: "%.0f", $0) }
@@ -244,6 +332,10 @@ final class FxDesignerView: NSView {
             ("End Alpha", \.endAlpha, 0, 1, pct),
         ]
 
+        let slidersStack = NSStackView()
+        slidersStack.orientation = .vertical
+        slidersStack.alignment = .leading
+        slidersStack.spacing = 10
         var index = 0
         while index < specs.count {
             let left = sliderColumn(specs[index])
@@ -252,16 +344,30 @@ final class FxDesignerView: NSView {
             row.orientation = .horizontal
             row.spacing = 20
             row.distribution = .fillEqually
-            stack.addArrangedSubview(row)
-            row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+            slidersStack.addArrangedSubview(row)
+            row.widthAnchor.constraint(equalTo: slidersStack.widthAnchor).isActive = true
             index += 2
         }
+        let slidersCard = card(wrapping: slidersStack)
+        stack.addArrangedSubview(slidersCard)
+        slidersCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     }
 
     @objc private func presetChosen() {
         let index = presetPopup.indexOfSelectedItem
-        guard index >= 0 && index < DefaultFxPresets.archetypes.count else { return }
-        loadPreset(DefaultFxPresets.archetypes[index])
+        let archetypeCount = DefaultFxPresets.archetypes.count
+        if index >= 0 && index < archetypeCount {
+            selectedCustomId = nil
+            loadPreset(DefaultFxPresets.archetypes[index])
+        } else if index >= archetypeCount && index < archetypeCount + customPresets.count {
+            // Library presets load keeping their id, so Save overwrites in place
+            let preset = customPresets[index - archetypeCount]
+            selectedCustomId = preset.id
+            config = preset
+            syncControls()
+            apply()
+            onStatus?("Loaded archetype: \(preset.name) — previewing live on your cursor")
+        }
     }
 
     // MARK: Control factories
@@ -273,18 +379,41 @@ final class FxDesignerView: NSView {
         return field
     }
 
+    /// Web neon-card equivalent: rounded bordered container with padding.
+    private func card(wrapping inner: NSView, padding: CGFloat = 14) -> NSView {
+        let card = NSView()
+        card.wantsLayer = true
+        card.layer?.backgroundColor = Theme.cardBg.cgColor
+        card.layer?.borderColor = Theme.cardBorder.cgColor
+        card.layer?.borderWidth = 1
+        card.layer?.cornerRadius = 10
+        inner.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(inner)
+        NSLayoutConstraint.activate([
+            inner.topAnchor.constraint(equalTo: card.topAnchor, constant: padding),
+            inner.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: padding),
+            inner.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -padding),
+            inner.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -padding),
+        ])
+        return card
+    }
+
     private func smallButton(_ title: String, action: @escaping () -> Void) -> CardButton {
+        smallButtonControl(title, titleColor: Theme.textPrimary, border: Theme.cardBorder, action: action)
+    }
+
+    private func smallButtonControl(_ title: String, titleColor: NSColor, border: NSColor, action: @escaping () -> Void) -> CardButton {
         let button = CardButton()
         button.layer?.cornerRadius = 6
-        button.setStyle(background: Theme.controlBg, border: Theme.cardBorder, borderWidth: 1)
-        let titleLabel = label(title, size: 10, color: Theme.textPrimary)
+        button.setStyle(background: Theme.controlBg, border: border, borderWidth: 1)
+        let titleLabel = label(title, size: 12, color: titleColor)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         button.addSubview(titleLabel)
         NSLayoutConstraint.activate([
             titleLabel.centerXAnchor.constraint(equalTo: button.centerXAnchor),
             titleLabel.centerYAnchor.constraint(equalTo: button.centerYAnchor),
             button.widthAnchor.constraint(greaterThanOrEqualTo: titleLabel.widthAnchor, constant: 18),
-            button.heightAnchor.constraint(equalToConstant: 24),
+            button.heightAnchor.constraint(equalToConstant: 26),
         ])
         button.onClick = action
         return button
@@ -300,9 +429,9 @@ final class FxDesignerView: NSView {
         popup.addItems(withTitles: titles)
         popup.target = self
         popup.action = #selector(controlsChanged)
-        popup.font = .systemFont(ofSize: 10)
+        popup.font = .systemFont(ofSize: 12)
         popupRefs.append((keyPath, popup, values))
-        let column = NSStackView(views: [label(title, size: 10, color: Theme.textFaint), popup])
+        let column = NSStackView(views: [label(title, size: 12, color: Theme.textFaint), popup])
         column.orientation = .vertical
         column.alignment = .leading
         column.spacing = 2
@@ -342,7 +471,7 @@ final class FxDesignerView: NSView {
             panel.center()
             panel.makeKeyAndOrderFront(nil)
         }
-        let column = NSStackView(views: [chip, label(title, size: 9, color: Theme.textMuted)])
+        let column = NSStackView(views: [chip, label(title, size: 11, color: Theme.textMuted)])
         column.orientation = .horizontal
         column.spacing = 4
         return column
@@ -352,11 +481,11 @@ final class FxDesignerView: NSView {
         let (title, keyPath, min, max, fmt) = spec
         let slider = NeonSlider(value: config[keyPath: keyPath], minValue: min, maxValue: max, target: self, action: #selector(controlsChanged))
         slider.isContinuous = true
-        let valueLabel = label(fmt(config[keyPath: keyPath]), size: 10, color: Theme.neonValue)
+        let valueLabel = label(fmt(config[keyPath: keyPath]), size: 12, color: Theme.neonValue)
         valueLabel.alignment = .right
         sliderRefs.append((keyPath, slider, valueLabel, fmt))
 
-        let titleLabel = label(title, size: 10, color: NSColor(hexString: "#D4D4D8"))
+        let titleLabel = label(title, size: 12, color: NSColor(hexString: "#D4D4D8"))
         let header = NSStackView(views: [titleLabel, NSView(), valueLabel])
         header.orientation = .horizontal
         let column = NSStackView(views: [header, slider])

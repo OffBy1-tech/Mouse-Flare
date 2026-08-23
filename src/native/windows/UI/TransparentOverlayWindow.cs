@@ -34,6 +34,9 @@ namespace Mouseflare.UI
         public static readonly string[] DefaultQuickSwatches =
             { "#FF007F", "#3B82F6", "#14B8A6", "#F97316", "#A855F7", "#EF4444", "#FACC15", "#22C55E" };
         public string[] QuickSwatches { get; set; } = (string[])DefaultQuickSwatches.Clone();
+
+        /// <summary>FX Designer preset library (CustomFxConfig JSON per entry).</summary>
+        public string[] CustomFxPresets { get; set; } = Array.Empty<string>();
         public double FluidVorticity { get; set; } = 0.85;    // 0.1 .. 2.0 (curl spin strength)
         public double FluidDissipation { get; set; } = 0.96;  // 0.90 .. 0.99 (smoke persistence)
 
@@ -74,6 +77,7 @@ namespace Mouseflare.UI
             LastCheckedUtc = Core.Updater.Shared.LastCheckedUtc,
             QuickSwatches = QuickSwatches,
             CustomFxJson = CustomFxJson,
+            CustomFxPresets = CustomFxPresets,
             FluidVorticity = FluidVorticity,
             FluidDissipation = FluidDissipation,
             Hotkey = hotkey,
