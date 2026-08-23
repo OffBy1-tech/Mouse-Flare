@@ -482,6 +482,25 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     </label>
                   </div>
 
+                  {/* Sound on Flare */}
+                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
+                    <div>
+                      <div className="font-semibold text-sm text-neutral-200">Play Sound on Flare</div>
+                      <div className="text-xs text-neutral-400 mt-0.5">
+                        Subtle synth chime on flare trigger.
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.soundFx}
+                        onChange={(e) => updateInstant({ soundFx: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+                    </label>
+                  </div>
+
                   {/* Passive FX Toggle */}
                   <div className="flex items-center justify-between p-4 rounded-xl neon-card">
                     <div>
@@ -505,7 +524,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                   <div className="p-4 rounded-xl neon-card space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-sm text-neutral-200">Find Mouse Global Hotkey</div>
+                        <div className="font-semibold text-sm text-neutral-200">Flare hotkey</div>
                         <div className="text-xs text-neutral-400 mt-0.5">
                           Press this shortcut anywhere in your OS to trigger the signature flare.
                         </div>
@@ -541,33 +560,18 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                     </div>
                   </div>
 
-                  {/* Sound FX & Startup */}
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div className="flex items-center justify-between p-4 rounded-xl neon-card">
-                      <div>
-                        <div className="font-semibold text-xs text-neutral-200">Start with OS</div>
-                        <div className="text-[11px] text-neutral-400">Launch in tray upon system login.</div>
-                      </div>
+                  {/* Startup */}
+                  <div className="flex items-center justify-between p-4 rounded-xl neon-card">
+                    <div className="font-semibold text-sm text-neutral-200">Launch on startup</div>
+                    <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
                         checked={settings.startWithWindows}
                         onChange={(e) => updateInstant({ startWithWindows: e.target.checked })}
-                        className="neon-check rounded h-4 w-4"
+                        className="sr-only peer"
                       />
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-xl neon-card">
-                      <div>
-                        <div className="font-semibold text-xs text-neutral-200">Acoustic Beacon Chime</div>
-                        <div className="text-[11px] text-neutral-400">Subtle synth chime on flare trigger.</div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={settings.soundFx}
-                        onChange={(e) => updateInstant({ soundFx: e.target.checked })}
-                        className="neon-check rounded h-4 w-4"
-                      />
-                    </div>
+                      <div className="neon-switch w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+                    </label>
                   </div>
 
                   {/* Quick Software Updates Card in General Tab */}
