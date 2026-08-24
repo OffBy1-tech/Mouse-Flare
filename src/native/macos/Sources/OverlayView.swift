@@ -38,6 +38,8 @@ final class OverlayView: NSView {
     }
 
     private var particles: [Particle] = []
+    private var lastUpdateTime = Date.timeIntervalSinceReferenceDate
+    private var passiveBudget: Double = 0
     private var rings: [BeaconRing] = []
     private var displayTimer: Timer?
     private var lastPoint: CGPoint = .zero
@@ -144,7 +146,12 @@ final class OverlayView: NSView {
             let speed = min(35.0, Double(dist))
             let angle = atan2(dy, dx)
             let densityScale = cfg.particleDensity / 5.0
-            let count = max(1, Int(Double(dist) * 0.35 * densityScale))
+            // Distance-proportional with a carried remainder: flooring to one
+            // per event made a high-polling-rate mouse emit far denser trails.
+            passiveBudget += Double(dist) * 0.35 * densityScale
+            let count = Int(passiveBudget.rounded(.down))
+            passiveBudget -= Double(count)
+            guard count > 0 else { return }
             strokeIndex += 1
 
             for i in 0..<min(count, 14) {
@@ -566,7 +573,14 @@ final class OverlayView: NSView {
         }
         guard !particles.isEmpty || !rings.isEmpty else { return }
 
-        let ringStep = CGFloat(0.04) * CGFloat(max(0.4, cfg.animationSpeed))
+        // Frame-equivalent advancement: presets are authored at 60fps, so a
+        // 120Hz display must not halve how long effects last. dt is clamped
+        // so a stall cannot teleport particles or expire them all at once.
+        let nowTime = Date.timeIntervalSinceReferenceDate
+        let fe = CGFloat(min(0.1, max(0, nowTime - lastUpdateTime)) * 60)
+        lastUpdateTime = nowTime
+
+        let ringStep = CGFloat(0.04) * CGFloat(max(0.4, cfg.animationSpeed)) * fe
         for i in (0..<rings.count).reversed() {
             rings[i].progress += ringStep
             if rings[i].progress >= 1.0 {
@@ -576,7 +590,7 @@ final class OverlayView: NSView {
 
         let dissipation = CGFloat(cfg.fluidDissipation)
         for i in (0..<particles.count).reversed() {
-            particles[i].alpha -= particles[i].decay
+            particles[i].alpha -= particles[i].decay * fe
             if particles[i].alpha <= 0 {
                 particles.remove(at: i)
                 continue
@@ -586,18 +600,21 @@ final class OverlayView: NSView {
                 // Apply curl vector rotation (fluid presets & vortex flares)
                 let curVx = particles[i].vx
                 let curVy = particles[i].vy
-                let curl = particles[i].spin * 0.05
+                let curl = particles[i].spin * 0.05 * fe
                 particles[i].vx = curVx * cos(curl) - curVy * sin(curl)
                 particles[i].vy = curVx * sin(curl) + curVy * cos(curl)
-                particles[i].vx *= dissipation
-                particles[i].vy *= dissipation
+                // per-frame multipliers: exponentiate for other refresh rates
+                let dissipationStep = pow(dissipation, fe)
+                particles[i].vx *= dissipationStep
+                particles[i].vy *= dissipationStep
             } else if !particles[i].constantVelocity {
-                particles[i].vx *= 0.94
-                particles[i].vy *= 0.94
+                let dragStep = pow(CGFloat(0.94), fe)
+                particles[i].vx *= dragStep
+                particles[i].vy *= dragStep
             }
 
-            particles[i].x += particles[i].vx
-            particles[i].y += particles[i].vy
+            particles[i].x += particles[i].vx * fe
+            particles[i].y += particles[i].vy * fe
         }
 
         needsDisplay = true

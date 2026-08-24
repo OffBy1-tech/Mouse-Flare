@@ -101,6 +101,20 @@ namespace Mouseflare.Core
             _compositor.Clear();
         }
 
+        // Presets are authored in 60fps frame units, so each update advances by
+        // dt*60 rather than a fixed 1 — identical duration at any refresh
+        // rate. dt is clamped so a stall can't teleport or mass-expire.
+        private const double ReferenceHz = 60.0;
+        private const double MaxDeltaSeconds = 0.1;
+        private long _lastUpdateTime = Environment.TickCount64;
+        private double _spawnBudget;
+
+        private static double FrameEquivalents(long previousMs, long nowMs)
+        {
+            double seconds = Math.Min(MaxDeltaSeconds, Math.Max(0, (nowMs - previousMs) / 1000.0));
+            return seconds * ReferenceHz;
+        }
+
         public void OnMove(double x, double y, double dx, double dy, CustomFxConfig config)
         {
             long now = Environment.TickCount64;
@@ -112,7 +126,12 @@ namespace Mouseflare.Core
             _cursorSpeed = dist / dt * 1000;
 
             if (dist < 0.5) return;
-            for (int i = 0; i < (int)config.spawnRateOnMove; i++)
+            // Time-budgeted emission: the low-level mouse hook fires per
+            // hardware event, so a 1000Hz mouse used to emit ~8x a 125Hz one.
+            _spawnBudget += config.spawnRateOnMove * FrameEquivalents(now - (long)dt, now);
+            int spawnCount = Math.Min((int)Math.Floor(_spawnBudget), 40);
+            _spawnBudget -= spawnCount;
+            for (int i = 0; i < spawnCount; i++)
             {
                 Spawn(x, y, dx, dy, config, isBurst: false);
             }
@@ -206,23 +225,29 @@ namespace Mouseflare.Core
                 catch (Exception ex) { CompositorFault(ex); composited = false; }
             }
 
+            long updateNow = Environment.TickCount64;
+            double fe = FrameEquivalents(_lastUpdateTime, updateNow);
+            _lastUpdateTime = updateNow;
+            double dragStep = config.drag == 1 ? 1 : Math.Pow(config.drag, fe);
+
             for (int i = _particles.Count - 1; i >= 0; i--)
             {
                 var p = _particles[i];
-                p.Life += 1;
+                p.Life += fe;
                 if (p.Life >= p.MaxLife) { _particles.RemoveAt(i); continue; }
                 double progress = p.Life / p.MaxLife;
 
-                p.Vx += gravityX;
-                p.Vy += gravityY;
-                p.Vx *= config.drag;
-                p.Vy *= config.drag;
+                p.Vx += gravityX * fe;
+                p.Vy += gravityY * fe;
+                // drag is a per-frame multiplier, so exponentiate
+                p.Vx *= dragStep;
+                p.Vy *= dragStep;
 
                 if (config.turbulence > 0)
                 {
                     double time = (p.Life + p.TurbulenceSeed) * 0.1;
-                    p.Vx += Math.Sin(time) * config.turbulence * 0.15;
-                    p.Vy += Math.Cos(time * 0.8) * config.turbulence * 0.15;
+                    p.Vx += Math.Sin(time) * config.turbulence * 0.15 * fe;
+                    p.Vy += Math.Cos(time * 0.8) * config.turbulence * 0.15 * fe;
                 }
 
                 if (config.vortexAttraction != 0)
@@ -232,14 +257,14 @@ namespace Mouseflare.Core
                     if (dist > 5 && dist < 300)
                     {
                         double normX = toX / dist, normY = toY / dist;
-                        p.Vx += -normY * config.vortexAttraction * 0.8 + normX * 0.2;
-                        p.Vy += normX * config.vortexAttraction * 0.8 + normY * 0.2;
+                        p.Vx += (-normY * config.vortexAttraction * 0.8 + normX * 0.2) * fe;
+                        p.Vy += (normX * config.vortexAttraction * 0.8 + normY * 0.2) * fe;
                     }
                 }
 
-                p.X += p.Vx;
-                p.Y += p.Vy;
-                p.Rotation += p.RotationSpeed;
+                p.X += p.Vx * fe;
+                p.Y += p.Vy * fe;
+                p.Rotation += p.RotationSpeed * fe;
 
                 p.Size = config.sizeCurve switch
                 {

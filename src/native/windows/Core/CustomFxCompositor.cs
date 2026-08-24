@@ -61,6 +61,7 @@ namespace Mouseflare.Core
         private const int RasterBudgetPerFrame = 6;   // new sprites per frame
         private const int TombstoneRetryFrames = 120; // ~2s before retrying a failed sprite
         private const int MaxSpriteFailures = 5;      // then disable the compositor
+        private const double MaxGlowBlur = 20.0;      // logical pt; matches macOS/web
 
         private static readonly Sprite Tombstone = new();
         private readonly Dictionary<long, int> _tombstoneFrame = new();
@@ -182,8 +183,12 @@ namespace Mouseflare.Core
                 // Canvas: shadowBlur = glowRadius * (size / 6); the glow sprite
                 // approximates the blurred silhouette with a radial falloff
                 // reaching shape extent + 1.5 * blur. glowRadius comes straight
-                // from user JSON — clamp before it sizes a sprite.
-                double blur = Math.Clamp(config.glowRadius, 0.0, 100.0) * (size / 6.0) * dpiScale;
+                // from user JSON — clamp before it sizes a sprite. Cap the
+                // result at MaxGlowBlur logical points before scaling for DPI:
+                // presets whose particles grow large otherwise ask for a blur
+                // several times any other preset's, at no visible benefit.
+                double blur = Math.Min(MaxGlowBlur,
+                    Math.Clamp(config.glowRadius, 0.0, 100.0) * (size / 6.0)) * dpiScale;
                 int glowRadius = Math.Clamp((int)Math.Round(sizeDev * 1.2 + blur * 1.5), 2, 400);
                 int glowQ = QuantizeSize(glowRadius);
                 glow = GetSprite(Key(shapeIdx, 0, glow: true, glowQ),
