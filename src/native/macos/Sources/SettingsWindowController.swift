@@ -966,7 +966,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             makeSliderPairRow(
                 left: makeSliderColumn(title: "Animation Speed", slider: sliderSpeed, valueLabel: valueSpeed),
                 right: makeSliderColumn(title: "Min Movement Threshold", slider: sliderThreshold, valueLabel: valueThreshold)
-            )
+            ),
+            makeLabel("Applies to the built-in presets above. Custom FX uses the FX Designer's own parameters.", size: 10, weight: .regular, color: Theme.textMuted)
         ])
         physicsGrid.orientation = .vertical
         physicsGrid.spacing = 12

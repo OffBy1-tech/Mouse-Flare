@@ -202,6 +202,14 @@ namespace Mouseflare.UI
 
         private void SpawnIdleBurst(double x, double y)
         {
+            // A designed effect owns its own look, so wake-from-idle fires its
+            // burst rather than generic sparks (matches macOS and the web).
+            if (PassiveFxStyle == "custom-fx" && _customFxConfig != null)
+            {
+                _customFx.TriggerBurst(x, y, _customFxConfig);
+                return;
+            }
+
             for (int i = 0; i < 16; i++)
             {
                 double angle = _rand.NextDouble() * Math.PI * 2;

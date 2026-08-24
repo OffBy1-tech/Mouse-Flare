@@ -620,6 +620,12 @@ export class ParticleEngine {
 
   // Wake-from-idle burst
   private spawnIdleBurst(x: number, y: number, settings: AppSettings) {
+    // A designed effect owns its own look, so wake-from-idle fires its burst
+    // rather than generic sparks (macOS already behaved this way).
+    if (settings.passiveFx === 'custom-fx' && settings.customFxConfig) {
+      this.customFxRenderer.triggerBurst(x, y, settings.customFxConfig);
+      return;
+    }
     const colors = this.getColors(settings);
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2;

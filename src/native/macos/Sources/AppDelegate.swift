@@ -95,6 +95,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if CommandLine.arguments.contains("--settings") {
             openPreferences()
         }
+        // `Mouseflare --bench-fx <presetId> [frames]`: headless render benchmark
+        // for a Custom FX preset. Prints ms/frame so particle-rendering costs
+        // can be measured without eyeballing the live overlay.
+        if let flagIndex = CommandLine.arguments.firstIndex(of: "--bench-fx"),
+           CommandLine.arguments.count > flagIndex + 1 {
+            let presetId = CommandLine.arguments[flagIndex + 1]
+            let frames = CommandLine.arguments.count > flagIndex + 2
+                ? Int(CommandLine.arguments[flagIndex + 2]) ?? 240
+                : 240
+            runFxBenchmark(presetId: presetId, frames: frames)
+        }
         // Headless exercise of the full update path (used by CI-adjacent testing)
         if CommandLine.arguments.contains("--self-update-test") {
             runSelfUpdateTest()
@@ -388,6 +399,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Internal (not private): the Settings window's Updates tab drives the
     // same download/stage/install flow as these menu-bar actions.
+    /// Renders a preset offscreen for `frames` iterations and reports the
+    /// average cost per frame. Used to catch particle-rendering regressions.
+    private func runFxBenchmark(presetId: String, frames: Int) {
+        guard let config = DefaultFxPresets.archetypes.first(where: { $0.id == presetId }) else {
+            print("[bench-fx] unknown preset '\(presetId)'. Available: " +
+                  DefaultFxPresets.archetypes.map { $0.id }.joined(separator: ", "))
+            exit(2)
+        }
+        // Backing scale matters: a Retina overlay is 4x the pixels, and blur
+        // cost scales with area. Default to 2x, the common case.
+        let scale = CommandLine.arguments.firstIndex(of: "--bench-scale").flatMap { i -> Int? in
+            CommandLine.arguments.count > i + 1 ? Int(CommandLine.arguments[i + 1]) : nil
+        } ?? 2
+        let width = 1440 * scale, height = 900 * scale
+        guard let ctx = CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            print("[bench-fx] could not create bitmap context")
+            exit(2)
+        }
+
+        let engine = CustomFxEngine()
+        var x: CGFloat = 200, y: CGFloat = 450
+        var total: Double = 0
+        var peakParticles = 0
+
+        for frame in 0..<frames {
+            // Steady 600pt/s sweep so emission matches a real drag
+            let dx: CGFloat = 10, dy: CGFloat = CGFloat(sin(Double(frame) * 0.1) * 6)
+            x += dx; y += dy
+            if x > CGFloat(width) - 100 { x = 200 }
+            engine.onMove(x: x, y: y, dx: dx, dy: dy, config: config)
+            // The real app polls the mouse at 120Hz but renders per frame, so
+            // emit twice per rendered frame to match steady-state population.
+            engine.onMove(x: x + dx * 0.5, y: y + dy * 0.5, dx: dx, dy: dy, config: config)
+
+            let started = Date.timeIntervalSinceReferenceDate
+            engine.update(config: config, cursor: CGPoint(x: x, y: y))
+            ctx.clear(CGRect(x: 0, y: 0, width: width, height: height))
+            engine.draw(in: ctx, config: config)
+            total += Date.timeIntervalSinceReferenceDate - started
+            peakParticles = max(peakParticles, engine.activeCount)
+        }
+
+        let msPerFrame = total / Double(frames) * 1000
+        print(String(format: "[bench-fx] %@: %.2f ms/frame over %d frames at %dx, peak %d particles (60fps budget = 16.67 ms)",
+                     presetId, msPerFrame, frames, scale, peakParticles))
+        exit(0)
+    }
+
     @objc func startUpdateDownload() {
         guard case .available(let release) = Updater.shared.phase else {
             // Manual path can arrive here right after check(); re-read phase safely

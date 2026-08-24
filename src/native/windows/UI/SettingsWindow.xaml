@@ -1371,6 +1371,7 @@
 
                             <!-- Physics Controls Card -->
                             <Border Background="#1A0F2E" BorderBrush="#2E1B4A" BorderThickness="1" CornerRadius="10" Padding="14">
+                              <StackPanel>
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -1414,6 +1415,8 @@
                                         <Slider x:Name="sliderThreshold" Minimum="0" Maximum="15" Value="2" ValueChanged="OnThresholdChanged" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Grid>
+                                <TextBlock Text="Applies to the built-in presets above. Custom FX uses the FX Designer's own parameters." FontSize="10" Foreground="#71717A" TextWrapping="Wrap" Margin="0,12,0,0"/>
+                              </StackPanel>
                             </Border>
 
                             <!-- Fluid Dynamics & Vorticity Engine (cyan accent, matches macOS) -->
