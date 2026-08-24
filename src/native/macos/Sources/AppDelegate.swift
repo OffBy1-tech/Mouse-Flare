@@ -422,32 +422,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             exit(2)
         }
 
+        // `--bench-shape <name>` overrides just the shape so shapes can be
+        // compared with every other parameter held constant.
+        var benchConfig = config
+        if let i = CommandLine.arguments.firstIndex(of: "--bench-shape"),
+           CommandLine.arguments.count > i + 1 {
+            benchConfig.shape = CommandLine.arguments[i + 1]
+        }
+
         let engine = CustomFxEngine()
         var x: CGFloat = 200, y: CGFloat = 450
         var total: Double = 0
         var peakParticles = 0
+        var particleFrames = 0
 
         for frame in 0..<frames {
             // Steady 600pt/s sweep so emission matches a real drag
             let dx: CGFloat = 10, dy: CGFloat = CGFloat(sin(Double(frame) * 0.1) * 6)
             x += dx; y += dy
             if x > CGFloat(width) - 100 { x = 200 }
-            engine.onMove(x: x, y: y, dx: dx, dy: dy, config: config)
+            engine.onMove(x: x, y: y, dx: dx, dy: dy, config: benchConfig)
             // The real app polls the mouse at 120Hz but renders per frame, so
             // emit twice per rendered frame to match steady-state population.
-            engine.onMove(x: x + dx * 0.5, y: y + dy * 0.5, dx: dx, dy: dy, config: config)
+            engine.onMove(x: x + dx * 0.5, y: y + dy * 0.5, dx: dx, dy: dy, config: benchConfig)
 
             let started = Date.timeIntervalSinceReferenceDate
-            engine.update(config: config, cursor: CGPoint(x: x, y: y))
+            engine.update(config: benchConfig, cursor: CGPoint(x: x, y: y))
             ctx.clear(CGRect(x: 0, y: 0, width: width, height: height))
-            engine.draw(in: ctx, config: config)
+            engine.draw(in: ctx, config: benchConfig)
             total += Date.timeIntervalSinceReferenceDate - started
             peakParticles = max(peakParticles, engine.activeCount)
+            particleFrames += engine.activeCount
         }
 
         let msPerFrame = total / Double(frames) * 1000
-        print(String(format: "[bench-fx] %@: %.2f ms/frame over %d frames at %dx, peak %d particles (60fps budget = 16.67 ms)",
-                     presetId, msPerFrame, frames, scale, peakParticles))
+        // Population floats (time-based emission means slower frames emit
+        // more), so also report cost per particle, which is comparable.
+        let avgParticles = Double(particleFrames) / Double(frames)
+        let usPerParticle = avgParticles > 0 ? (total / Double(particleFrames)) * 1_000_000 : 0
+        print(String(format: "[bench-fx] %@ shape=%-14@ %.2f ms/frame  %.1f us/particle  avg %.0f, peak %d particles @%dx",
+                     presetId, benchConfig.shape, msPerFrame, usPerParticle, avgParticles, peakParticles, scale))
         exit(0)
     }
 
