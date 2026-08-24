@@ -209,7 +209,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             break
         }
 
-        menu.addItem(NSMenuItem(title: "⚙ Settings & FX Studio...", action: #selector(openPreferences), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: "⚙ Settings & FX Studio…", action: #selector(openPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdatesManually), keyEquivalent: ""))
 
         let toggleItem = NSMenuItem(title: "Enable Effects", action: #selector(toggleEnabled), keyEquivalent: "")
