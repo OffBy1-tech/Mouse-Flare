@@ -18,11 +18,13 @@ namespace Mouseflare.Tray
         private readonly ToolStripMenuItem _updateActionItem;
         private readonly ToolStripSeparator _updateActionSeparator;
         private Action? _updateAction;
+        private readonly ToolStripMenuItem _findItem;
 
-        /// <summary>Keeps the tray tooltip in sync with the configured hotkey.</summary>
+        /// <summary>Keeps the tray tooltip and Find Mouse item in sync with the hotkey.</summary>
         public void UpdateHotkey(string hotkey)
         {
             _notifyIcon.Text = $"Mouseflare \u2014 {hotkey} to Find Mouse";
+            _findItem.Text = $"\u26a1 Find Mouse ({hotkey})";
         }
 
         public TrayIconManager(bool initialEnabled = true)
@@ -45,21 +47,21 @@ namespace Mouseflare.Tray
             contextMenu.Items.Add(_updateActionItem);
             contextMenu.Items.Add(_updateActionSeparator);
 
-            var findItem = new ToolStripMenuItem("⚡ Find Mouse (Ctrl+Shift+F)");
-            findItem.Click += (s, e) => FindMouseRequested?.Invoke();
-            contextMenu.Items.Add(findItem);
+            _findItem = new ToolStripMenuItem("⚡ Find Mouse (Ctrl + Shift + F)");
+            _findItem.Click += (s, e) => FindMouseRequested?.Invoke();
+            contextMenu.Items.Add(_findItem);
 
             contextMenu.Items.Add(new ToolStripSeparator());
 
-            var settingsItem = new ToolStripMenuItem("⚙ Preferences / Settings...");
+            var settingsItem = new ToolStripMenuItem("⚙ Settings & FX Studio…");
             settingsItem.Click += (s, e) => OpenSettingsRequested?.Invoke();
             contextMenu.Items.Add(settingsItem);
 
-            var checkUpdatesItem = new ToolStripMenuItem("Check for Updates...");
+            var checkUpdatesItem = new ToolStripMenuItem("Check for Updates…");
             checkUpdatesItem.Click += (s, e) => CheckUpdatesRequested?.Invoke();
             contextMenu.Items.Add(checkUpdatesItem);
 
-            var enableItem = new ToolStripMenuItem("✓ Enable Cursor FX") { Checked = initialEnabled, CheckOnClick = true };
+            var enableItem = new ToolStripMenuItem("Enable Effects") { Checked = initialEnabled, CheckOnClick = true };
             enableItem.CheckedChanged += (s, e) => EnabledToggled?.Invoke(enableItem.Checked);
             contextMenu.Items.Add(enableItem);
 

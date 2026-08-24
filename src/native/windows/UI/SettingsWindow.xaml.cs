@@ -1048,6 +1048,23 @@ namespace Mouseflare.UI
                 return; // wait for the main key
             }
 
+            if (key == Key.Escape)
+            {
+                _isRecordingHotkey = false;
+                btnHotkey.Content = _currentHotkey;
+                SetStatusText("Hotkey recording cancelled");
+                return;
+            }
+
+            // A bare non-function key would hijack normal typing system-wide
+            // (same rule as the macOS recorder, which exempts F1-F12).
+            bool isFunctionKey = key >= Key.F1 && key <= Key.F12;
+            if (Keyboard.Modifiers == ModifierKeys.None && !isFunctionKey)
+            {
+                SetStatusText("Add a modifier (Ctrl Shift Alt) — a bare key would hijack normal typing");
+                return; // stay in recording mode, like macOS
+            }
+
             var parts = new List<string>();
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) parts.Add("Ctrl");
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) parts.Add("Shift");
