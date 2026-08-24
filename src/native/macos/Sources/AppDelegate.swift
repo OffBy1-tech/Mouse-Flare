@@ -435,6 +435,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var total: Double = 0
         var peakParticles = 0
         var particleFrames = 0
+        var sizeSum: CGFloat = 0
 
         for frame in 0..<frames {
             // Steady 600pt/s sweep so emission matches a real drag
@@ -453,6 +454,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             total += Date.timeIntervalSinceReferenceDate - started
             peakParticles = max(peakParticles, engine.activeCount)
             particleFrames += engine.activeCount
+            sizeSum += engine.activeSizeSum
         }
 
         let msPerFrame = total / Double(frames) * 1000
@@ -460,8 +462,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // more), so also report cost per particle, which is comparable.
         let avgParticles = Double(particleFrames) / Double(frames)
         let usPerParticle = avgParticles > 0 ? (total / Double(particleFrames)) * 1_000_000 : 0
-        print(String(format: "[bench-fx] %@ shape=%-14@ %.2f ms/frame  %.1f us/particle  avg %.0f, peak %d particles @%dx",
-                     presetId, benchConfig.shape, msPerFrame, usPerParticle, avgParticles, peakParticles, scale))
+        // Blur radius is glowRadius * size/6, so mean size predicts blur cost.
+        let meanSize = particleFrames > 0 ? Double(sizeSum) / Double(particleFrames) : 0
+        let blur = benchConfig.glowBloom ? benchConfig.glowRadius * meanSize / 6 : 0
+        print(String(format: "[bench-fx] %@ shape=%-14@ %.2f ms/frame  %.1f us/particle  avg %.0f particles  meanSize %.1f  blur %.0fpt @%dx",
+                     presetId, benchConfig.shape, msPerFrame, usPerParticle, avgParticles, meanSize, blur, scale))
         exit(0)
     }
 

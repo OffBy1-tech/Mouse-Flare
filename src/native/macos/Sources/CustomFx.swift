@@ -128,6 +128,9 @@ final class CustomFxEngine {
     }
 
     var activeCount: Int { particles.count }
+    /// Sum of live particle sizes — the benchmark uses it to see how the size
+    /// distribution shifts, since blur cost is driven by size, not count.
+    var activeSizeSum: CGFloat { particles.reduce(0) { $0 + $1.size } }
 
     func clear() { particles.removeAll() }
 
