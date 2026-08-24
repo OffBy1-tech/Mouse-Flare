@@ -2,6 +2,56 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.8.2 (2026-08-24)
+
+Stable release v0.8.2 (commit 935b301c341a7fe5bd5b5afe88ffd1d391664053).
+
+## What's new
+
+Mouseflare 0.8.2 — Effects no longer speed up on high-refresh displays, and heavy presets got much faster
+
+### 🐛 Fixed
+- **Effects ran at the wrong speed depending on your display's refresh rate.** Particle aging advanced one step per rendered frame, so on a 120 Hz display every effect played roughly twice as fast and burned through its lifetime in half the time it should. Aging now advances by elapsed time, so an effect lasts the same duration at 60, 120 or 144 Hz. Your saved presets are untouched — their numbers are still calibrated to 60 Hz, which is now the reference rather than an assumption.
+- **Particle emission was tied to mouse poll rate.** Particles were emitted per mouse event instead of per unit of time, so a high-polling mouse or a fast drag produced several times the intended number of particles. This was the main cause of the severe slowdown on **Dragon Ash & Smoke**. Emission now runs on a time budget with a carried remainder, so the density you designed is the density you get.
+- **Waking from idle fired generic sparks instead of your own effect** on Windows and in the web demo when a custom FX Designer effect was selected. macOS already behaved correctly; all three now agree.
+
+All three fixes apply to macOS, Windows and the web demo.
+
+### ⚡ Performance
+
+Measured on macOS, 2× Retina, under sustained full-screen dragging — a deliberate stress case, not typical use:
+
+| Preset | 0.8.1 | 0.8.2 |
+| :--- | ---: | ---: |
+| Dragon Ash & Smoke | 23.1 ms/frame | **14.9 ms/frame** |
+| Bioluminescent Abyss | 19.2 ms/frame | 11.3 ms/frame |
+| Solar Plasma Flare | 12.0 ms/frame | 6.4 ms/frame |
+| Chromatic Rainbow Rush | 6.4 ms/frame | 2.7 ms/frame |
+
+### 🎨 Changed
+- **Glow blur is now capped at 20 points.** Blur scales with particle size, so a preset whose particles grow large asked for a proportionally huge blur — Dragon Ash & Smoke reached 40 points, several times any other preset's and the single largest cost in its frame. Capping it took another 22% off that preset with no visible difference. The practical effect: past 20 points of blur, the top of the Glow Radius slider no longer widens the falloff for very large particles.
+- FX Studio's Intensity, Density and Animation Speed sliders now note that they apply to the built-in presets; FX Designer effects carry their own parameters. Behavior is unchanged — the note documents what already happened.
+
+### 🔧 Internal
+- CI now smoke-tests the *packaged* macOS app by opening Settings, and blocks `Bundle.module` from the macOS target. A local `swift build` cannot catch the packaging bug behind the 0.8.1 crash, because the build tree contains a resource bundle the shipped `.app` does not.
+
+
+## Verify your download
+
+```
+42a7817fb6d8ee8ea5ca083d5863a246fc80c9a23927a250db305b0fea859c1f  Mouseflare-macOS.zip
+d9e1d5e42727ef4f1f85591ba046841d1795ecea7aaadf8c9da66140e0fa94be  Mouseflare-Windows.zip
+```
+
+Artifacts are minisign-signed ([public key](https://github.com/OffBy1-tech/Mouse-Flare/blob/main/minisign.pub)):
+
+```
+minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw
+```
+
+- **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
+- **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 ## Mouseflare v0.8.1 (2026-08-24)
 
 Stable release v0.8.1 (commit 91991a398fee31fd2f7aeab84d3797d8fd451269).
