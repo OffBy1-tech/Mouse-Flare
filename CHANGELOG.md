@@ -2,6 +2,49 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.8.0 (2026-08-24)
+
+Stable release v0.8.0 (commit 8f884dde6d04607d1541ca9ecfbf02084d043336).
+
+## What's new
+
+Mouseflare 0.8.0 — Parity polish, NeonSwitch on Windows, and the hosted demo
+
+### ✨ Added
+- **Fluid dye controls on native**: the "Luminescent Glowing Bloom" and "Chromatic Rainbow Dye Cycle" toggles now exist in FX Studio's fluid card on macOS and Windows, hooked into both engines (additive bloom on macOS, soft glow halo on Windows).
+- **Security & Package Verification card** in Check for Updates on macOS and Windows — a SHA256SUMS download link plus a copyable minisign verify command.
+- **Grouped FX Designer preset dropdowns** on both native apps ("Built-in Presets" / "My Custom Presets" section headers, matching the demo).
+- **Windows NeonSwitch**: every boolean setting is now a sliding pill switch, matching macOS.
+- **Windows update prompt** now offers a release-notes path (Yes installs · No opens the notes · Cancel for later).
+
+### 🐛 Fixed
+- **Windows: "Launch on startup" actually works now** — it persists and registers a per-user Run entry that tracks the app's location. In earlier releases the checkbox did nothing.
+- **Windows FX Studio**: the selected-preset highlight no longer doubles up when your saved preset isn't the default.
+
+### 🎨 Changed
+- Cross-platform parity pass across all settings surfaces: unified window title and status model, section labels, subtexts, preset ordering (fluid effects grouped first) and short descriptions, "Min Movement Threshold", the "Checking…" update label, macOS-style save/reset confirmations, and the tray tooltip "Mouseflare — {hotkey} to Find Mouse".
+- Native sidebars render the same lucide SVG icons as the web, in matching accent colors; the Windows window is now 940×680 like macOS.
+- FX Designer: delete is a trash-icon button, and clipboard import distinguishes an unreadable clipboard from invalid JSON.
+- Tray/menu-bar FX preset quick-switching was removed on all platforms — preset selection lives in FX Studio.
+- **The web app is now a small hosted showcase demo** at https://offby1-tech.github.io/Mouse-Flare/ (FX playground + designer with a much faster glow renderer); the canonical preset library moved to `data/default-fx-presets.json`, shared by all three platforms and drift-checked in CI.
+
+
+## Verify your download
+
+```
+6b92072d220a03cdc792a78ca4b5ad719a767bb45cae1a86ce1a5c8f3ef6c58e  Mouseflare-macOS.zip
+e28ceb400185c14770788225bc1a811d05e9d339e7c16080ef05751f84dd4645  Mouseflare-Windows.zip
+```
+
+Artifacts are minisign-signed ([public key](https://github.com/OffBy1-tech/Mouse-Flare/blob/main/minisign.pub)):
+
+```
+minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw
+```
+
+- **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
+- **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 ## Mouseflare v0.7.0 (2026-08-23)
 
 Stable release v0.7.0 (commit de67f1b37814e2a132dbb31392c41db2e01fc281).
