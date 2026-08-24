@@ -10,6 +10,9 @@ export class CustomFxRenderer {
   // at 60, 120 or 144Hz. dt is clamped so a stall can't teleport or mass-expire.
   private static readonly referenceHz = 60;
   private static readonly maxDeltaSeconds = 0.1;
+
+  // Upper bound on glow blur, in CSS px. Matches macOS and Windows.
+  private static readonly maxGlowBlur = 20;
   private lastRenderTime = performance.now();
   private spawnBudget = 0;
 
@@ -579,7 +582,13 @@ export class CustomFxRenderer {
     glowRadius: number
   ): HTMLCanvasElement {
     const sizeQ = Math.max(1, Math.round(size));
-    const blur = Math.max(1, Math.round(glowRadius * (sizeQ / 6)));
+    // Capped so presets whose particles grow large (Dragon Ash & Smoke reaches
+    // size 30, asking for a 40px blur) don't bake sprites several times the
+    // size of any other preset's for no visible gain.
+    const blur = Math.max(
+      1,
+      Math.round(Math.min(CustomFxRenderer.maxGlowBlur, glowRadius * (sizeQ / 6)))
+    );
     const colorQ = this.quantizeColor(color);
     const key = `${shape}|${sizeQ}|${blur}|${colorQ}`;
     let sprite = this.glowSprites.get(key);

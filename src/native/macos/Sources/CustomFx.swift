@@ -122,6 +122,13 @@ final class CustomFxEngine {
     private static let referenceHz: Double = 60
     private static let maxDeltaSeconds: Double = 0.1
 
+    /// Blur is `glowRadius * size/6`, so a preset whose particles grow large
+    /// (Dragon Ash & Smoke reaches size 30) asks for a 40pt blur — several
+    /// times any other preset, and the dominant cost in its frame. Past ~20pt
+    /// the falloff is already wide enough that more radius reads as no visible
+    /// change, so cap it. Logical points; callers scale for backing density.
+    static let maxGlowBlur: CGFloat = 20
+
     private func frameEquivalents(since previous: Double, now: Double) -> CGFloat {
         let seconds = min(Self.maxDeltaSeconds, max(0, now - previous))
         return CGFloat(seconds * Self.referenceHz)
@@ -340,7 +347,8 @@ final class CustomFxEngine {
     private func drawShape(_ ctx: CGContext, p: P, color: NSColor, config: CustomFxConfig) {
         ctx.saveGState()
         if config.glowBloom && config.glowRadius > 0 {
-            ctx.setShadow(offset: .zero, blur: CGFloat(config.glowRadius) * (p.size / 6), color: color.cgColor)
+            let blur = min(Self.maxGlowBlur, CGFloat(config.glowRadius) * (p.size / 6))
+            ctx.setShadow(offset: .zero, blur: blur, color: color.cgColor)
         }
         ctx.translateBy(x: p.x, y: p.y)
         if p.rotation != 0 { ctx.rotate(by: p.rotation) }
