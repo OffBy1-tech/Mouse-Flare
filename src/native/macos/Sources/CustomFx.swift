@@ -113,6 +113,19 @@ final class CustomFxEngine {
     private var cursorVy: CGFloat = 0
     private var cursorSpeed: Double = 0
     private var lastTime = Date.timeIntervalSinceReferenceDate
+    private var lastUpdateTime = Date.timeIntervalSinceReferenceDate
+    private var spawnBudget: Double = 0
+
+    /// Presets are authored in 60fps frame units, so each update advances by
+    /// dt*60 rather than a fixed 1 — identical duration at 60/120/144Hz.
+    /// dt is clamped so a stall cannot teleport or mass-expire particles.
+    private static let referenceHz: Double = 60
+    private static let maxDeltaSeconds: Double = 0.1
+
+    private func frameEquivalents(since previous: Double, now: Double) -> CGFloat {
+        let seconds = min(Self.maxDeltaSeconds, max(0, now - previous))
+        return CGFloat(seconds * Self.referenceHz)
+    }
 
     var activeCount: Int { particles.count }
 
@@ -132,7 +145,12 @@ final class CustomFxEngine {
         cursorSpeed = Double(dist) / dt
 
         guard dist > 0.5 else { return }
-        for _ in 0..<Int(config.spawnRateOnMove) {
+        // Time-budgeted emission: the 120Hz poll timer no longer dictates
+        // density, so macOS and Windows agree for the same preset.
+        spawnBudget += config.spawnRateOnMove * Double(frameEquivalents(since: now - dt, now: now))
+        let count = min(Int(spawnBudget.rounded(.down)), 40)
+        spawnBudget -= Double(count)
+        for _ in 0..<max(0, count) {
             spawn(x: x, y: y, dx: dx, dy: dy, config: config, isBurst: false)
         }
     }
@@ -198,6 +216,9 @@ final class CustomFxEngine {
     }
 
     func update(config: CustomFxConfig, cursor: CGPoint) {
+        let now = Date.timeIntervalSinceReferenceDate
+        let fe = frameEquivalents(since: lastUpdateTime, now: now)
+        lastUpdateTime = now
         let gravityX = CGFloat(config.gravityX) * 0.1
         let gravityYUp = CGFloat(-config.gravityY) * 0.1 // web +Y falls -> mac -Y
         let drag = CGFloat(config.drag)
@@ -205,22 +226,24 @@ final class CustomFxEngine {
         let vortex = CGFloat(config.vortexAttraction)
 
         for i in (0..<particles.count).reversed() {
-            particles[i].life += 1
+            particles[i].life += Double(fe)
             if particles[i].life >= particles[i].maxLife {
                 particles.remove(at: i)
                 continue
             }
             let progress = particles[i].life / particles[i].maxLife
 
-            particles[i].vx += gravityX
-            particles[i].vy += gravityYUp
-            particles[i].vx *= drag
-            particles[i].vy *= drag
+            particles[i].vx += gravityX * fe
+            particles[i].vy += gravityYUp * fe
+            // drag is a per-frame multiplier, so exponentiate for other rates
+            let dragStep = drag == 1 ? 1 : pow(drag, fe)
+            particles[i].vx *= dragStep
+            particles[i].vy *= dragStep
 
             if turbulence > 0 {
                 let time = (particles[i].life + particles[i].turbulenceSeed) * 0.1
-                particles[i].vx += CGFloat(sin(time)) * turbulence * 0.15
-                particles[i].vy += CGFloat(-cos(time * 0.8)) * turbulence * 0.15
+                particles[i].vx += CGFloat(sin(time)) * turbulence * 0.15 * fe
+                particles[i].vy += CGFloat(-cos(time * 0.8)) * turbulence * 0.15 * fe
             }
 
             if vortex != 0 {
@@ -230,14 +253,14 @@ final class CustomFxEngine {
                 if dist > 5 && dist < 300 {
                     let normX = toX / dist, normY = toY / dist
                     let tanX = -normY, tanY = normX
-                    particles[i].vx += tanX * vortex * 0.8 + normX * 0.2
-                    particles[i].vy += tanY * vortex * 0.8 + normY * 0.2
+                    particles[i].vx += (tanX * vortex * 0.8 + normX * 0.2) * fe
+                    particles[i].vy += (tanY * vortex * 0.8 + normY * 0.2) * fe
                 }
             }
 
-            particles[i].x += particles[i].vx
-            particles[i].y += particles[i].vy
-            particles[i].rotation += particles[i].rotationSpeed
+            particles[i].x += particles[i].vx * fe
+            particles[i].y += particles[i].vy * fe
+            particles[i].rotation += particles[i].rotationSpeed * fe
 
             // Size curve
             let start = CGFloat(config.startSize), peak = CGFloat(config.peakSize), end = CGFloat(config.endSize)

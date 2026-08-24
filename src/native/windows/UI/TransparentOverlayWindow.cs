@@ -222,8 +222,13 @@ namespace Mouseflare.UI
 
         private void SpawnPassiveParticles(double x, double y, double dx, double dy, double dist)
         {
-            int baseCount = Math.Max(1, (int)((dist / 14.0) * SparkDensityMultiplier));
-            int count = Math.Min(10, baseCount);
+            // Distance-proportional with a carried remainder: the low-level
+            // hook fires per hardware event, so flooring to one per event made
+            // a high-polling-rate mouse emit far denser trails.
+            _passiveBudget += (dist / 14.0) * SparkDensityMultiplier;
+            int count = Math.Min(10, (int)Math.Floor(_passiveBudget));
+            _passiveBudget -= count;
+            if (count <= 0) return;
 
             switch (PassiveFxStyle)
             {
@@ -658,8 +663,17 @@ namespace Mouseflare.UI
             }
         }
 
+        // Presets are authored in 60fps frame units; CompositionTarget.Rendering
+        // fires at the display's refresh rate, so advance by dt*60 instead of a
+        // fixed 1. dt is clamped so a stall can't teleport or mass-expire.
+        private long _lastFrameTime = Environment.TickCount64;
+        private double _passiveBudget;
+
         private void OnRenderFrame(object? sender, EventArgs e)
         {
+            long frameNow = Environment.TickCount64;
+            double fe = Math.Min(0.1, Math.Max(0, (frameNow - _lastFrameTime) / 1000.0)) * 60.0;
+            _lastFrameTime = frameNow;
             if (_particles.Count == 0 && _rings.Count == 0 && _customFx.ActiveCount == 0) return;
 
             using (DrawingContext dc = _visual.RenderOpen())
@@ -674,7 +688,7 @@ namespace Mouseflare.UI
                 for (int i = _rings.Count - 1; i >= 0; i--)
                 {
                     var r = _rings[i];
-                    r.Progress += 0.04 * AnimationSpeedMultiplier;
+                    r.Progress += 0.04 * AnimationSpeedMultiplier * fe;
                     if (r.Progress >= 1.0)
                     {
                         _rings.RemoveAt(i);
@@ -701,34 +715,37 @@ namespace Mouseflare.UI
                 for (int i = _particles.Count - 1; i >= 0; i--)
                 {
                     var p = _particles[i];
-                    p.Alpha -= p.Decay;
+                    p.Alpha -= p.Decay * fe;
                     if (p.Alpha <= 0)
                     {
                         _particles.RemoveAt(i);
                         continue;
                     }
 
-                    p.X += p.Vx;
-                    p.Y += p.Vy;
+                    p.X += p.Vx * fe;
+                    p.Y += p.Vy * fe;
                     if (p.Type == "fluid")
                     {
                         // Curl vector rotation + configurable dissipation (mirrors macOS)
-                        double curl = p.Extra * 0.05;
+                        double curl = p.Extra * 0.05 * fe;
                         double vx = p.Vx * Math.Cos(curl) - p.Vy * Math.Sin(curl);
                         double vy = p.Vx * Math.Sin(curl) + p.Vy * Math.Cos(curl);
-                        p.Vx = vx * FluidDissipation;
-                        p.Vy = vy * FluidDissipation;
+                        // per-frame multipliers: exponentiate for other rates
+                        double dissipationStep = Math.Pow(FluidDissipation, fe);
+                        p.Vx = vx * dissipationStep;
+                        p.Vy = vy * dissipationStep;
                     }
                     else if (p.Type != "glyph") // glyphs fall at constant cascade speed
                     {
-                        p.Vx *= 0.94;
-                        p.Vy *= 0.94;
+                        double dragStep = Math.Pow(0.94, fe);
+                        p.Vx *= dragStep;
+                        p.Vy *= dragStep;
                     }
 
                     if (p.Type == "firefly")
                     {
-                        p.Extra += 0.15;
-                        p.X += Math.Sin(p.Extra) * 0.8;
+                        p.Extra += 0.15 * fe;
+                        p.X += Math.Sin(p.Extra) * 0.8 * fe;
                     }
 
                     byte alpha = (byte)(Math.Max(0, p.Alpha) * 255);
