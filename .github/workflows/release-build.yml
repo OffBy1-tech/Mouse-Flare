@@ -99,6 +99,47 @@ jobs:
           codesign --verify --verbose=2 "$APP"
           ditto -c -k --keepParent "$APP" "$GITHUB_WORKSPACE/Mouseflare-macOS.zip"
 
+      # Guards the failure that shipped in 0.8.0: Bundle.module's SwiftPM
+      # accessor aborts when the resource bundle is missing, and it only knows
+      # the .app root plus the build machine's absolute build path — so the
+      # packaged app crashed everywhere except the machine that built it.
+      - name: Ban Bundle.module in the macOS target
+        working-directory: src/native/macos
+        run: |
+          set -euo pipefail
+          if grep -rn --include='*.swift' 'Bundle\.module' Sources | grep -vE ':[[:space:]]*(///|//)'; then
+            echo "::error::Bundle.module aborts when the resource bundle is absent from the packaged .app. Embed the resource or resolve its path by hand (see AppLogo / NavIcons)."
+            exit 1
+          fi
+          echo "No Bundle.module usage."
+
+      # Launches the assembled .app the way a user would and opens Settings —
+      # the code path that trapped in 0.8.0. swift build alone cannot catch it,
+      # because the build tree still contains the resource bundle.
+      - name: Smoke-test the packaged app (opens Settings)
+        working-directory: src/native/macos
+        run: |
+          set -uo pipefail
+          BIN="dist/Mouseflare.app/Contents/MacOS/Mouseflare"
+          "$BIN" --settings > smoke-out.txt 2> smoke-err.txt &
+          PID=$!
+          sleep 12
+          if kill -0 "$PID" 2>/dev/null; then
+            kill "$PID" 2>/dev/null || true
+            echo "Settings opened and the app stayed alive."
+            exit 0
+          fi
+          wait "$PID"; CODE=$?
+          echo "App exited early with code $CODE"
+          sed -n '1,40p' smoke-err.txt || true
+          # Swift traps (SIGTRAP/SIGABRT) and explicit fatal errors are real
+          # crashes; anything else may be a headless-runner quirk, so warn only.
+          if [ "$CODE" -ge 128 ] || grep -q "Fatal error" smoke-err.txt; then
+            echo "::error::Packaged app crashed while opening Settings (exit $CODE)."
+            exit 1
+          fi
+          echo "::warning::App exited early (code $CODE) without a crash signature; not failing the release."
+
       - uses: actions/upload-artifact@v4
         with:
           name: Mouseflare-macOS
