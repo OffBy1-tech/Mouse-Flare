@@ -3,6 +3,23 @@ import { ParticleFxConfig, CustomParticle, ParticleShape } from '../types/fxEdit
 export class CustomFxRenderer {
   private particles: CustomParticle[] = [];
   private maxParticles = 500;
+
+  // Frame-equivalent timing: presets store lifetimes/speeds/gravity/drag in
+  // 60fps frame units, so each update advances by dt*60 rather than a fixed 1.
+  // That keeps stored preset values meaningful while making behavior identical
+  // at 60, 120 or 144Hz. dt is clamped so a stall can't teleport or mass-expire.
+  private static readonly referenceHz = 60;
+  private static readonly maxDeltaSeconds = 0.1;
+  private lastRenderTime = performance.now();
+  private spawnBudget = 0;
+
+  private frameEquivalents(previous: number, now: number): number {
+    const seconds = Math.min(
+      CustomFxRenderer.maxDeltaSeconds,
+      Math.max(0, (now - previous) / 1000)
+    );
+    return seconds * CustomFxRenderer.referenceHz;
+  }
   private globalHue = 0;
   private lastX = 0;
   private lastY = 0;
@@ -39,7 +56,19 @@ export class CustomFxRenderer {
 
     if (dist < 0.5 && !forceSpawnCount) return;
 
-    const count = forceSpawnCount ?? config.spawnRateOnMove;
+    if (forceSpawnCount !== undefined) {
+      for (let i = 0; i < forceSpawnCount; i++) {
+        this.spawnSingleParticle(x, y, dx, dy, config, false);
+      }
+      return;
+    }
+
+    // Spawn on a time budget, not per event: a 1000Hz mouse and a 125Hz mouse
+    // emit the same density. The fractional remainder carries so low rates
+    // still emit smoothly.
+    this.spawnBudget += config.spawnRateOnMove * this.frameEquivalents(now - dt, now);
+    const count = Math.min(Math.floor(this.spawnBudget), 40);
+    this.spawnBudget -= count;
     for (let i = 0; i < count; i++) {
       this.spawnSingleParticle(x, y, dx, dy, config, false);
     }
@@ -180,6 +209,8 @@ export class CustomFxRenderer {
     cursorY: number = height / 2
   ) {
     const t0 = performance.now();
+    const fe = this.frameEquivalents(this.lastRenderTime, t0);
+    this.lastRenderTime = t0;
 
     ctx.save();
     ctx.globalCompositeOperation = config.blendMode;
@@ -192,7 +223,7 @@ export class CustomFxRenderer {
 
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
-      p.life += 1;
+      p.life += fe;
 
       if (p.life >= p.maxLife) {
         this.particles.splice(i, 1);
@@ -202,18 +233,19 @@ export class CustomFxRenderer {
       const progress = p.life / p.maxLife; // 0 to 1
 
       // 1. Gravity & Forces
-      p.vx += gravityX;
-      p.vy += gravityY;
+      p.vx += gravityX * fe;
+      p.vy += gravityY * fe;
 
-      // 2. Drag / Air friction
-      p.vx *= drag;
-      p.vy *= drag;
+      // 2. Drag / Air friction (per-frame multiplier, so exponentiate)
+      const dragStep = drag === 1 ? 1 : Math.pow(drag, fe);
+      p.vx *= dragStep;
+      p.vy *= dragStep;
 
       // 3. Turbulence / Curl Noise Jitter
       if (turbulence > 0) {
         const time = (p.life + p.turbulenceSeed) * 0.1;
-        p.vx += Math.sin(time) * turbulence * 0.15;
-        p.vy += Math.cos(time * 0.8) * turbulence * 0.15;
+        p.vx += Math.sin(time) * turbulence * 0.15 * fe;
+        p.vy += Math.cos(time * 0.8) * turbulence * 0.15 * fe;
       }
 
       // 4. Vortex Attraction (Spin towards/around cursor)
@@ -227,17 +259,17 @@ export class CustomFxRenderer {
           // Perpendicular tangential vector for orbit + centripetal pull
           const tanX = -normY;
           const tanY = normX;
-          p.vx += (tanX * vortexAttraction * 0.8 + normX * 0.2);
-          p.vy += (tanY * vortexAttraction * 0.8 + normY * 0.2);
+          p.vx += (tanX * vortexAttraction * 0.8 + normX * 0.2) * fe;
+          p.vy += (tanY * vortexAttraction * 0.8 + normY * 0.2) * fe;
         }
       }
 
       // Step position
-      p.x += p.vx;
-      p.y += p.vy;
+      p.x += p.vx * fe;
+      p.y += p.vy * fe;
 
       // Rotation
-      p.rotation += p.rotationSpeed;
+      p.rotation += p.rotationSpeed * fe;
 
       // 5. Size Curve Evaluation
       switch (config.sizeCurve) {

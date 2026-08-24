@@ -22,6 +22,15 @@ export class ParticleEngine {
   private lastY = 0;
   private lastTime = 0;
   private lastMoveTime = 0;
+
+  // Frame-equivalent timing (see customFxRenderer): presets are authored in
+  // 60fps frame units, so each update advances by dt*60 instead of a fixed 1.
+  // Keeps effect duration identical at 60/120/144Hz; dt is clamped so a stall
+  // can't teleport particles or expire the whole population at once.
+  private static readonly referenceHz = 60;
+  private static readonly maxDeltaSeconds = 0.1;
+  private lastUpdateTime = performance.now();
+  private densityBudget = 0;
   private isIdle = true;
   private globalHue = 0;
   public fluidEngine: FluidSimulationEngine;
@@ -108,7 +117,12 @@ export class ParticleEngine {
     if (!settings.enablePassiveFx) return;
 
     const colors = this.getColors(settings);
-    const density = Math.max(1, Math.round(settings.particleDensity * (dist / 15)));
+    // Distance-proportional emission with a carried remainder: flooring to a
+    // minimum of 1 per event made a 1000Hz mouse emit ~8x a 125Hz one.
+    this.densityBudget += settings.particleDensity * (dist / 15);
+    const density = Math.min(Math.floor(this.densityBudget), 40);
+    this.densityBudget -= density;
+    if (density <= 0) return;
     const intensity = settings.intensity;
 
     this.spawnPassiveParticles(x, y, dx, dy, dist, settings, colors, density, intensity);
@@ -638,6 +652,12 @@ export class ParticleEngine {
     settings: AppSettings
   ) {
     const startTime = performance.now();
+    const elapsedSeconds = Math.min(
+      ParticleEngine.maxDeltaSeconds,
+      Math.max(0, (startTime - this.lastUpdateTime) / 1000)
+    );
+    const fe = elapsedSeconds * ParticleEngine.referenceHz;
+    this.lastUpdateTime = startTime;
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
@@ -658,7 +678,7 @@ export class ParticleEngine {
     // 1. Render & Update Flare Rings
     for (let i = this.rings.length - 1; i >= 0; i--) {
       const ring = this.rings[i];
-      ring.progress += 0.035 * settings.animationSpeed;
+      ring.progress += 0.035 * settings.animationSpeed * fe;
 
       if (ring.progress >= 1) {
         this.rings.splice(i, 1);
@@ -727,24 +747,25 @@ export class ParticleEngine {
     const trailScale = Math.min(2.4, Math.max(0.4, settings.trailLength / 25));
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
-      p.life += 1 / trailScale;
-      p.alpha -= p.decay / trailScale;
+      p.life += fe / trailScale;
+      p.alpha -= (p.decay * fe) / trailScale;
 
       if (p.alpha <= 0 || p.life >= p.maxLife) {
         this.particles.splice(i, 1);
         continue;
       }
 
-      p.x += p.vx;
-      p.y += p.vy;
+      p.x += p.vx * fe;
+      p.y += p.vy * fe;
 
       // Type-specific physics & rendering
       ctx.save();
       ctx.globalAlpha = Math.max(0, p.alpha);
 
       if (p.type === 'spark' || p.type === 'flare-burst') {
-        p.vx *= 0.94;
-        p.vy *= 0.94;
+        const sparkDrag = Math.pow(0.94, fe);
+        p.vx *= sparkDrag;
+        p.vy *= sparkDrag;
         const curSize = p.size * (p.alpha / p.initialAlpha);
 
         ctx.fillStyle = p.color;
@@ -764,7 +785,7 @@ export class ParticleEngine {
         ctx.fill();
       } else if (p.type === 'star') {
         if (p.rotation !== undefined && p.rotationSpeed !== undefined) {
-          p.rotation += p.rotationSpeed;
+          p.rotation += p.rotationSpeed * fe;
         }
         const s = p.size * (p.alpha / p.initialAlpha);
         ctx.translate(p.x, p.y);
@@ -786,8 +807,8 @@ export class ParticleEngine {
         ctx.fill();
       } else if (p.type === 'bubble') {
         if (p.extra) {
-          p.extra.wobble += 0.1;
-          p.x += Math.sin(p.extra.wobble) * 0.4;
+          p.extra.wobble += 0.1 * fe;
+          p.x += Math.sin(p.extra.wobble) * 0.4 * fe;
         }
         ctx.strokeStyle = p.color;
         ctx.lineWidth = 1.2;
@@ -798,9 +819,9 @@ export class ParticleEngine {
         ctx.stroke();
       } else if (p.type === 'firefly') {
         if (p.extra) {
-          p.extra.phase += p.extra.freq;
-          p.vx += Math.sin(p.extra.phase) * 0.15;
-          p.vy += Math.cos(p.extra.phase) * 0.15;
+          p.extra.phase += p.extra.freq * fe;
+          p.vx += Math.sin(p.extra.phase) * 0.15 * fe;
+          p.vy += Math.cos(p.extra.phase) * 0.15 * fe;
         }
         ctx.fillStyle = p.color;
         ctx.shadowColor = p.color;
