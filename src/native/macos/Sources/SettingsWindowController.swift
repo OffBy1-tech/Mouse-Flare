@@ -2092,8 +2092,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func makeSvgIconTile(resource: String, fallbackEmoji: String, background: NSColor, size: CGFloat, corner: CGFloat) -> NSView {
-        guard let url = Bundle.module.url(forResource: resource, withExtension: "svg", subdirectory: "NavIcons"),
-              let image = NSImage(contentsOf: url) else {
+        guard let image = NavIcons.image(resource) else {
             return makeIconTile(emoji: fallbackEmoji, background: background, size: size, corner: corner)
         }
         let tile = NSView()

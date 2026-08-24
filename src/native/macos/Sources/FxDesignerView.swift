@@ -416,8 +416,7 @@ final class FxDesignerView: NSView {
         button.layer?.cornerRadius = 6
         button.setStyle(background: NSColor(hexString: "#F87171").withAlphaComponent(0.10), border: NSColor(hexString: "#F87171").withAlphaComponent(0.4), borderWidth: 1)
         button.toolTip = "Delete this custom preset from your library"
-        if let url = Bundle.module.url(forResource: "trash", withExtension: "svg", subdirectory: "NavIcons"),
-           let image = NSImage(contentsOf: url) {
+        if let image = NavIcons.image("trash") {
             let imageView = NSImageView(image: image)
             imageView.imageScaling = .scaleProportionallyUpOrDown
             imageView.translatesAutoresizingMaskIntoConstraints = false
