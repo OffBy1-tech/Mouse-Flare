@@ -2,6 +2,39 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.8.1 (2026-08-24)
+
+Stable release v0.8.1 (commit 91991a398fee31fd2f7aeab84d3797d8fd451269).
+
+## What's new
+
+Mouseflare 0.8.1 — Fixes the macOS Settings crash in 0.8.0
+
+### 🐛 Fixed
+- **macOS: opening Settings no longer quits the app.** In 0.8.0 the new sidebar icons loaded through SwiftPM's `Bundle.module`, whose accessor aborts the process when the resource bundle isn't found — and it only looks in the app bundle and the absolute build directory baked in at compile time, so the shipped build crashed on every machine except the one that built it. The icon artwork is now embedded in the source, so no bundle lookup happens at all. **All 0.8.0 macOS users should update.**
+- **Windows**: a hotkey recorded while holding only the Windows key was saved without any modifier, registering a bare key that swallowed normal typing. Only Ctrl / Shift / Alt now satisfy the modifier requirement (F1–F12 remain exempt), matching macOS.
+
+### 🎨 Changed
+- Windows tray menu adopts the macOS wording — "⚙ Settings & FX Studio…" and "Enable Effects" — and its Find Mouse entry now shows your configured hotkey instead of always reading Ctrl+Shift+F.
+- Windows hotkey recording gains the macOS guards: Escape cancels, and a bare key is refused with an explanatory message rather than silently registering.
+
+
+## Verify your download
+
+```
+1dc4fba644f78b0b50e055649c018d11a92b29055a3a8582cba7ff2ef3655caf  Mouseflare-macOS.zip
+f17a6b0ba1aff2144f19a72cfe1384ddf74815b737de929c317759f4bde05389  Mouseflare-Windows.zip
+```
+
+Artifacts are minisign-signed ([public key](https://github.com/OffBy1-tech/Mouse-Flare/blob/main/minisign.pub)):
+
+```
+minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw
+```
+
+- **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
+- **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 ## Mouseflare v0.8.0 (2026-08-24)
 
 Stable release v0.8.0 (commit 8f884dde6d04607d1541ca9ecfbf02084d043336).
