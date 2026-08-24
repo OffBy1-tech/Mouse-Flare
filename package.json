@@ -1,7 +1,7 @@
 {
   "name": "mouseflare",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "MIT",
   "description": "Mouseflare — never lose your cursor. Native Windows & macOS apps, with a browser demo of the FX engine.",
   "homepage": "https://github.com/OffBy1-tech/Mouse-Flare",
