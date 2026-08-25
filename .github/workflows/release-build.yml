@@ -26,8 +26,34 @@ jobs:
   build-macos:
     name: macOS app (universal)
     runs-on: macos-latest
+    outputs:
+      # Tells the publish job which Gatekeeper story belongs in the release notes.
+      signing-mode: ${{ steps.signing.outputs.mode }}
     steps:
       - uses: actions/checkout@v7
+
+      # Signing degrades gracefully rather than failing the release: with no
+      # secrets configured (forks, or any run before the Developer ID cert
+      # exists) the app is still ad-hoc signed exactly as it was, and the notes
+      # keep the quarantine workaround. Secret names: src/native/macos/README.md.
+      - name: Detect signing credentials
+        id: signing
+        env:
+          CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          NOTARY_KEY_P8: ${{ secrets.MACOS_NOTARY_KEY_P8 }}
+          NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CERT_P12" ]; then
+            MODE=adhoc
+          elif [ -n "$NOTARY_KEY_P8" ] && [ -n "$NOTARY_KEY_ID" ] && [ -n "$NOTARY_ISSUER_ID" ]; then
+            MODE=notarized
+          else
+            MODE=developer-id
+          fi
+          echo "Signing mode: $MODE"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
 
       # Two single-arch builds joined with lipo (works with bare Command Line
       # Tools too, so the recipe can be rehearsed locally — `swift build
@@ -95,10 +121,6 @@ jobs:
           </plist>
           PLIST
 
-          codesign --force --deep --sign - "$APP"
-          codesign --verify --verbose=2 "$APP"
-          ditto -c -k --keepParent "$APP" "$GITHUB_WORKSPACE/Mouseflare-macOS.zip"
-
       # Guards the failure that shipped in 0.8.0: Bundle.module's SwiftPM
       # accessor aborts when the resource bundle is missing, and it only knows
       # the .app root plus the build machine's absolute build path — so the
@@ -113,9 +135,74 @@ jobs:
           fi
           echo "No Bundle.module usage."
 
+      # The private key lives only in a throwaway keychain under RUNNER_TEMP,
+      # never the login keychain, and is deleted by the cleanup step below.
+      - name: Import Developer ID certificate
+        if: steps.signing.outputs.mode != 'adhoc'
+        env:
+          CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/mouseflare-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          P12="$RUNNER_TEMP/cert.p12"
+          trap 'rm -f "$P12"' EXIT
+
+          echo "$CERT_P12" | base64 --decode > "$P12"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$P12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" \
+            -T /usr/bin/codesign -f pkcs12
+          # Without this, codesign blocks on a UI prompt for keychain access.
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+
+          # Sign by SHA-1 hash, not by name: unambiguous even if the keychain
+          # ever holds more than one Developer ID identity.
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" \
+            | grep 'Developer ID Application' | head -1 | awk '{print $2}')"
+          if [ -z "$IDENTITY" ]; then
+            echo "::error::No 'Developer ID Application' identity in the imported .p12. A Mac Development or Developer ID Installer certificate will not do."
+            exit 1
+          fi
+          security find-identity -v -p codesigning "$KEYCHAIN" | grep 'Developer ID Application'
+          echo "SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "SIGNING_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+
+      - name: Code-sign Mouseflare.app
+        working-directory: src/native/macos
+        env:
+          SIGNING_MODE: ${{ steps.signing.outputs.mode }}
+        run: |
+          set -euo pipefail
+          APP="dist/Mouseflare.app"
+
+          if [ "$SIGNING_MODE" = "adhoc" ]; then
+            echo "No Developer ID secrets — ad-hoc signing for local execution only."
+            codesign --force --deep --sign - "$APP"
+          else
+            # The bundle holds no nested code (no frameworks, no helpers), so
+            # signing the bundle covers its one Mach-O. --options runtime is the
+            # hardened runtime, mandatory for notarization; --timestamp gets the
+            # secure timestamp that keeps the signature valid past cert expiry.
+            # No entitlements file: the app is unsandboxed, and Accessibility
+            # (AXIsProcessTrustedWithOptions) is a TCC grant, not an entitlement.
+            codesign --force --options runtime --timestamp \
+              --sign "$SIGNING_IDENTITY" "$APP"
+          fi
+
+          codesign --verify --strict --deep --verbose=2 "$APP"
+          codesign --display --verbose=4 "$APP" 2>&1 | grep -E 'Authority|TeamIdentifier|flags|Identifier' || true
+
       # Launches the assembled .app the way a user would and opens Settings —
       # the code path that trapped in 0.8.0. swift build alone cannot catch it,
-      # because the build tree still contains the resource bundle.
+      # because the build tree still contains the resource bundle. Runs after
+      # signing so it exercises the bundle that actually ships, hardened
+      # runtime included.
       - name: Smoke-test the packaged app (opens Settings)
         working-directory: src/native/macos
         run: |
@@ -140,11 +227,72 @@ jobs:
           fi
           echo "::warning::App exited early (code $CODE) without a crash signature; not failing the release."
 
+      # Stapling matters for the updater: it embeds the notarization ticket in
+      # the bundle, so an app unzipped by the in-app updater validates without
+      # a round trip to Apple.
+      - name: Notarize & staple
+        if: steps.signing.outputs.mode == 'notarized'
+        working-directory: src/native/macos
+        env:
+          NOTARY_KEY_P8: ${{ secrets.MACOS_NOTARY_KEY_P8 }}
+          NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          APP="dist/Mouseflare.app"
+          KEY="$RUNNER_TEMP/notary.p8"
+          trap 'rm -f "$KEY"' EXIT
+          echo "$NOTARY_KEY_P8" | base64 --decode > "$KEY"
+
+          # ditto, not zip: it is the only archiver that preserves the symlinks
+          # and extended attributes a signed bundle depends on.
+          ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/notarize.zip"
+
+          set +e
+          OUT="$(xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
+            --key "$KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" \
+            --wait --timeout 30m --output-format json)"
+          RC=$?
+          set -e
+          echo "$OUT"
+
+          SUBMISSION_ID="$(echo "$OUT" | /usr/bin/python3 -c 'import sys,json;print(json.load(sys.stdin).get("id",""))' 2>/dev/null || true)"
+          if [ "$RC" -ne 0 ]; then
+            # The rejection reasons live in the log, not the submit output.
+            if [ -n "$SUBMISSION_ID" ]; then
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --key "$KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" || true
+            fi
+            echo "::error::Notarization failed (see the log above)."
+            exit 1
+          fi
+
+          xcrun stapler staple "$APP"
+          xcrun stapler validate "$APP"
+
+          # What a user's Mac will conclude: expect "source=Notarized Developer ID".
+          spctl --assess --type exec -vvv "$APP"
+
+      - name: Package Mouseflare-macOS.zip
+        working-directory: src/native/macos
+        run: |
+          set -euo pipefail
+          ditto -c -k --keepParent dist/Mouseflare.app "$GITHUB_WORKSPACE/Mouseflare-macOS.zip"
+
       - uses: actions/upload-artifact@v4
         with:
           name: Mouseflare-macOS
           path: Mouseflare-macOS.zip
           if-no-files-found: error
+
+      - name: Clean up signing keychain
+        if: always()
+        run: |
+          set -uo pipefail
+          if [ -n "${SIGNING_KEYCHAIN:-}" ] && [ -f "$SIGNING_KEYCHAIN" ]; then
+            security delete-keychain "$SIGNING_KEYCHAIN" || true
+          fi
+          rm -f "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/notary.p8" || true
 
   build-windows:
     name: Windows app (x64)
@@ -181,6 +329,8 @@ jobs:
       contents: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Decides which Gatekeeper instructions the release notes carry.
+      MACOS_SIGNING_MODE: ${{ needs.build-macos.outputs.signing-mode }}
     steps:
       - uses: actions/checkout@v7
 
@@ -190,6 +340,23 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
+
+      # Gatekeeper wording depends on how the app was actually signed this run
+      # — build-macos degrades to ad-hoc when the secrets are absent. Computed
+      # once here; both release steps below consume $MAC_GATEKEEPER.
+      - name: Compose the macOS install note
+        run: |
+          set -euo pipefail
+          case "${MACOS_SIGNING_MODE:-adhoc}" in
+            notarized)
+              NOTE="Signed with a Developer ID certificate and notarized by Apple — unzip and open, no Gatekeeper workaround needed." ;;
+            developer-id)
+              NOTE="Developer ID signed but not notarized, so Gatekeeper blocks the first launch: \`xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app\` (or System Settings → Privacy & Security → Open Anyway)." ;;
+            *)
+              NOTE="Not notarized yet, so Gatekeeper blocks the first launch: \`xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app\` (or System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined." ;;
+          esac
+          echo "macOS note: $NOTE"
+          echo "MAC_GATEKEEPER=$NOTE" >> "$GITHUB_ENV"
 
       - name: Generate checksums
         run: |
@@ -248,7 +415,7 @@ jobs:
             echo "minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw"
             echo '```'
             echo
-            echo "- **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: \`xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app\` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined."
+            echo "- **macOS** (universal, macOS 13+): $MAC_GATEKEEPER"
             echo "- **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)."
           } > notes.md
 
@@ -274,7 +441,7 @@ jobs:
             cat SHA256SUMS.txt
             echo '```'
             echo
-            echo "- **macOS**: \`shasum -a 256 -c SHA256SUMS.txt\` (with the zip in the same folder). Not notarized yet, so Gatekeeper blocks the first launch: \`xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app\` (or System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined."
+            echo "- **macOS**: \`shasum -a 256 -c SHA256SUMS.txt\` (with the zip in the same folder). $MAC_GATEKEEPER"
             echo "- **Windows**: \`certutil -hashfile Mouseflare-Windows.zip SHA256\` and compare against the value above. Requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)."
           } > notes.md
           # Recreate the release so tag, assets, and checksums always refer to this commit
