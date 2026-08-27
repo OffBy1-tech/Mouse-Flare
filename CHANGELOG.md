@@ -2,6 +2,37 @@
 
 All notable releases of Mouseflare. Generated from [GitHub Releases](https://github.com/OffBy1-tech/Mouse-Flare/releases).
 
+## Mouseflare v0.8.3 (2026-08-27)
+
+Stable release v0.8.3 (commit 44b9375d1c618c419e747faa2e1d4c13f881b255).
+
+## What's new
+
+macOS releases are now notarized
+
+- macOS builds are signed with a Developer ID Application certificate (hardened runtime, secure timestamp), notarized by Apple, and ship with a stapled ticket — unzip and open, no `xattr` quarantine workaround needed (#3, #5)
+- Start with macOS (login item via SMAppService) is now reliable, thanks to the stable signed code identity
+- One-time note for existing users: the new code identity means macOS asks you to re-grant Accessibility once after this update
+- No app-code changes; auto-updating from v0.8.2 works as usual and stays minisign-verified
+
+
+## Verify your download
+
+```
+69166757ef00238cdca6019f1a59a2d42cc474d08a4bb6a282a72dc8df5b8bea  Mouseflare-macOS.zip
+f8170f07ecf6549a5d496dabc1c2ed9f9aa44a5668856c975ee7b5bab93a6b35  Mouseflare-Windows.zip
+```
+
+Artifacts are minisign-signed ([public key](https://github.com/OffBy1-tech/Mouse-Flare/blob/main/minisign.pub)):
+
+```
+minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48ImhiukQjEmN8lAqP3Mw
+```
+
+- **macOS** (universal, macOS 13+): Signed with a Developer ID certificate and notarized by Apple — unzip and open, no Gatekeeper workaround needed.
+- **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+
 ## Mouseflare v0.8.2 (2026-08-24)
 
 Stable release v0.8.2 (commit 935b301c341a7fe5bd5b5afe88ffd1d391664053).
@@ -52,6 +83,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.8.1 (2026-08-24)
 
 Stable release v0.8.1 (commit 91991a398fee31fd2f7aeab84d3797d8fd451269).
@@ -84,6 +116,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 
 ## Mouseflare v0.8.0 (2026-08-24)
 
@@ -128,6 +161,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.7.0 (2026-08-23)
 
 Stable release v0.7.0 (commit de67f1b37814e2a132dbb31392c41db2e01fc281).
@@ -167,6 +201,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.6.5 (2026-08-21)
 
 ## Mouseflare 0.6.5 — True ClearType on Windows
@@ -177,12 +212,14 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 ### 🎨 Changed
 - The soft violet glow around the window and dropdown edges is replaced by the standard system drop shadow; the gradient borders and all interior styling are unchanged. Windows 11 rounds the corners natively; Windows 10 shows square corners.
 
+
 ## Mouseflare v0.6.4 (2026-08-21)
 
 ## Mouseflare 0.6.4 — Crisp Text on Windows
 
 ### 🐛 Fixed
 - **Windows**: remaining soft/thin text — most visible in dropdown lists and the small version line. The transparent window style had ClearType disabled entirely; subpixel text rendering is now explicitly re-enabled over the app's opaque surfaces, in both windows and inside dropdown popups, with pixel-snapped popup layout.
+
 
 ## Mouseflare v0.6.3 (2026-08-21)
 
@@ -194,6 +231,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 ### ✨ Improved
 - Rainbow and gradient custom effects on Windows render with exact per-particle color (no more quantization banding).
 
+
 ## Mouseflare v0.6.2 (2026-08-21)
 
 ## Mouseflare 0.6.2 — Windows Stability
@@ -204,12 +242,14 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 ### 🩺 Added
 - **Windows crash log**: unhandled errors are now recorded to `%AppData%\Mouseflare\crash.log` (with a per-launch marker), so if anything still goes wrong, the log tells us exactly what.
 
+
 ## Mouseflare v0.6.1 (2026-08-21)
 
 ## Mouseflare 0.6.1 — macOS Layout Hotfix
 
 ### 🐛 Fixed
 - **macOS**: checking for updates could blow the settings window up far wider than the screen. Release-note text was allowed to dictate the window's width through Auto Layout; runtime text labels in the Updates tab can no longer push the window's size, changelog bullets now wrap fully (matching the web), and the window is hard-clamped to its designed 940×680.
+
 
 ## Mouseflare v0.6.0 (2026-08-21)
 
@@ -225,6 +265,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 ### 🔍 Crisp text on Windows
 - Fixed blurry, ghosted text throughout the settings window — most visibly on dropdowns. Glow effects were rasterizing the text they wrapped (including the window frame's own glow, which softened every label in the app); glows now live on dedicated carrier elements behind the content, with pixel-snapped layout on both windows.
+
 
 ## Mouseflare v0.5.0 (2026-08-21)
 
@@ -254,6 +295,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 ### 🥚 One more thing
 - The Diagnostics tab is now hidden. Click the version text in the settings sidebar five times to find it.
+
 
 ## Mouseflare v0.4.0 (2026-08-20)
 
@@ -285,6 +327,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.3.5 (2026-08-20)
 
 Stable release v0.3.5 (commit 06ee3df1ef094a4c89d177f8a15bfc67c0f7fb97).
@@ -313,6 +356,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.3.4 (2026-08-20)
 
 Stable release v0.3.4 (commit 4de36df7dfabf9d849643ee6345796a1325c44a7).
@@ -339,6 +383,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 
 ## Mouseflare v0.3.3 (2026-08-20)
 
@@ -369,6 +414,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.3.2 (2026-08-20)
 
 Stable release v0.3.2 (commit 45621891565fab7ffdbd840b361cc0be992dc5ea).
@@ -397,6 +443,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.3.1 (2026-08-20)
 
 Stable release v0.3.1 (commit a10c9a40a6f65bebcbccc28daf95586158d49471).
@@ -424,6 +471,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 
 ## Mouseflare v0.3.0 (2026-08-20)
 
@@ -454,6 +502,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.2.4 (2026-08-20)
 
 Stable release v0.2.4 (commit 6f2bceb51decf48e78d54f86e6be72e30ae6ec73).
@@ -480,6 +529,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 
 ## Mouseflare v0.2.3 (2026-08-20)
 
@@ -509,6 +559,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.2.2 (2026-08-20)
 
 Stable release v0.2.2 (commit 7d781de1221260149afc6a35c679fe6bb2a16268).
@@ -535,6 +586,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 
 ## Mouseflare v0.2.1 (2026-08-19)
 
@@ -563,6 +615,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 - **macOS** (universal, macOS 13+): not notarized yet, so Gatekeeper blocks the first launch. Unzip, then: `xattr -dr com.apple.quarantine Mouseflare.app && open Mouseflare.app` (or use System Settings → Privacy & Security → Open Anyway). Needed once per download; the app's own auto-updates are not quarantined.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
 
 ## Mouseflare v0.2.0 (2026-08-19)
 
@@ -595,6 +648,7 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 - **macOS**: unzip and launch Mouseflare.app (universal, macOS 13+). Ad-hoc signed, not notarized: on first launch, right-click the app and choose Open.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
 
+
 ## Mouseflare v0.1.0 (2026-08-19)
 
 Stable release v0.1.0 (commit 05864d20f68aa3dc85191bcf585dac192b8f0b10).
@@ -614,3 +668,4 @@ minisign -Vm Mouseflare-macOS.zip -P RWQV1L6pDRSw69B18smY6ny2RZpAecKvPvS48Imhiuk
 
 - **macOS**: unzip and launch Mouseflare.app (universal, macOS 13+). Ad-hoc signed, not notarized: on first launch, right-click the app and choose Open.
 - **Windows**: requires the free [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
