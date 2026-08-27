@@ -91,7 +91,9 @@ minisign -Vm Mouseflare-macOS.zip -p minisign.pub
 ```
 
 ### 🍏 macOS Gatekeeper Note
-The macOS app is ad-hoc signed but not notarized yet, so Gatekeeper blocks the first launch. After verifying your download, strip the quarantine flag and open:
+The macOS app is signed with a Developer ID certificate and notarized by Apple — unzip and open, no Gatekeeper workaround needed.
+
+Downloads of **v0.8.2 or earlier** predate notarization; for those, strip the quarantine flag after verifying your download:
 ```bash
 xattr -dr com.apple.quarantine Mouseflare.app
 open Mouseflare.app
